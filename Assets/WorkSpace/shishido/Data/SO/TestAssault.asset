@@ -14,10 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   weaponName: "\u30C6\u30B9\u30C8\u30A2\u30B5\u30EB\u30C8\u30E9\u30A4\u30D5\u30EB"
   ammoType: 1
-  weaponDamage: 0
-  maxAmmo: 0
+  weaponDamage: 33
+  maxAmmo: 30
   distanceAttenuation: 0
   fireAccuracy: 0
   recoilValue: 0
   fireRate: 0
   reloadTime: 0
+  headMultiplier: 2
+  bodyMultiplier: 1
+  legMultiplier: 0.8

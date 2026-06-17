@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class AssaultRifle : WeaponBase
 {
+
     public override void Fire()
     {
     }
