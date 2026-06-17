@@ -6,6 +6,8 @@ public abstract class WeaponBase : MonoBehaviour
 {
     [SerializeField]
     protected WeaponData weaponData;
+    [SerializeField]
+    protected WeaponView weaponView;
 
     /// <summary>
     /// 射撃処理
