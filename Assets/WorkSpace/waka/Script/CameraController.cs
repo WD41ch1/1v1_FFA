@@ -26,12 +26,14 @@ public class CameraController : MonoBehaviour
         yaw += lookInput.x * mouseSensitivity;
         pitch -= lookInput.y * mouseSensitivity;
 
-        pitch = Mathf.Clamp(pitch, -20f, 60f);
+        // ★変更：上も下もかなり向けるようにした
+        pitch = Mathf.Clamp(pitch, -80f, 80f);
 
         Quaternion rotation = Quaternion.Euler(pitch, yaw, 0);
 
         transform.position = target.position + rotation * offset;
 
-        transform.LookAt(target.position + Vector3.up * 1.5f);
+        // ★変更：LookAtではなく、カメラの回転をそのまま使う
+        transform.rotation = rotation;
     }
 }
