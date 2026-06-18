@@ -3,42 +3,45 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu]
-public class WeaponData : ScriptableObject
+public class WeaponData : ItemData
 {
-    //  武器名
-    public string weaponName;
-    //  武器のダメージ
+    [Header("武器の見た目")]
+    public GameObject weaponPrefab;
+    //==============================================
+    //      基本情報
+    //==============================================
+    [Header("武器のダメージ")]    
     public float weaponDamage;
-    //  連射速度
+    [Header("連射速度")]
     public float fireRate;
-    //  リロード時間
+    [Header("リロード時間")]
     public float reloadTime;
 
     //==============================================
     //      弾薬系
     //==============================================
-    //  使用する弾
+    [Header("使用する弾")] 
     public AmmoType ammoType;
-    //  マガジン数
+    [Header("マガジン数")] 
     public int maxAmmo;
 
     //==============================================
     //      反動系
     //==============================================
-    //  射撃精度
+    [Header("射撃精度")] 
     public float fireAccuracy;
-    //  リコイル
+    [Header("リコイル")] 
     public float recoilValue;
 
     //==============================================
     //      ダメージ変化系
     //==============================================
-    //  距離減衰
+    [Header("距離減衰")] 
     public float distanceAttenuation;
-    //  ヘッショ倍率
+    [Header("ヘッショ倍率")] 
     public float headMultiplier = 2.0f;
-    //  胴体倍率
+    [Header("胴体倍率")] 
     public float bodyMultiplier = 1.0f;
-    //  レッグ倍率
+    [Header("レッグ倍率")] 
     public float legMultiplier = 0.8f;
 }
