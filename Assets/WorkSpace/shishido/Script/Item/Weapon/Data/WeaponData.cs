@@ -22,11 +22,13 @@ public class WeaponData : ItemData
     public AmmoType ammoType;
     [Header("マガジン数")] 
     public int maxAmmo;
+    [Header("弾速")] 
+    public float ammoSpeed;
 
     //==============================================
     //      反動系
     //==============================================
-    [Header("射撃精度")] 
+    [Header("射撃精度(拡散率)")] 
     public float fireAccuracy;
     [Header("リコイル")] 
     public float recoilValue;

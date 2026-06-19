@@ -4,13 +4,10 @@ using UnityEngine;
 
 public abstract class ItemBase : MonoBehaviour
 {
-    //  1スロットに重ねられる個数
-    protected int maxStack;
-
     /// <summary>
     /// 初期化
     /// </summary>
-    public virtual void Initialize(ItemData ItemData) { }
+    public virtual void Initialize(GameObject owner,ItemData ItemData) { }
 
 
     public virtual void UsePrimary() { }
