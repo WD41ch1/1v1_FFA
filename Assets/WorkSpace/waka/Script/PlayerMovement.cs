@@ -4,11 +4,7 @@ public class PlayerMovement : MonoBehaviour
 {
     [Header("参照")]
     public PlayerInputController input;
-
-    // カメラ
     public Transform cameraTransform;
-
-    // 足元判定用オブジェクト
     public Transform groundCheck;
 
     [Header("移動設定")]
@@ -16,20 +12,13 @@ public class PlayerMovement : MonoBehaviour
     public float jumpForce = 7f;
 
     [Header("体の回転設定")]
-    // 何度差が付いたら体を回し始めるか
     public float rotateStartAngle = 60f;
-
-    // この角度になったら最大速度で回る
     public float rotateFullAngle = 90f;
-
-    // 最低回転速度
     public float minRotateSpeed = 2f;
-
-    // 最大回転速度
     public float maxRotateSpeed = 10f;
+    public float moveRotateSpeed = 15f;
 
     [Header("ジャンプ調整")]
-    // 落下を速くする倍率
     public float fallMultiplier = 2.5f;
 
     [Header("接地判定")]
@@ -37,6 +26,8 @@ public class PlayerMovement : MonoBehaviour
     public LayerMask groundLayer;
 
     private Rigidbody rb;
+    private float lastMoveTime;
+    private float lastLookTime;
 
     private void Start()
     {
@@ -45,30 +36,32 @@ public class PlayerMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
-        // 移動
         Move();
-
-        // カメラ方向に応じて体を回す
         RotateBodyByCamera();
-
-        // ジャンプ
         Jump();
-
-        // 落下補正
         BetterJump();
+
+
     }
 
-    /// <summary>
-    /// WASD移動
-    /// カメラ基準で移動する
-    /// フォートナイト風
-    /// </summary>
+    private void Update()
+    {
+        if (input.LookInput.sqrMagnitude > 0.01f)
+        {
+            lastLookTime = Time.time;
+        }
+    }
+
     private void Move()
     {
         Vector2 moveInput = input.MoveInput;
 
-        // カメラのY回転だけを使う
-        // 上下の向きは無視して、横方向だけ見る
+        if (moveInput.sqrMagnitude > 0.01f)
+        {
+            lastMoveTime = Time.time;
+        }
+
+        // カメラのY回転だけ使う
         Quaternion cameraYawRotation =
             Quaternion.Euler(0f, cameraTransform.eulerAngles.y, 0f);
 
@@ -76,44 +69,55 @@ public class PlayerMovement : MonoBehaviour
         Vector3 forward = cameraYawRotation * Vector3.forward;
         Vector3 right = cameraYawRotation * Vector3.right;
 
-        // WASD入力をカメラ基準の移動方向に変換
+        // WASDの移動方向
         Vector3 moveDirection =
             forward * moveInput.y +
             right * moveInput.x;
 
-        // 斜め移動が速くなりすぎないようにする
         if (moveDirection.magnitude > 1f)
         {
             moveDirection.Normalize();
         }
 
+        // 移動
         Vector3 velocity = rb.velocity;
-
-        // XZ方向だけ移動させる
         velocity.x = moveDirection.x * moveSpeed;
         velocity.z = moveDirection.z * moveSpeed;
-
         rb.velocity = velocity;
+
+        // WASDどれかが押されている間は
+        // 体をカメラ正面へ向ける
+        if (moveInput.sqrMagnitude > 0.01f)
+        {
+            Quaternion targetRotation =
+                Quaternion.LookRotation(forward, Vector3.up);
+
+            transform.rotation =
+                Quaternion.Slerp(
+                    transform.rotation,
+                    targetRotation,
+                    moveRotateSpeed * Time.fixedDeltaTime
+                );
+        }
     }
 
-    /// <summary>
-    /// カメラと体の角度差で体を回転
-    ///
-    /// 0～60度
-    ///     回らない
-    ///
-    /// 60～90度
-    ///     徐々に回る
-    ///
-    /// 90度以上
-    ///     素早く回る
-    /// </summary>
     private void RotateBodyByCamera()
     {
-        // カメラの前方向取得
-        Vector3 cameraForward = cameraTransform.forward;
+        Vector2 moveInput = input.MoveInput;
 
-        // 上下成分を無視
+        // WASD入力中はMove()側で体をカメラ正面に向ける
+        if (moveInput.sqrMagnitude > 0.01f)
+            return;
+
+        // 移動をやめた直後は回さない
+        if (Time.time - lastMoveTime < 0.3f)
+            return;
+
+        // カメラを動かしていない時は回さない
+        if (Time.time - lastLookTime > 0.1f)
+            return;
+
+        Vector3 cameraForward = cameraTransform.forward;
         cameraForward.y = 0f;
 
         if (cameraForward == Vector3.zero)
@@ -121,26 +125,21 @@ public class PlayerMovement : MonoBehaviour
 
         cameraForward.Normalize();
 
-        // カメラのY回転
         float cameraYaw =
             Quaternion.LookRotation(cameraForward).eulerAngles.y;
 
-        // プレイヤーのY回転
         float bodyYaw =
             transform.eulerAngles.y;
 
-        // カメラと体の角度差
         float angle =
             Mathf.DeltaAngle(bodyYaw, cameraYaw);
 
         float absAngle =
             Mathf.Abs(angle);
 
-        // 60度以内なら回転しない
         if (absAngle <= rotateStartAngle)
             return;
 
-        // 60～90度を0～1に変換
         float t =
             Mathf.InverseLerp(
                 rotateStartAngle,
@@ -148,7 +147,6 @@ public class PlayerMovement : MonoBehaviour
                 absAngle
             );
 
-        // 回転速度補間
         float rotateSpeed =
             Mathf.Lerp(
                 minRotateSpeed,
@@ -156,15 +154,9 @@ public class PlayerMovement : MonoBehaviour
                 t
             );
 
-        // 目標回転
         Quaternion targetRotation =
-            Quaternion.Euler(
-                0f,
-                cameraYaw,
-                0f
-            );
+            Quaternion.Euler(0f, cameraYaw, 0f);
 
-        // 滑らかに回転
         transform.rotation =
             Quaternion.Slerp(
                 transform.rotation,
@@ -173,9 +165,6 @@ public class PlayerMovement : MonoBehaviour
             );
     }
 
-    /// <summary>
-    /// ジャンプ
-    /// </summary>
     private void Jump()
     {
         bool isGrounded =
@@ -196,10 +185,6 @@ public class PlayerMovement : MonoBehaviour
         input.ResetJump();
     }
 
-    /// <summary>
-    /// 落下を速くして
-    /// ジャンプを気持ちよくする
-    /// </summary>
     private void BetterJump()
     {
         if (rb.velocity.y < 0)
