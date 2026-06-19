@@ -42,14 +42,22 @@ public class TestSceneManager : MonoBehaviour
 
     public void TestPlayer()
     {
+        //  左クリック処理
         if (Input.GetMouseButtonDown(0))
         {
-            em.currentItem.UsePrimary();
+            em.GetcurrentItem()?.UsePrimary();
         }
 
+        //  右クリック処理
         if (Input.GetMouseButtonDown(1))
         {
-            em.currentItem.UseSecondary();
+            em.GetcurrentItem()?.UseSecondary();
+        }
+
+        //  リロード
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            em.GetcurrentItem()?.UseReload();
         }
     }
 
