@@ -4,14 +4,19 @@ using UnityEngine;
 
 public class TestSceneManager : MonoBehaviour
 {
+    /// <summary>
+    /// 実際は拾うアイテムに持っている
+    /// </summary>
     [SerializeField]
     public ItemData ItemData;
 
     private InventoryManager im;
+    private EquipmentManager em;
 
     void Start()
     {
         im = GetComponent<InventoryManager>();
+        em = GetComponent<EquipmentManager>();
     }
 
     // Update is called once per frame
@@ -31,7 +36,7 @@ public class TestSceneManager : MonoBehaviour
         //  アイテムを装備
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
-            im.AddItem(ItemData);
+            em.Equip(im.GetItem(0));
         }
     }
 
@@ -39,12 +44,12 @@ public class TestSceneManager : MonoBehaviour
     {
         if (Input.GetMouseButtonDown(0))
         {
-            //im.GetItem(0).UsePrimary();
+            em.currentItem.UsePrimary();
         }
 
         if (Input.GetMouseButtonDown(1))
         {
-            //im.GetItem(0).UseSecondary();
+            em.currentItem.UseSecondary();
         }
     }
 

@@ -18,6 +18,8 @@ public class InventoryManager : MonoBehaviour
             return;
 
         slots.Add(item);
+
+        Debug.Log(item.ItemName + "を取得");
     }
 
     /// <summary>

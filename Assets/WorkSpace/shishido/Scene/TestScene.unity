@@ -122,6 +122,37 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &96031077
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 96031078}
+  m_Layer: 0
+  m_Name: TestItemSocket
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &96031078
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 96031077}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.01, y: 0.47619778, z: -7.08}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &334842090
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -173,6 +204,10 @@ PrefabInstance:
     - target: {fileID: 6648396557018715953, guid: aa48a5f6b4dae674ea4fb973ed1c9444, type: 3}
       propertyPath: m_Name
       value: TestAsssult
+      objectReference: {fileID: 0}
+    - target: {fileID: 6648396557018715953, guid: aa48a5f6b4dae674ea4fb973ed1c9444, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -377,6 +412,7 @@ GameObject:
   - component: {fileID: 1428777443}
   - component: {fileID: 1428777445}
   - component: {fileID: 1428777446}
+  - component: {fileID: 1428777447}
   m_Layer: 0
   m_Name: DebugTestOBj
   m_TagString: Untagged
@@ -437,6 +473,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   slots: []
+--- !u!114 &1428777447
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1428777442}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9633721c51cfdb4ba72174e0c7473f6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  itemSocket: {fileID: 96031078}
+  currentItem: {fileID: 0}
 --- !u!1 &1588328347
 GameObject:
   m_ObjectHideFlags: 0
@@ -539,3 +589,4 @@ SceneRoots:
   - {fileID: 1588328350}
   - {fileID: 1428777444}
   - {fileID: 334842090}
+  - {fileID: 96031078}

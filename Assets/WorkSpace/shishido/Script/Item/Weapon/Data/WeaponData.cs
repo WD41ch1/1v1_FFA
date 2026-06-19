@@ -5,8 +5,6 @@ using UnityEngine;
 [CreateAssetMenu]
 public class WeaponData : ItemData
 {
-    [Header("武器の見た目")]
-    public GameObject weaponPrefab;
     //==============================================
     //      基本情報
     //==============================================

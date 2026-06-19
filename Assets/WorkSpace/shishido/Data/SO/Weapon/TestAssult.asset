@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: TestAssult
   m_EditorClassIdentifier: 
   icon: {fileID: 0}
-  ItemName: AR
-  weaponPrefab: {fileID: 6648396557018715953, guid: aa48a5f6b4dae674ea4fb973ed1c9444, type: 3}
+  ItemName: TestAR
+  itemPrefab: {fileID: 6648396557018715953, guid: aa48a5f6b4dae674ea4fb973ed1c9444, type: 3}
   weaponDamage: 33
   fireRate: 0
   reloadTime: 3
