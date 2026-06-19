@@ -32,6 +32,9 @@ public class InventoryManager : MonoBehaviour
 
     public ItemData GetItem(int slotNumber)
     {
+        if (slots == null || slots.Count == 0)
+            return null;
+
         return slots[slotNumber];
     }
 

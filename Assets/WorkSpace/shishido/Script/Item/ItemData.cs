@@ -14,4 +14,7 @@ public class ItemData : ScriptableObject
     [Header("アイテムの見た目")]
     public GameObject itemPrefab;
 
+    [Header("1スロットに重ねられる個数")]
+    public int maxStack;
+
 }

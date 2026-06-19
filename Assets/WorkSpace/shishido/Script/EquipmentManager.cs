@@ -28,7 +28,7 @@ public class EquipmentManager : MonoBehaviour
     /// アイテムの装備
     /// 武器の生成など
     /// </summary>
-    public void Equip(ItemData ItemData)
+    public void Equip(GameObject owner, ItemData ItemData)
     {
         if (itemSocket == null || ItemData == null)
             return;
@@ -38,7 +38,7 @@ public class EquipmentManager : MonoBehaviour
         //  生成したアイテムのItemBaseを取得
         currentItem = createItem.GetComponent<ItemBase>();
         //  装備アイテムの初期化
-        currentItem.Initialize(ItemData);
+        currentItem.Initialize(owner,ItemData);
     }
 
     /// <summary>
@@ -46,7 +46,10 @@ public class EquipmentManager : MonoBehaviour
     /// </summary>
     public void UnEquip()
     {
-        Destroy(currentItem);
+        if(createItem == null) return;
+
+        Destroy(createItem);
+        createItem = null;
         currentItem = null;
     }
 }

@@ -36,7 +36,7 @@ public class TestSceneManager : MonoBehaviour
         //  アイテムを装備
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
-            em.Equip(im.GetItem(0));
+            em.Equip(this.gameObject,im.GetItem(0));
         }
     }
 
@@ -58,6 +58,11 @@ public class TestSceneManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.R))
         {
             em.GetcurrentItem()?.UseReload();
+        }
+        //  リロード
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            em.UnEquip();
         }
     }
 
