@@ -110,6 +110,11 @@ public class InventoryManager : MonoBehaviour
         return true;
     }
 
+    public int GetAmmo(AmmoType type)
+    {
+        return ammoDict[type];
+    }
+
     #endregion
 
     #region 建材系
@@ -167,6 +172,11 @@ public class InventoryManager : MonoBehaviour
         bildMatDict[type] -= amount;
 
         return true;
+    }
+
+    public int GetMat(BildingMatType type)
+    {
+        return bildMatDict[type];
     }
 
     #endregion
