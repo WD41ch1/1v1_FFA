@@ -19,3 +19,13 @@ public enum HitPart
     Body,       //  胴体
     Leg         //  足
 }
+
+/// <summary>
+/// 建材の種類
+/// </summary>
+public enum BildingMatType
+{
+    Wood,
+    Brick,
+    Iron,
+}

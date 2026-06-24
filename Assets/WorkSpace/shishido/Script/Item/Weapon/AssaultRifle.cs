@@ -4,12 +4,15 @@ using UnityEngine;
 
 public class AssaultRifle : WeaponBase
 {
-    public override void Initialize(GameObject owner, ItemData itemData)
+    public override void Initialize(TC_Character _owner, ItemData itemData)
     {
         if (itemData is WeaponData)
         {
             weaponData = (WeaponData)itemData;
         }
+
+        //  使用者情報
+        this.owner = _owner;
 
         weaponView = GetComponent<WeaponView>();
         Reload();

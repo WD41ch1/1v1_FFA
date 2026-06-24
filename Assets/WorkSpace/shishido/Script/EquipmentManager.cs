@@ -28,7 +28,7 @@ public class EquipmentManager : MonoBehaviour
     /// アイテムの装備
     /// 武器の生成など
     /// </summary>
-    public void Equip(GameObject owner, ItemData ItemData)
+    public void Equip(TC_Character owner, ItemData ItemData)
     {
         if (itemSocket == null || ItemData == null)
             return;
