@@ -1,9 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using static UnityEngine.UI.GridLayoutGroup;
 
-public class AssaultRifle : WeaponBase
+public class Pistol : WeaponBase
 {
     public override void Initialize(TC_Character _owner, ItemData itemData)
     {
@@ -72,7 +71,6 @@ public class AssaultRifle : WeaponBase
         //  デバッグ用残弾表示更新
         owner.showAmmoRemaining(currentAmmo);
     }
-
     public override void ADS()
     {
         Debug.Log("ADS");

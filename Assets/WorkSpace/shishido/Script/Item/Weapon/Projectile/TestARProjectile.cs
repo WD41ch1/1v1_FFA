@@ -10,13 +10,13 @@ public class TestARProjectile : ProjectileBase
         rb = GetComponent<Rigidbody>();
         rb.useGravity = false;
 
-        shootPos = pos;
+        direction = -pos.forward;
         speed = data.ammoSpeed;
     }
 
     public override void AmmoBehavior()
     {
         if (rb != null)
-            rb.AddForce(-shootPos.forward * speed);
+            rb.AddForce(direction * speed);
     }
 }

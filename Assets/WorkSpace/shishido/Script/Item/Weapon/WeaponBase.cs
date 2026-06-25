@@ -50,4 +50,25 @@ public abstract class WeaponBase : ItemBase
         isReloading = false;
     }
 
+    protected void BulletCreate(WeaponView weaponView)
+    {
+        if (weaponView == null) return;
+        Transform muzzlePoint = weaponView.muzzlePoint;
+
+        GameObject projectile =
+            Instantiate(
+                weaponView.projectilePrefab,
+                muzzlePoint.position,
+                muzzlePoint.rotation,
+                transform.root.parent
+                );
+
+        projectile.GetComponent<ProjectileBase>()?
+            .Initialize(weaponData, muzzlePoint);
+
+        //  ※いずれプーリング処理で行う
+        Destroy(projectile, 5.0f);
+    }
+
+
 }

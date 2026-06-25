@@ -19,6 +19,7 @@ public class TC_Character : MonoBehaviour
 
     [Header("アイテムデータ(実際は拾うアイテムについているもの)")]
     public ItemData itemData;
+    public ItemData itemData2;
 
     void Start()
     {
@@ -80,6 +81,7 @@ public class TC_Character : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.F))
         {
             inventoryManager.AddItem(itemData);
+            inventoryManager.AddItem(itemData2);
             TestInventoryInit();
 
         }
@@ -87,6 +89,11 @@ public class TC_Character : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
             equipmentManager.Equip(this, inventoryManager.GetItem(0));
+        }
+        //  アイテムを装備
+        if (Input.GetKeyDown(KeyCode.Alpha2))
+        {
+            equipmentManager.Equip(this, inventoryManager.GetItem(1));
         }
     }
 

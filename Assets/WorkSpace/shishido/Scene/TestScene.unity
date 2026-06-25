@@ -1553,6 +1553,7 @@ MonoBehaviour:
   inventoryManager: {fileID: 0}
   si: {fileID: 720832909}
   itemData: {fileID: 11400000, guid: 5ddaaa04021ec3c41be821974a526c9c, type: 2}
+  itemData2: {fileID: 11400000, guid: 86bf548c0bdc9da49bf20813f883f633, type: 2}
 --- !u!1 &1588328347
 GameObject:
   m_ObjectHideFlags: 0

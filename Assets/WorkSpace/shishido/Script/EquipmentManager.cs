@@ -33,6 +33,10 @@ public class EquipmentManager : MonoBehaviour
         if (itemSocket == null || ItemData == null)
             return;
 
+        //  すでに何か装備していたら
+        if (currentItem != null)
+            UnEquip();
+
         //  アイテムの生成
         createItem = Instantiate(ItemData.itemPrefab, itemSocket);
         //  生成したアイテムのItemBaseを取得
