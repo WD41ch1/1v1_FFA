@@ -8,6 +8,8 @@ public abstract class WeaponBase : ItemBase
 
     protected WeaponView weaponView;
 
+    //  リロード中かいなか
+    protected bool isReloading;
     //  現在の弾数
     protected int currentAmmo;
 
@@ -35,4 +37,17 @@ public abstract class WeaponBase : ItemBase
     /// スコープを覗く(ADS)
     /// </summary>
     public virtual void ADS() { }
+
+    /// <summary>
+    /// リロードコルーチン
+    /// </summary>
+    /// <param name="reloadTime"></param>
+    /// <returns></returns>
+    protected IEnumerator ReloadAnimation(float reloadTime)
+    {
+        isReloading = true;
+        yield return new WaitForSeconds(reloadTime);
+        isReloading = false;
+    }
+
 }

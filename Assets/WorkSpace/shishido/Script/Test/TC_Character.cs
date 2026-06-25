@@ -14,6 +14,9 @@ public class TC_Character : MonoBehaviour
     public EquipmentManager equipmentManager;
     public InventoryManager inventoryManager;
 
+    //  デバッグ用UI表示
+    public showItem si;
+
     [Header("アイテムデータ(実際は拾うアイテムについているもの)")]
     public ItemData itemData;
 
@@ -53,13 +56,32 @@ public class TC_Character : MonoBehaviour
             amount);
     }
 
-    #region デバッグ用処理関数
+    #region デバッグ用関数
+
+    public void showAmmoRemaining(int value)
+    {
+        if (si != null)
+            si.showAmmoRemaining(value);
+    }
+
+    public void TestInventoryInit()
+    {
+        inventoryManager.AddAmmo(AmmoType.SmallAmmo, 200);
+        inventoryManager.AddAmmo(AmmoType.MiddleAmmo, 400);
+        inventoryManager.AddAmmo(AmmoType.BigAmmo, 50);
+        inventoryManager.AddAmmo(AmmoType.ShotgunAmmo, 100);
+        inventoryManager.AddBildMat(BildingMatType.Wood, 500);
+        inventoryManager.AddBildMat(BildingMatType.Brick, 500);
+        inventoryManager.AddBildMat(BildingMatType.Iron, 500);
+    }
     public void TestInventory()
     {
         //  アイテムを取得
         if (Input.GetKeyDown(KeyCode.F))
         {
             inventoryManager.AddItem(itemData);
+            TestInventoryInit();
+
         }
         //  アイテムを装備
         if (Input.GetKeyDown(KeyCode.Alpha1))

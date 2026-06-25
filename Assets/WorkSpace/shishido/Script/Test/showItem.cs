@@ -14,6 +14,7 @@ public class showItem : MonoBehaviour
     public TextMeshProUGUI t4;
     public TextMeshProUGUI t5;
     public TextMeshProUGUI t6;
+    public TextMeshProUGUI t20;
 
 
     void Start()
@@ -31,4 +32,10 @@ public class showItem : MonoBehaviour
         t5.text = im.GetMat(BildingMatType.Brick).ToString();
         t6.text = im.GetMat(BildingMatType.Iron).ToString();
     }
+
+    public void showAmmoRemaining(int amount)
+    {
+        t20.text = amount.ToString();
+    }
+
 }
