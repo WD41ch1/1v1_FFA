@@ -12,7 +12,8 @@ public class PlayerInputController : MonoBehaviour
     // ジャンプが押されたか
     public bool JumpPressed { get; private set; }
 
-
+    // 壁建築ボタンが押されたか
+    public bool BuildWallPressed { get; private set; }
 
     // Moveイベントから呼ばれる
     public void OnMove(InputAction.CallbackContext context)
@@ -39,9 +40,26 @@ public class PlayerInputController : MonoBehaviour
         }
     }
 
+    // BuildWallイベントから呼ばれる
+    public void OnBuildWall(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            BuildWallPressed = true;
+
+            Debug.Log("Build Wall");
+        }
+    }
+
     // ジャンプ処理が終わったらfalseに戻す
     public void ResetJump()
     {
         JumpPressed = false;
+    }
+
+    // 建築処理が終わったらfalseに戻す
+    public void ResetBuildWall()
+    {
+        BuildWallPressed = false;
     }
 }
