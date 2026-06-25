@@ -8,6 +8,8 @@ public abstract class WeaponBase : ItemBase
 
     protected WeaponView weaponView;
 
+    //  リロード中かいなか
+    protected bool isReloading;
     //  現在の弾数
     protected int currentAmmo;
 
@@ -35,4 +37,38 @@ public abstract class WeaponBase : ItemBase
     /// スコープを覗く(ADS)
     /// </summary>
     public virtual void ADS() { }
+
+    /// <summary>
+    /// リロードコルーチン
+    /// </summary>
+    /// <param name="reloadTime"></param>
+    /// <returns></returns>
+    protected IEnumerator ReloadAnimation(float reloadTime)
+    {
+        isReloading = true;
+        yield return new WaitForSeconds(reloadTime);
+        isReloading = false;
+    }
+
+    protected void BulletCreate(WeaponView weaponView)
+    {
+        if (weaponView == null) return;
+        Transform muzzlePoint = weaponView.muzzlePoint;
+
+        GameObject projectile =
+            Instantiate(
+                weaponView.projectilePrefab,
+                muzzlePoint.position,
+                muzzlePoint.rotation,
+                transform.root.parent
+                );
+
+        projectile.GetComponent<ProjectileBase>()?
+            .Initialize(weaponData, muzzlePoint);
+
+        //  ※いずれプーリング処理で行う
+        Destroy(projectile, 5.0f);
+    }
+
+
 }

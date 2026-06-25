@@ -1,14 +1,12 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using static GameConst;
 
 public class InventoryManager : MonoBehaviour
 {
-    //  仮置きの所持上限
-    public readonly int MaxAmmo = 999;
-    public readonly int MaxMat = 999;
-
 
     //  アイテムスロット
     public List<ItemData> slots { get; private set; } = new();
@@ -20,6 +18,7 @@ public class InventoryManager : MonoBehaviour
     //  資材スロット
     public Dictionary<BildingMatType, int> bildMatDict
          = new Dictionary<BildingMatType, int>();
+
 
     #region 基本アイテム系(武器等)
     /// <summary>
@@ -54,24 +53,108 @@ public class InventoryManager : MonoBehaviour
 
     #endregion
 
+    #region 共通関数
+
+    /// <summary>
+    /// 共通Add関数
+    /// </summary>
+    /// <typeparam name="TKey"></typeparam>
+    /// <param name="dict"></param>
+    /// <param name="key"></param>
+    /// <param name="amount"></param>
+    /// <param name="maxValue"></param>
+    /// <param name="onOverflow"></param>
+    private void AddResource<TKey>(
+    Dictionary<TKey, int> dict,
+    TKey key,
+    int amount,
+    int maxValue,
+    Action<TKey, int> onOverflow)
+    {
+        // キーが存在しなければ追加
+        if (!dict.ContainsKey(key))
+        {
+            dict.Add(key, amount);
+        }
+        else
+        {
+            dict[key] += amount;
+        }
+
+        // 上限チェック
+        if (dict[key] > maxValue)
+        {
+            int overValue = dict[key] - maxValue;
+            dict[key] = maxValue;
+
+            onOverflow?.Invoke(key, overValue);
+        }
+    }
+
+    /// <summary>
+    /// 共通資材消費要求
+    /// </summary>
+    /// <typeparam name="TKey"></typeparam>
+    /// <param name="dict"></param>
+    /// <param name="key"></param>
+    /// <param name="amount"></param>
+    /// <returns></returns>
+    private bool TryConsumeResouce<TKey>(
+    Dictionary<TKey, int> dict,
+    TKey key,
+    int amount)
+    {
+        // 弾種が存在するか確認
+        if (!dict.TryGetValue(key, out int currentAmmo))
+        {
+            return false;
+        }
+
+        // 弾が足りるか確認
+        if (currentAmmo < amount)
+        {
+            return false;
+        }
+
+        // 消費
+        dict[key] -= amount;
+
+        return true;
+    }
+
+
+    /// <summary>
+    /// 共通Getter
+    /// </summary>
+    /// <typeparam name="TKey"></typeparam>
+    /// <param name="dict"></param>
+    /// <param name="key"></param>
+    /// <returns></returns>
+    private int GetResouce<TKey>(
+        Dictionary<TKey, int> dict, TKey key)
+    {
+        if (dict == null)
+            return 0;
+
+        // keyが存在するか確認
+        if (!dict.TryGetValue(key, out int value))
+            return 0;
+
+        return value;
+    }
+    #endregion
+
     #region 弾薬系
 
     public void AddAmmo(AmmoType type, int amount)
     {
-        // 弾種が存在するか確認
-        if (!ammoDict.ContainsKey(type))
-            return;
-
-        // 追加
-        ammoDict[type] += amount;
-
-        // 弾が上限に達していないか
-        if (ammoDict[type] >= MaxAmmo)
-        {
-            int overValue = ammoDict[type] - MaxAmmo;
-            ammoDict[type] = MaxAmmo;
-            AmmoDroping(type, overValue);
-        }
+        //  Add共通関数実行
+        AddResource(
+        ammoDict,
+        type,
+        amount,
+        MAX_AMMO,
+        AmmoDroping);
     }
 
     /// <summary>
@@ -92,22 +175,12 @@ public class InventoryManager : MonoBehaviour
     /// <returns></returns>
     public bool TryConsumeAmmo(AmmoType type, int amount)
     {
-        // 弾種が存在するか確認
-        if (!ammoDict.TryGetValue(type, out int currentAmmo))
-        {
-            return false;
-        }
+        return TryConsumeResouce(ammoDict, type, amount);
+    }
 
-        // 弾が足りるか確認
-        if (currentAmmo < amount)
-        {
-            return false;
-        }
-
-        // 消費
-        ammoDict[type] -= amount;
-
-        return true;
+    public int GetAmmo(AmmoType type)
+    {
+        return GetResouce(ammoDict, type);
     }
 
     #endregion
@@ -116,20 +189,13 @@ public class InventoryManager : MonoBehaviour
 
     public void AddBildMat(BildingMatType type, int amount)
     {
-        // 弾種が存在するか確認
-        if (!bildMatDict.ContainsKey(type))
-            return;
-
-        // 追加
-        bildMatDict[type] += amount;
-
-        // 建材が上限に達していないか
-        if (bildMatDict[type] >= MaxMat)
-        {
-            int overValue = bildMatDict[type] - MaxMat;
-            bildMatDict[type] = MaxMat;
-            MatDroping(type, overValue);
-        }
+        //  Add共通関数実行
+        AddResource(
+        bildMatDict,
+        type,
+        amount,
+        MAX_BILDMAT,
+        MatDroping);
     }
 
     /// <summary>
@@ -142,7 +208,6 @@ public class InventoryManager : MonoBehaviour
 
     }
 
-
     /// <summary>
     /// 建材消費要求
     /// </summary>
@@ -151,22 +216,12 @@ public class InventoryManager : MonoBehaviour
     /// <returns></returns>
     public bool TryConsumeBildMat(BildingMatType type, int amount)
     {
-        // 弾種が存在するか確認
-        if (!bildMatDict.TryGetValue(type, out int currentMat))
-        {
-            return false;
-        }
+        return TryConsumeResouce(bildMatDict, type, amount);
+    }
 
-        // 弾が足りるか確認
-        if (currentMat < amount)
-        {
-            return false;
-        }
-
-        // 消費
-        bildMatDict[type] -= amount;
-
-        return true;
+    public int GetMat(BildingMatType type)
+    {
+        return GetResouce(bildMatDict, type);
     }
 
     #endregion

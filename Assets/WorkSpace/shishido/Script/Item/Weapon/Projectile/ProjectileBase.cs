@@ -6,6 +6,7 @@ public abstract class ProjectileBase : MonoBehaviour
 {
     protected Rigidbody rb;
     protected Transform shootPos;
+    protected Vector3 direction;
 
     /// <summary>
     /// 初期化

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static UnityEngine.UI.GridLayoutGroup;
 
 public class AssaultRifle : WeaponBase
 {
@@ -15,13 +16,18 @@ public class AssaultRifle : WeaponBase
         this.owner = _owner;
 
         weaponView = GetComponent<WeaponView>();
-        Reload();
+
+        currentAmmo = weaponData.maxAmmo;
     }
 
     public override void Fire()
     {
+        //  リロード中
+        if (isReloading)
+            return;
+
         //  残弾無し
-        if(currentAmmo == 0)
+        if (currentAmmo == 0)
         {
             Reload();
             return;
@@ -30,32 +36,41 @@ public class AssaultRifle : WeaponBase
         Debug.Log("発射");
         Debug.Log(weaponData.weaponDamage);
 
-        BulletCreate();
-    }
+        //  弾の生成(現状可視化するためのデバッグ用)
+        BulletCreate(weaponView);
 
-    private void BulletCreate()
-    {
-        if (weaponView == null) return;
-        Transform muzzlePoint = weaponView.muzzlePoint;
+        //  弾数消費
+        currentAmmo--;
 
-        GameObject projectile =
-            Instantiate(
-                weaponView.projectilePrefab,
-                muzzlePoint.position,
-                muzzlePoint.rotation,
-                transform.root.parent
-                );
-
-        projectile.GetComponent<ProjectileBase>()?
-            .Initialize(weaponData, muzzlePoint);
-
-        //  ※いずれプーリング処理で行う
-        Destroy(projectile, 5.0f);
+        //  デバッグ用残弾表示更新
+        owner.si.showAmmoRemaining(currentAmmo);
     }
 
     public override void Reload()
     {
-        currentAmmo = weaponData.maxAmmo;
+        //  すでにリロード中なら
+        if (isReloading) return;
+
+        //  補充必要数取得
+        int requestValue = weaponData.maxAmmo - currentAmmo;
+
+        //  inventory内弾数消費要求
+        if (owner.inventoryManager.TryConsumeAmmo(
+            weaponData.ammoType,
+            requestValue))
+        {
+            StartCoroutine(ReloadAnimation(weaponData.reloadTime));
+
+            //  弾補充
+            currentAmmo += requestValue;
+
+            //  万が一マガジン数が上限より上を行った場合
+            if (weaponData.maxAmmo <= currentAmmo)
+                currentAmmo = weaponData.maxAmmo;
+        }
+
+        //  デバッグ用残弾表示更新
+        owner.showAmmoRemaining(currentAmmo);
     }
 
     public override void ADS()
