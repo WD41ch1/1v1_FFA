@@ -68,6 +68,11 @@ public class Test : MonoBehaviour
             TestInventoryInit();
 
         }
+        //  ピッケルを装備
+        if (Input.GetKeyDown(KeyCode.LeftShift))
+        {
+            em.Equip(this.pm, im.pick);
+        }
         //  スロット1のアイテムを装備
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {

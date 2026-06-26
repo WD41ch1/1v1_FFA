@@ -7,6 +7,9 @@ using static GameConst;
 
 public class InventoryManager : MonoBehaviour
 {
+    //  収集ツールスロット
+    [SerializeField]
+    public ItemData pick;
 
     //  アイテムスロット
     public List<ItemData> slots { get; private set; } = new();
@@ -54,7 +57,6 @@ public class InventoryManager : MonoBehaviour
     #endregion
 
     #region 共通関数
-
     /// <summary>
     /// 共通Add関数
     /// </summary>
