@@ -5,7 +5,7 @@ using static UnityEngine.UI.GridLayoutGroup;
 
 public class AssaultRifle : WeaponBase
 {
-    public override void Initialize(TC_Character _owner, ItemData itemData)
+    public override void Initialize(PlayerManager _owner, ItemData itemData)
     {
         if (itemData is WeaponData)
         {
@@ -41,9 +41,6 @@ public class AssaultRifle : WeaponBase
 
         //  弾数消費
         currentAmmo--;
-
-        //  デバッグ用残弾表示更新
-        owner.si.showAmmoRemaining(currentAmmo);
     }
 
     public override void Reload()
@@ -61,16 +58,15 @@ public class AssaultRifle : WeaponBase
         {
             StartCoroutine(ReloadAnimation(weaponData.reloadTime));
 
-            //  弾補充
+            //  弾補充     
             currentAmmo += requestValue;
+            //  TODO:現状武器を切り替え、落としてすぐに拾うなどをするとリロードしていないにもかかわらず弾が装填される
 
             //  万が一マガジン数が上限より上を行った場合
             if (weaponData.maxAmmo <= currentAmmo)
                 currentAmmo = weaponData.maxAmmo;
         }
 
-        //  デバッグ用残弾表示更新
-        owner.showAmmoRemaining(currentAmmo);
     }
 
     public override void ADS()

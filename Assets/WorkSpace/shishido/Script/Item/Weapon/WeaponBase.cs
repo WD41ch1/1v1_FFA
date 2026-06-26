@@ -18,6 +18,11 @@ public abstract class WeaponBase : ItemBase
         Fire();
     }
 
+    public override void UseSecondary()
+    {
+        ADS();
+    }
+
     public override void UseReload()
     {
         Reload();
@@ -70,5 +75,8 @@ public abstract class WeaponBase : ItemBase
         Destroy(projectile, 5.0f);
     }
 
-
+    public int GetcurrentAmmo()
+    {
+        return currentAmmo;
+    }
 }

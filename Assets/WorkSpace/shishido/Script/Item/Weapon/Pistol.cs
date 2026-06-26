@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Pistol : WeaponBase
 {
-    public override void Initialize(TC_Character _owner, ItemData itemData)
+    public override void Initialize(PlayerManager _owner, ItemData itemData)
     {
         if (itemData is WeaponData)
         {
@@ -40,9 +40,6 @@ public class Pistol : WeaponBase
 
         //  弾数消費
         currentAmmo--;
-
-        //  デバッグ用残弾表示更新
-        owner.si.showAmmoRemaining(currentAmmo);
     }
 
     public override void Reload()
@@ -68,8 +65,6 @@ public class Pistol : WeaponBase
                 currentAmmo = weaponData.maxAmmo;
         }
 
-        //  デバッグ用残弾表示更新
-        owner.showAmmoRemaining(currentAmmo);
     }
     public override void ADS()
     {

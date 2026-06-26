@@ -8,7 +8,7 @@ public class ItemPickup : MonoBehaviour, IPickupable
     [Header("アイテムデータ")]
     public ItemData itemData;
 
-    public void Pickup(TC_Character character)
+    public void Pickup(PlayerManager character)
     {
         character.inventoryManager.AddItem(itemData);
         Destroy(gameObject);

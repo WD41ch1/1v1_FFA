@@ -61,8 +61,8 @@ public class TC_Character : MonoBehaviour
 
     public void showAmmoRemaining(int value)
     {
-        if (si != null)
-            si.showAmmoRemaining(value);
+        //if (si != null)
+        // si.showAmmoRemaining(value);
     }
 
     public void TestInventoryInit()
@@ -88,12 +88,12 @@ public class TC_Character : MonoBehaviour
         //  アイテムを装備
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
-            equipmentManager.Equip(this, inventoryManager.GetItem(0));
+            //equipmentManager.Equip(this, inventoryManager.GetItem(0));
         }
         //  アイテムを装備
         if (Input.GetKeyDown(KeyCode.Alpha2))
         {
-            equipmentManager.Equip(this, inventoryManager.GetItem(1));
+            //equipmentManager.Equip(this, inventoryManager.GetItem(1));
         }
     }
 

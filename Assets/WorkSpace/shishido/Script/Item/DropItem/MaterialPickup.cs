@@ -11,9 +11,9 @@ public class MaterialPickup : MonoBehaviour, IPickupable
     private int amount;
 
 
-    public void Pickup(TC_Character character)
+    public void Pickup(PlayerManager character)
     {
-
+        character.inventoryManager.AddBildMat(bildingMatType, amount);
         Destroy(gameObject);
     }
 }
