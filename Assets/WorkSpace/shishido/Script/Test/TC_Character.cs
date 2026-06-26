@@ -14,7 +14,7 @@ public class TC_Character : MonoBehaviour
     public EquipmentManager equipmentManager;
     public InventoryManager inventoryManager;
 
-    //  デバッグ用UI表示
+    //  test用UI表示
     public showItem si;
 
     [Header("アイテムデータ(実際は拾うアイテムについているもの)")]
