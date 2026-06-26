@@ -14,13 +14,6 @@ public class PlayerManager: MonoBehaviour
     public EquipmentManager equipmentManager;
     public InventoryManager inventoryManager;
 
-    //  デバッグ用UI表示
-    public showItem si;
-
-    [Header("アイテムデータ(実際は拾うアイテムについているもの)")]
-    public ItemData itemData;
-    public ItemData itemData2;
-
     void Start()
     {
         GetPlayerClass();
@@ -34,5 +27,20 @@ public class PlayerManager: MonoBehaviour
         equipmentManager = GetComponent<EquipmentManager>();
         inventoryManager = GetComponent<InventoryManager>();
     }
-   
+
+    /// <summary>
+    /// 弾消費要求
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="amount"></param>
+    /// <returns></returns>
+    public bool TryConsumeAmmo(
+    AmmoType type,
+    int amount)
+    {
+        return inventoryManager.TryConsumeAmmo(
+            type,
+            amount);
+    }
+
 }
