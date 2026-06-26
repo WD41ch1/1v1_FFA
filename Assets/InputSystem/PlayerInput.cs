@@ -120,9 +120,18 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": true
                 },
                 {
-                    ""name"": ""Build"",
+                    ""name"": ""Wall"",
                     ""type"": ""Button"",
                     ""id"": ""eaf15718-16c0-42e8-b4c2-52a0bfd3a73a"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Ramp"",
+                    ""type"": ""Button"",
+                    ""id"": ""5f70586e-36fa-44ff-9c61-9ad711a6b7be"",
                     ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
@@ -214,7 +223,7 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""Build"",
+                    ""action"": ""Wall"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -225,7 +234,7 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""Build"",
+                    ""action"": ""Ramp"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -239,7 +248,8 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
         m_Player_Jump = m_Player.FindAction("Jump", throwIfNotFound: true);
         m_Player_Look = m_Player.FindAction("Look", throwIfNotFound: true);
         m_Player_Move = m_Player.FindAction("Move", throwIfNotFound: true);
-        m_Player_Build = m_Player.FindAction("Build", throwIfNotFound: true);
+        m_Player_Wall = m_Player.FindAction("Wall", throwIfNotFound: true);
+        m_Player_Ramp = m_Player.FindAction("Ramp", throwIfNotFound: true);
     }
 
     ~@PlayerInput()
@@ -323,7 +333,8 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_Jump;
     private readonly InputAction m_Player_Look;
     private readonly InputAction m_Player_Move;
-    private readonly InputAction m_Player_Build;
+    private readonly InputAction m_Player_Wall;
+    private readonly InputAction m_Player_Ramp;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -348,9 +359,13 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @Move => m_Wrapper.m_Player_Move;
         /// <summary>
-        /// Provides access to the underlying input action "Player/Build".
+        /// Provides access to the underlying input action "Player/Wall".
         /// </summary>
-        public InputAction @Build => m_Wrapper.m_Player_Build;
+        public InputAction @Wall => m_Wrapper.m_Player_Wall;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/Ramp".
+        /// </summary>
+        public InputAction @Ramp => m_Wrapper.m_Player_Ramp;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -386,9 +401,12 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
             @Move.started += instance.OnMove;
             @Move.performed += instance.OnMove;
             @Move.canceled += instance.OnMove;
-            @Build.started += instance.OnBuild;
-            @Build.performed += instance.OnBuild;
-            @Build.canceled += instance.OnBuild;
+            @Wall.started += instance.OnWall;
+            @Wall.performed += instance.OnWall;
+            @Wall.canceled += instance.OnWall;
+            @Ramp.started += instance.OnRamp;
+            @Ramp.performed += instance.OnRamp;
+            @Ramp.canceled += instance.OnRamp;
         }
 
         /// <summary>
@@ -409,9 +427,12 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
             @Move.started -= instance.OnMove;
             @Move.performed -= instance.OnMove;
             @Move.canceled -= instance.OnMove;
-            @Build.started -= instance.OnBuild;
-            @Build.performed -= instance.OnBuild;
-            @Build.canceled -= instance.OnBuild;
+            @Wall.started -= instance.OnWall;
+            @Wall.performed -= instance.OnWall;
+            @Wall.canceled -= instance.OnWall;
+            @Ramp.started -= instance.OnRamp;
+            @Ramp.performed -= instance.OnRamp;
+            @Ramp.canceled -= instance.OnRamp;
         }
 
         /// <summary>
@@ -474,11 +495,18 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnMove(InputAction.CallbackContext context);
         /// <summary>
-        /// Method invoked when associated input action "Build" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// Method invoked when associated input action "Wall" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnBuild(InputAction.CallbackContext context);
+        void OnWall(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Ramp" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnRamp(InputAction.CallbackContext context);
     }
 }

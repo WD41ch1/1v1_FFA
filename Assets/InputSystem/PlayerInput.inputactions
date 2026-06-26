@@ -34,9 +34,18 @@
                     "initialStateCheck": true
                 },
                 {
-                    "name": "Build",
+                    "name": "Wall",
                     "type": "Button",
                     "id": "eaf15718-16c0-42e8-b4c2-52a0bfd3a73a",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Ramp",
+                    "type": "Button",
+                    "id": "5f70586e-36fa-44ff-9c61-9ad711a6b7be",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -128,7 +137,7 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Build",
+                    "action": "Wall",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
@@ -139,7 +148,7 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Build",
+                    "action": "Ramp",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
