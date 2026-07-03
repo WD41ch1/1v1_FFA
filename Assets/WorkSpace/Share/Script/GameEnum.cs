@@ -1,5 +1,18 @@
 
 /// <summary>
+/// アイテムレアリティ
+/// </summary>
+public enum ItemRarity
+{
+    Common,
+    UnCommon,
+    Rar,
+    Epic,
+    Legend,
+}
+
+
+/// <summary>
 /// 弾の種類
 /// </summary>
 public enum AmmoType

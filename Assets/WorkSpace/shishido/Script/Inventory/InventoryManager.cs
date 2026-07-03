@@ -11,6 +11,8 @@ public class InventoryManager : MonoBehaviour
     [SerializeField]
     public ItemData pick;
 
+    public int selectItemNumber;
+
     //  アイテムスロット
     public List<ItemData> slots { get; private set; } = new();
 
@@ -46,9 +48,15 @@ public class InventoryManager : MonoBehaviour
 
     }
 
+    public void SetSelectItemNumber(int number)
+    {
+        selectItemNumber = number;
+    }
+
     public ItemData GetItem(int slotNumber)
     {
-        if (slots == null || slots.Count == 0)
+        if (slots == null || slots.Count == 0 ||
+            slots.Count < slotNumber + 1)
             return null;
 
         return slots[slotNumber];

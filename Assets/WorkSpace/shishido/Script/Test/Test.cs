@@ -8,6 +8,9 @@ public class Test : MonoBehaviour
 
     public EquipmentManager em;
     public InventoryManager im;
+
+    public GUIManager gui;
+
     //  test用UI表示
     public showItem si;
 
@@ -21,7 +24,6 @@ public class Test : MonoBehaviour
         Debug.Log(Application.dataPath);
         if (pm == null)
             pm = GetComponent<PlayerManager>();
-
 
         StartCoroutine(GetCoroutine());
     }
@@ -39,6 +41,7 @@ public class Test : MonoBehaviour
         yield return null;
         im = pm.inventoryManager;
         em = pm.equipmentManager;
+        gui.Initialize(pm);
 
     }
 

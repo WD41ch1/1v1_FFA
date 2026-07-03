@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 01862edc10ef3ba4aa48712915f51aab, type: 3}
   m_Name: TestPistol
   m_EditorClassIdentifier: 
-  icon: {fileID: 0}
+  itemIcon: {fileID: 21300000, guid: 7e41f0dbe77e4a041ad855d7803e0934, type: 3}
+  rarityBackGroundIcon: {fileID: 0}
   ItemName: TestPistol
   itemPrefab: {fileID: 3763604498974455608, guid: 2af581842b170e84d9538062242679a8, type: 3}
   maxStack: 0
