@@ -5,9 +5,14 @@ using UnityEngine;
 [CreateAssetMenu]
 public class ItemData : ScriptableObject
 {
+    [Header("--inventory表示アイコン--")]
     [Header("inventory表示アイコン")]
-    public Sprite icon;
+    public Sprite itemIcon;
 
+    [Header("レアリティバックグラウンドカラー")]
+    public Sprite rarityBackGroundIcon;
+
+    [Header("--基本情報--")]
     [Header("武器名")]
     public string ItemName;
 
