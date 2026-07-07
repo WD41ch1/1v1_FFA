@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using static GameConst;
 
 public class Test : MonoBehaviour
 {
@@ -74,32 +75,44 @@ public class Test : MonoBehaviour
         //  ピッケルを装備
         if (Input.GetKeyDown(KeyCode.LeftShift))
         {
-            em.Equip(this.pm, im.pick);
+            em.Equip(this.pm, PICKEL_SLOT);
         }
         //  スロット1のアイテムを装備
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
-            em.Equip(this.pm, im.GetItem(0));
+            em.Equip(this.pm, ITEM_SLOT_1);
         }
         //  スロット2のアイテムを装備
         if (Input.GetKeyDown(KeyCode.Alpha2))
         {
-            em.Equip(this.pm, im.GetItem(1));
+            em.Equip(this.pm, ITEM_SLOT_2);
         }
         //  スロット3のアイテムを装備
         if (Input.GetKeyDown(KeyCode.Alpha3))
         {
-            em.Equip(this.pm, im.GetItem(2));
+            em.Equip(this.pm, ITEM_SLOT_3);
         }
         //  スロット4のアイテムを装備
         if (Input.GetKeyDown(KeyCode.Alpha4))
         {
-            em.Equip(this.pm, im.GetItem(3));
+            em.Equip(this.pm, ITEM_SLOT_4);
         }
         //  スロット5のアイテムを装備
         if (Input.GetKeyDown(KeyCode.Alpha5))
         {
-            em.Equip(this.pm, im.GetItem(4));
+            em.Equip(this.pm, ITEM_SLOT_5);
+        }
+
+        float scroll = Input.GetAxis("Mouse ScrollWheel");
+        if (scroll > 0)
+        {
+            Debug.Log("上にスクロール");
+            em.PreviousItemEquip(this.pm);
+        }
+        else if (scroll < 0)
+        {
+            Debug.Log("下にスクロール");
+            em.NextItemEquip(this.pm);
         }
     }
 
@@ -133,7 +146,7 @@ public class Test : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if(other.TryGetComponent<IPickupable>(out var pickup))
+        if (other.TryGetComponent<IPickupable>(out var pickup))
         {
             pickup?.Pickup(pm);
         }

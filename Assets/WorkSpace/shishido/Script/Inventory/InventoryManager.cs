@@ -1,7 +1,5 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 using static GameConst;
 
@@ -9,12 +7,10 @@ public class InventoryManager : MonoBehaviour
 {
     //  収集ツールスロット
     [SerializeField]
-    public ItemData pick;
-
-    public int selectItemNumber;
+    public ItemData pickel;
 
     //  アイテムスロット
-    public List<ItemData> slots { get; private set; } = new();
+    public List<ItemData> slots /*{ get; private set; } */= new();
 
     //  弾薬スロット
     public Dictionary<AmmoType, int> ammoDict =
@@ -24,6 +20,17 @@ public class InventoryManager : MonoBehaviour
     public Dictionary<BildingMatType, int> bildMatDict
          = new Dictionary<BildingMatType, int>();
 
+    //  装備通知処理
+    public event Action<int> OnAddItem;
+
+    private void Awake()
+    {
+        //  アイテムスロットを全て空で登録
+        for (int i = 0; i < ITEM_SLOT_MAX; i++)
+        {
+            slots.Add(null);
+        }
+    }
 
     #region 基本アイテム系(武器等)
     /// <summary>
@@ -32,25 +39,23 @@ public class InventoryManager : MonoBehaviour
     /// <param name="item"></param>
     public void AddItem(ItemData item)
     {
-        if (slots.Count >= 5)
-            return;
-
-        slots.Add(item);
-
-        Debug.Log(item.ItemName + "を取得");
+        for (int i = 0; i < slots.Count; i++)
+        {
+            if (slots[i] == null)
+            {
+                slots[i] = item;
+                OnAddItem?.Invoke(i);
+                return;
+            }
+        }
     }
 
     /// <summary>
     /// アイテムを捨てる
     /// </summary>
-    public void RemoveItem()
+    public void RemoveItem(int number)
     {
-
-    }
-
-    public void SetSelectItemNumber(int number)
-    {
-        selectItemNumber = number;
+        slots[number] = null;
     }
 
     public ItemData GetItem(int slotNumber)
