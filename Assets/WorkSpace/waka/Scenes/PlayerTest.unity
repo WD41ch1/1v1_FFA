@@ -495,7 +495,7 @@ MonoBehaviour:
   playerCamera: {fileID: 877880251}
   wallPrefab: {fileID: 21281137193718817, guid: 329ba115949f3734e9ab77e33aea0622, type: 3}
   wallPreviewPrefab: {fileID: 2042916248963457750, guid: 0c1f4ef8668c9264fbcd66c7c85ab18b, type: 3}
-  buildDistance: 8
+  buildDistance: 6
   gridSize: 4
 --- !u!114 &1604397113
 MonoBehaviour:
@@ -513,7 +513,7 @@ MonoBehaviour:
   player: {fileID: 1666229339}
   rampPrefab: {fileID: 7585568590100317355, guid: bd27c99dc8e805e4b85c06eda82a5c93, type: 3}
   rampPreviewPrefab: {fileID: 2082210205880270045, guid: 21f021990abcceb4eb09e49c10757399, type: 3}
-  buildDistance: 6
+  buildDistance: 7
   gridSize: 4
 --- !u!4 &1666229339 stripped
 Transform:
