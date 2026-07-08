@@ -440,8 +440,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1604397111}
   - component: {fileID: 1604397110}
-  - component: {fileID: 1604397113}
   - component: {fileID: 1604397112}
+  - component: {fileID: 1604397113}
   m_Layer: 0
   m_Name: BuildingSystem
   m_TagString: Untagged
@@ -495,7 +495,7 @@ MonoBehaviour:
   playerCamera: {fileID: 877880251}
   wallPrefab: {fileID: 21281137193718817, guid: 329ba115949f3734e9ab77e33aea0622, type: 3}
   wallPreviewPrefab: {fileID: 2042916248963457750, guid: 0c1f4ef8668c9264fbcd66c7c85ab18b, type: 3}
-  buildDistance: 6
+  buildDistance: 8
   gridSize: 4
 --- !u!114 &1604397113
 MonoBehaviour:
@@ -506,14 +506,20 @@ MonoBehaviour:
   m_GameObject: {fileID: 1604397109}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 746e7a8f56e567840a646e542a7fa1b1, type: 3}
+  m_Script: {fileID: 11500000, guid: 5b1a7aabbe2247a4fbc391bb9b9197cd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   playerCamera: {fileID: 877880251}
-  rampPrefab: {fileID: 5653611106945573320, guid: be4bc7ef9bf571746a20cc8af784ff33, type: 3}
-  rampPreviewPrefab: {fileID: 62394421527133640, guid: eabd56f05d0b4c54e845c5bd0eb44f3a, type: 3}
+  player: {fileID: 1666229339}
+  rampPrefab: {fileID: 7585568590100317355, guid: bd27c99dc8e805e4b85c06eda82a5c93, type: 3}
+  rampPreviewPrefab: {fileID: 2082210205880270045, guid: 21f021990abcceb4eb09e49c10757399, type: 3}
   buildDistance: 6
   gridSize: 4
+--- !u!4 &1666229339 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7311350174921958986, guid: 9a7d8593727d7814d9f62bf63edf4244, type: 3}
+  m_PrefabInstance: {fileID: 1694054073236590675}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1983348251
 GameObject:
   m_ObjectHideFlags: 0
@@ -707,6 +713,14 @@ PrefabInstance:
     - target: {fileID: 2114553256069805887, guid: 9a7d8593727d7814d9f62bf63edf4244, type: 3}
       propertyPath: m_ActionEvents.Array.data[4].m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
       value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
+    - target: {fileID: 6600365596503939205, guid: 9a7d8593727d7814d9f62bf63edf4244, type: 3}
+      propertyPath: jumpForce
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 6600365596503939205, guid: 9a7d8593727d7814d9f62bf63edf4244, type: 3}
+      propertyPath: fallMultiplier
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 6600365596503939205, guid: 9a7d8593727d7814d9f62bf63edf4244, type: 3}
       propertyPath: cameraTransform

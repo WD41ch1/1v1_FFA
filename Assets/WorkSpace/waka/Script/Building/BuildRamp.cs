@@ -9,6 +9,9 @@ public class BuildRamp : MonoBehaviour
     [Header("参照")]
     public Camera playerCamera;
 
+    // Player本体を入れる
+    public Transform player;
+
     [Header("階段Prefab")]
     public GameObject rampPrefab;
     public GameObject rampPreviewPrefab;
@@ -89,17 +92,46 @@ public class BuildRamp : MonoBehaviour
         }
         else
         {
-            buildPoint =
-                playerCamera.transform.position +
-                playerCamera.transform.forward * buildDistance;
+            Vector3 forward = playerCamera.transform.forward;
+            forward.y = 0f;
+            forward.Normalize();
 
+            buildPoint = playerCamera.transform.position + forward * buildDistance;
             buildPoint.y = 0f;
         }
 
-        // 階段はマスの中心に置く
-        position = SnapToGrid(buildPoint);
+        position = GetRampGridPosition(buildPoint);
+
+        // Playerより後ろには建築できない
+        Vector3 playerForward = player.forward;
+        playerForward.y = 0f;
+        playerForward.Normalize();
+
+        Vector3 toBuild = position - player.position;
+        toBuild.y = 0f;
+
+        if (Vector3.Dot(playerForward, toBuild.normalized) < 0f)
+        {
+            return false;
+        }
+
+        // PlayerがRampの空間に埋まるなら建築禁止
+        if (IsPlayerOverlappingRamp(position, rotation))
+        {
+            return false;
+        }
 
         return true;
+    }
+
+    private Vector3 GetRampGridPosition(Vector3 buildPoint)
+    {
+        Vector3 pos = SnapToGrid(buildPoint);
+
+        // RampPrefabのPivotが地面にある前提
+        pos.y = 0f;
+
+        return pos;
     }
 
     private Vector3 SnapToGrid(Vector3 pos)
@@ -128,4 +160,28 @@ public class BuildRamp : MonoBehaviour
 
         return x + "_" + y + "_" + z + "_" + rotY;
     }
+    private bool IsPlayerOverlappingRamp(Vector3 rampPosition, Quaternion rampRotation)
+    {
+        Collider playerCollider = player.GetComponent<Collider>();
+
+        if (playerCollider == null)
+        {
+            return false;
+        }
+
+        Bounds playerBounds = playerCollider.bounds;
+
+        Vector3 rampCenter = rampPosition + Vector3.up * (gridSize / 2f);
+
+        Vector3 rampSize = new Vector3(
+            gridSize,
+            gridSize,
+            gridSize
+        );
+
+        Bounds rampBounds = new Bounds(rampCenter, rampSize);
+
+        return rampBounds.Intersects(playerBounds);
+    }
+
 }
