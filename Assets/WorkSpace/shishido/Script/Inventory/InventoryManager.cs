@@ -22,6 +22,7 @@ public class InventoryManager : MonoBehaviour
 
     //  装備通知処理
     public event Action<int> OnAddItem;
+    public event Action<int> OnRemoveItem;
 
     private void Awake()
     {
@@ -56,6 +57,7 @@ public class InventoryManager : MonoBehaviour
     public void RemoveItem(int number)
     {
         slots[number] = null;
+        OnRemoveItem.Invoke(number);
     }
 
     public ItemData GetItem(int slotNumber)

@@ -114,6 +114,29 @@ public class Test : MonoBehaviour
             Debug.Log("下にスクロール");
             em.NextItemEquip(this.pm);
         }
+
+
+        if (Input.GetKeyDown(KeyCode.Alpha6))
+        {
+            im.RemoveItem(ITEM_SLOT_1);
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha7))
+        {
+            im.RemoveItem(ITEM_SLOT_2);
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha8))
+        {
+            im.RemoveItem(ITEM_SLOT_3);
+
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha9))
+        {
+            im.RemoveItem(ITEM_SLOT_4);
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha0))
+        {
+            im.RemoveItem(ITEM_SLOT_5);
+        }
     }
 
     public void TestPlayer()

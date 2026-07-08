@@ -203,7 +203,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ItemIcon: {fileID: 7361385260042047600}
   rarityIcon: {fileID: 787557014676616294}
-  SelectFrame: {fileID: 5228287436785751798}
+  SelectedFrame: {fileID: 5228287436785751798}
+  emptyFrame: {fileID: 21300000, guid: a07d193443ea8734883ada09f2e1ae5f, type: 3}
 --- !u!1 &7513443546187888567
 GameObject:
   m_ObjectHideFlags: 0

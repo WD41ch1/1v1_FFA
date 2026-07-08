@@ -28,6 +28,7 @@ public class HotbarUI : UIBase
     {
         myPlayer.equipmentManager.OnEquipChanged += UpdateSelectFrame;
         myPlayer.inventoryManager.OnAddItem += UpdateSlotIcon;
+        myPlayer.inventoryManager.OnRemoveItem += UpdateSlotIcon;
     }
 
     public void UpdateSelectFrame(int num)
@@ -55,5 +56,7 @@ public class HotbarUI : UIBase
         ItemData itemData = myPlayer.inventoryManager.GetItem(number);
         if (itemData != null)
             SlotIcons[number].SetData(itemData);
+        else
+            SlotIcons[number].RemoveData();
     }
 }
