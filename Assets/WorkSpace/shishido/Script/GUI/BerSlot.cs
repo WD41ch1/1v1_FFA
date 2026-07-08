@@ -13,10 +13,18 @@ public class BerSlot : MonoBehaviour
     public Image SelectedFrame;
     public Sprite emptyFrame;
 
+    private bool isInitialized = false;
+    private Vector3 initPos;
 
     private void Awake()
     {
         ItemIcon.sprite = emptyFrame;
+    }
+
+    private void Start()
+    {
+        initPos = transform.position;
+        isInitialized = true;
     }
     public void SetNumber(int num)
     {
@@ -26,6 +34,8 @@ public class BerSlot : MonoBehaviour
     public void OnSelected(bool flag)
     {
         SelectedFrame.gameObject.SetActive(flag);
+
+        SlotSelectMove(flag);
     }
 
     public void SetData(ItemData data)
@@ -39,6 +49,17 @@ public class BerSlot : MonoBehaviour
     {
         ItemIcon.sprite = emptyFrame;
         rarityIcon = null;
+    }
+
+    private void SlotSelectMove(bool flag)
+    {
+        //  初期化が終わってるか
+        if (!isInitialized) return;
+
+        if (flag)
+            transform.DOMove(new Vector3(initPos.x, initPos.y + 5, initPos.z), 0.5f).SetUpdate(true);
+        else
+            transform.DOMove(initPos, 0.5f).SetUpdate(true);
     }
 
 }
