@@ -11,6 +11,16 @@ public enum ItemRarity
     Legend,
 }
 
+/// <summary>
+/// アイテムの種類
+/// </summary>
+public enum ItemType
+{
+    Item,
+    Ammo,
+    BildingMat
+}
+
 
 /// <summary>
 /// 弾の種類
@@ -41,4 +51,14 @@ public enum BildingMatType
     Wood,
     Brick,
     Iron,
+}
+
+/// <summary>
+/// 
+/// </summary>
+public enum ResourceChangeType
+{
+    AddedNew,
+    Updated,
+    Removed
 }

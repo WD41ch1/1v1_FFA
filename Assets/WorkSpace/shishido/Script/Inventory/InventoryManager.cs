@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using static GameConst;
 
 public class InventoryManager : MonoBehaviour
@@ -20,9 +21,13 @@ public class InventoryManager : MonoBehaviour
     public Dictionary<BildingMatType, int> bildMatDict
          = new Dictionary<BildingMatType, int>();
 
-    //  装備通知処理
+    //  ホットバーUI側装備通知処理
     public event Action<int> OnAddItem;
     public event Action<int> OnRemoveItem;
+
+    //  インベントリUI側通知処理
+    public event Action<AmmoType, int, ResourceChangeType> OnAddAmmo;
+    public event Action<BildingMatType, int, ResourceChangeType> OnAddBildMat;
 
     private void Awake()
     {
@@ -165,6 +170,8 @@ public class InventoryManager : MonoBehaviour
 
     public void AddAmmo(AmmoType type, int amount)
     {
+        bool isNew = !ammoDict.ContainsKey(type);
+
         //  Add共通関数実行
         AddResource(
         ammoDict,
@@ -172,6 +179,13 @@ public class InventoryManager : MonoBehaviour
         amount,
         MAX_AMMO,
         AmmoDroping);
+
+        //  新規追加かどうか
+        if (isNew)
+            OnAddAmmo?.Invoke(type, ammoDict[type], ResourceChangeType.AddedNew);
+        else
+            OnAddAmmo?.Invoke(type, ammoDict[type], ResourceChangeType.Updated);
+
     }
 
     /// <summary>
@@ -192,7 +206,21 @@ public class InventoryManager : MonoBehaviour
     /// <returns></returns>
     public bool TryConsumeAmmo(AmmoType type, int amount)
     {
-        return TryConsumeResouce(ammoDict, type, amount);
+        bool flag;
+
+        if (TryConsumeResouce(ammoDict, type, amount))
+        {
+            //  UI更新通知
+            OnAddAmmo?.Invoke(type, ammoDict[type],
+                ResourceChangeType.Updated);
+            flag = true;
+        }
+        else
+        {
+            flag = false;
+        }
+
+        return flag;
     }
 
     public int GetAmmo(AmmoType type)
@@ -206,6 +234,8 @@ public class InventoryManager : MonoBehaviour
 
     public void AddBildMat(BildingMatType type, int amount)
     {
+        bool isNew = !bildMatDict.ContainsKey(type);
+
         //  Add共通関数実行
         AddResource(
         bildMatDict,
@@ -213,6 +243,12 @@ public class InventoryManager : MonoBehaviour
         amount,
         MAX_BILDMAT,
         MatDroping);
+
+        //  新規追加かどうか
+        if (isNew)
+            OnAddBildMat?.Invoke(type, bildMatDict[type], ResourceChangeType.AddedNew);
+        else
+            OnAddBildMat?.Invoke(type, bildMatDict[type], ResourceChangeType.Updated);
     }
 
     /// <summary>
@@ -233,7 +269,21 @@ public class InventoryManager : MonoBehaviour
     /// <returns></returns>
     public bool TryConsumeBildMat(BildingMatType type, int amount)
     {
-        return TryConsumeResouce(bildMatDict, type, amount);
+        bool flag;
+
+        if (TryConsumeResouce(bildMatDict, type, amount))
+        {
+            //  UI更新通知
+            OnAddBildMat?.Invoke(type, bildMatDict[type],
+                ResourceChangeType.Updated);
+            flag = true;
+        }
+        else
+        {
+            flag = false;
+        }
+
+        return flag;
     }
 
     public int GetMat(BildingMatType type)
