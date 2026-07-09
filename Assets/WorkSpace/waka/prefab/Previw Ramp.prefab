@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5936354403943618216}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Previw Ramp
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -45,12 +45,16 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: 5d392703f89e96c42803b4c11d65cb6c, type: 2}
     - target: {fileID: 5872174901245915948, guid: 6f7fb26017a266244b9cdd84a64b4bd2, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 5.66
+      objectReference: {fileID: 0}
+    - target: {fileID: 5872174901245915948, guid: 6f7fb26017a266244b9cdd84a64b4bd2, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5872174901245915948, guid: 6f7fb26017a266244b9cdd84a64b4bd2, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.41
+      value: 1.45
       objectReference: {fileID: 0}
     - target: {fileID: 5872174901245915948, guid: 6f7fb26017a266244b9cdd84a64b4bd2, type: 3}
       propertyPath: m_LocalPosition.z
@@ -91,6 +95,10 @@ PrefabInstance:
     - target: {fileID: 8434901163645737139, guid: 6f7fb26017a266244b9cdd84a64b4bd2, type: 3}
       propertyPath: m_Name
       value: ramp (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 8434901163645737139, guid: 6f7fb26017a266244b9cdd84a64b4bd2, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
