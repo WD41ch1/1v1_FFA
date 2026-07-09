@@ -85,7 +85,6 @@ public class BuildRamp : MonoBehaviour
         position = Vector3.zero;
         rotation = GetRampRotation();
 
-        // カメラ中央からRayを飛ばす
         Ray ray = new Ray(
             playerCamera.transform.position,
             playerCamera.transform.forward
@@ -93,23 +92,25 @@ public class BuildRamp : MonoBehaviour
 
         Vector3 buildPoint;
 
-        // Rayが当たった場所を建築候補にする
         if (Physics.Raycast(ray, out RaycastHit hit, buildDistance))
         {
-            buildPoint = hit.point;
+            // 建築物や地面に当たったら、当たった面の少し外側を基準にする
+            buildPoint = hit.point + hit.normal * 0.1f;
         }
         else
         {
-            // Rayが当たらなかったら、カメラの水平前方向に候補を出す
-            Vector3 forward = playerCamera.transform.forward;
+            // 空を向いていてRayが当たらない時でも、
+            // Playerの前のグリッドに次のRamp候補を出す
+            Vector3 forward = player.forward;
             forward.y = 0f;
             forward.Normalize();
 
-            buildPoint = playerCamera.transform.position + forward * buildDistance;
-            buildPoint.y = 0f;
+            buildPoint = player.position + forward * gridSize;
+
+            // 今いる高さをグリッドに合わせる
+            buildPoint.y = Mathf.Round(player.position.y / gridSize) * gridSize;
         }
 
-        // Rampは1マスの中心に置く
         position = GetRampGridPosition(buildPoint);
 
         bool canBuild = true;
@@ -132,7 +133,6 @@ public class BuildRamp : MonoBehaviour
         }
 
         // PlayerがRampに埋まる高さなら建築できない
-        // ジャンプして足元が十分上なら建築できる
         if (IsPlayerOverlappingRamp(position, rotation))
         {
             canBuild = false;
@@ -159,9 +159,7 @@ public class BuildRamp : MonoBehaviour
     {
         Vector3 pos = SnapToGrid(buildPoint);
 
-        // RampPrefabのPivotが地面にある前提
-        pos.y = 0f;
-
+        // Yもグリッドに合わせるので、上方向にも繋げられる
         return pos;
     }
 
@@ -176,23 +174,18 @@ public class BuildRamp : MonoBehaviour
 
         Bounds playerBounds = playerCollider.bounds;
 
-        // PlayerとRampが同じXZマスか見る
         Vector3 playerGrid = SnapToGrid(player.position);
 
         bool sameXZ =
             rampPosition.x == playerGrid.x &&
             rampPosition.z == playerGrid.z;
 
-        // 同じマスじゃないならPlayerとは被らない扱い
         if (!sameXZ)
         {
             return false;
         }
 
-        // Playerの足元の高さ
         float playerBottomY = playerBounds.min.y;
-
-        // この高さより足元が上なら、ジャンプで避けている扱い
         float blockY = rampPosition.y + playerBlockHeight;
 
         if (playerBottomY > blockY)
@@ -200,13 +193,11 @@ public class BuildRamp : MonoBehaviour
             return false;
         }
 
-        // 同じマスで足元が低いなら、Rampに埋まるので建築不可
         return true;
     }
 
     private bool IsOverlappingBuild(Vector3 position, Quaternion rotation)
     {
-        // Rampが入る1マス分の箱でチェック
         Vector3 center = position + Vector3.up * (gridSize / 2f);
 
         Vector3 halfExtents = new Vector3(
@@ -223,19 +214,16 @@ public class BuildRamp : MonoBehaviour
 
         foreach (Collider hit in hits)
         {
-            // Preview自身は無視
             if (currentPreview != null && hit.transform.IsChildOf(currentPreview.transform))
             {
                 continue;
             }
 
-            // Playerは別の判定で見るので無視
             if (hit.transform == player || hit.transform.IsChildOf(player))
             {
                 continue;
             }
 
-            // PreviewとPlayer以外に当たったら既存建築と重なっている扱い
             return true;
         }
 
