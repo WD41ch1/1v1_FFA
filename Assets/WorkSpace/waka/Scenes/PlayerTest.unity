@@ -517,8 +517,16 @@ MonoBehaviour:
   rampPreviewPrefab: {fileID: 2082210205880270045, guid: 21f021990abcceb4eb09e49c10757399, type: 3}
   canBuildMaterial: {fileID: 2100000, guid: 5d392703f89e96c42803b4c11d65cb6c, type: 2}
   cannotBuildMaterial: {fileID: 2100000, guid: ae19b7cc0a48c1744b2ae3f71ebac9e6, type: 2}
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 8
+  buildLayer:
+    serializedVersion: 2
+    m_Bits: 256
   buildDistance: 7
   gridSize: 4
+  playerBlockHeight: 1.2
+  connectionThickness: 0.15
 --- !u!4 &1666229339 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7311350174921958986, guid: 9a7d8593727d7814d9f62bf63edf4244, type: 3}

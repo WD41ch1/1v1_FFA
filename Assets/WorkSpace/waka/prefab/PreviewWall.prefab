@@ -12,6 +12,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: PreviewWall
       objectReference: {fileID: 0}
+    - target: {fileID: 21281137193718817, guid: 329ba115949f3734e9ab77e33aea0622, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
     - target: {fileID: 2648133500950858305, guid: 329ba115949f3734e9ab77e33aea0622, type: 3}
       propertyPath: m_LocalScale.z
       value: 0.01
