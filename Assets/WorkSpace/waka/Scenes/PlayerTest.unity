@@ -497,8 +497,16 @@ MonoBehaviour:
   wallPreviewPrefab: {fileID: 2042916248963457750, guid: 0c1f4ef8668c9264fbcd66c7c85ab18b, type: 3}
   canBuildMaterial: {fileID: 2100000, guid: 5d392703f89e96c42803b4c11d65cb6c, type: 2}
   cannotBuildMaterial: {fileID: 2100000, guid: ae19b7cc0a48c1744b2ae3f71ebac9e6, type: 2}
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 8
+  buildLayer:
+    serializedVersion: 2
+    m_Bits: 256
   buildDistance: 6
   gridSize: 4
+  connectionThickness: 0.15
+  edgeCheckRatio: 0.4
 --- !u!114 &1604397113
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -527,6 +535,7 @@ MonoBehaviour:
   gridSize: 4
   playerBlockHeight: 1.2
   connectionThickness: 0.15
+  edgeCheckRatio: 0.4
 --- !u!4 &1666229339 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7311350174921958986, guid: 9a7d8593727d7814d9f62bf63edf4244, type: 3}
@@ -738,6 +747,10 @@ PrefabInstance:
       propertyPath: cameraTransform
       value: 
       objectReference: {fileID: 877880252}
+    - target: {fileID: 6600365596503939205, guid: 9a7d8593727d7814d9f62bf63edf4244, type: 3}
+      propertyPath: groundLayer.m_Bits
+      value: 264
+      objectReference: {fileID: 0}
     - target: {fileID: 7311350174921958986, guid: 9a7d8593727d7814d9f62bf63edf4244, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
