@@ -14,6 +14,8 @@ public class PlayerInputController : MonoBehaviour
 
     // 壁建築ボタンが押されたか
     public bool BuildWallPressed { get; private set; }
+    //階段ボタンが押されたか
+    public bool BuildRampPressed {  get; private set; }
 
     // Moveイベントから呼ばれる
     public void OnMove(InputAction.CallbackContext context)
@@ -51,6 +53,16 @@ public class PlayerInputController : MonoBehaviour
         }
     }
 
+    //BuildStairイベントから呼ばれる
+    public void OnBuildRamp(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            BuildRampPressed= true;
+            Debug.Log("Build Ramp");
+        }
+    }
+
     // ジャンプ処理が終わったらfalseに戻す
     public void ResetJump()
     {
@@ -61,5 +73,11 @@ public class PlayerInputController : MonoBehaviour
     public void ResetBuildWall()
     {
         BuildWallPressed = false;
+    }
+
+    // 建築処理が終わったらfalseに戻す
+    public void ResetBuildRamp()
+    {
+        BuildRampPressed = false;
     }
 }
