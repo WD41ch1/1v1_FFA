@@ -493,6 +493,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerCamera: {fileID: 877880251}
+  player: {fileID: 1666229339}
   wallPrefab: {fileID: 21281137193718817, guid: 329ba115949f3734e9ab77e33aea0622, type: 3}
   wallPreviewPrefab: {fileID: 2042916248963457750, guid: 0c1f4ef8668c9264fbcd66c7c85ab18b, type: 3}
   canBuildMaterial: {fileID: 2100000, guid: 5d392703f89e96c42803b4c11d65cb6c, type: 2}
@@ -503,7 +504,7 @@ MonoBehaviour:
   buildLayer:
     serializedVersion: 2
     m_Bits: 256
-  buildDistance: 6
+  buildDistance: 2
   gridSize: 4
   connectionThickness: 0.15
   edgeCheckRatio: 0.4
