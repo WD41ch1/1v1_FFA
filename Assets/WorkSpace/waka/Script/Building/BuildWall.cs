@@ -8,6 +8,8 @@ using UnityEngine;
 /// ・高所ではPlayerがいる階層に候補を出す
 /// ・既存建築と辺がつながっていれば高所でも建築可能
 /// ・何にもつながらない空中建築は禁止
+/// ・階段と壁は同じマスに共存可能
+/// ・同じ位置に壁がある場合だけ重複禁止
 /// ・建築できない場所は赤いプレビュー
 /// </summary>
 public class BuildWall : MonoBehaviour
@@ -30,8 +32,11 @@ public class BuildWall : MonoBehaviour
     [Tooltip("地面に設定しているLayer")]
     public LayerMask groundLayer;
 
-    [Tooltip("WallやRampなどに設定しているLayer")]
+    [Tooltip("接続判定に使用する全建築Layer。BuildとWallBuildを選択する")]
     public LayerMask buildLayer;
+
+    [Tooltip("完成した壁だけに設定するLayer。WallBuildだけを選択する")]
+    public LayerMask wallLayer;
 
     [Header("基本設定")]
     public float buildDistance = 6f;
@@ -94,7 +99,7 @@ public class BuildWall : MonoBehaviour
             out bool canBuild
         );
 
-        // 地面にも既存建築にもつながっていない
+        // 地面にも建築物にもつながっていない
         if (!hasCandidate)
         {
             currentPreview.SetActive(false);
@@ -103,7 +108,7 @@ public class BuildWall : MonoBehaviour
 
         string key = GetBuildKey(position, rotation);
 
-        // すでに同じ壁がある場合は候補を消す
+        // このスクリプトで同じ場所に建築済みなら候補を消す
         if (builtPositions.Contains(key))
         {
             currentPreview.SetActive(false);
@@ -160,6 +165,7 @@ public class BuildWall : MonoBehaviour
         rotation = GetWallRotation();
         canBuild = true;
 
+        // Groundとすべての建築物へRayを当てる
         int rayMask =
             groundLayer.value |
             buildLayer.value;
@@ -178,11 +184,7 @@ public class BuildWall : MonoBehaviour
                 rayMask,
                 QueryTriggerInteraction.Ignore))
         {
-            /*
-             * 建築物に当たった場合は、
-             * 建築物の内部へ候補が入らないように
-             * 当たった面の少し外側へ出す。
-             */
+            // 建築物に当たった場合は面の少し外側を使う
             if (IsLayerInMask(
                     hit.collider.gameObject.layer,
                     buildLayer))
@@ -193,16 +195,13 @@ public class BuildWall : MonoBehaviour
             }
             else
             {
-                // 地面に当たった場合は当たった位置を使用
+                // 地面に当たった場合は当たった位置を使う
                 buildPoint = hit.point;
             }
         }
         else
         {
-            /*
-             * Rayが当たらない場合は、
-             * カメラの水平前方向へ候補を出す。
-             */
+            // Rayが当たらなければPlayerの前へ候補を出す
             Vector3 forward =
                 playerCamera.transform.forward;
 
@@ -219,40 +218,36 @@ public class BuildWall : MonoBehaviour
                 player.position +
                 forward * buildDistance;
 
-            /*
-             * 下の地面まで候補を落とさない。
-             * Playerの足元を基準に現在の階層を使う。
-             *
-             * 地上     → Y=0
-             * 1段上    → Y=4
-             * 2段上    → Y=8
-             */
+            // 下の地面へ落とさず、Playerがいる階層を使う
             buildPoint.y = GetPlayerGridLevel();
         }
 
-        // 壁をグリッド境界へ配置する
+        // 壁をグリッド境界へ配置
         position = GetWallGridPosition(
             buildPoint,
             rotation
         );
 
         /*
-         * 地面または既存建築に接続していなければ、
-         * 空中建築になるので候補を表示しない。
+         * 地面または既存建築に接続していなければ
+         * 空中建築になるため候補を表示しない。
          */
         if (!IsWallConnected(position, rotation))
         {
             return false;
         }
 
-        // カメラより後ろなら建築不可
+        // カメラより後ろ側なら建築不可
         if (IsBehindCamera(position))
         {
             canBuild = false;
         }
 
-        // 既存建築と内部が重なる場合は建築不可
-        if (IsOverlappingBuild(position, rotation))
+        /*
+         * 完成済みの壁と重なる場合だけ建築不可。
+         * 階段はwallLayerに含まれないため無視される。
+         */
+        if (IsOverlappingWall(position, rotation))
         {
             canBuild = false;
         }
@@ -276,10 +271,7 @@ public class BuildWall : MonoBehaviour
                 playerCollider.bounds.min.y;
         }
 
-        /*
-         * 少しだけ誤差を加えてからFloorする。
-         * 足元が-0.01などでもY=-4にならないようにする。
-         */
+        // 誤差で1段下へ落ちないように0.1を足す
         return Mathf.Floor(
             (playerBottomY + 0.1f) / gridSize
         ) * gridSize;
@@ -287,7 +279,6 @@ public class BuildWall : MonoBehaviour
 
     /// <summary>
     /// 壁をグリッドの境界へ配置する
-    /// 0・90・180・270度を整数で扱い、方向差を防ぐ
     /// </summary>
     private Vector3 GetWallGridPosition(
         Vector3 buildPoint,
@@ -305,7 +296,6 @@ public class BuildWall : MonoBehaviour
                 rotation.eulerAngles.y / 90f
             ) * 90;
 
-        // 角度を0～359にする
         rotationY =
             ((rotationY % 360) + 360) % 360;
 
@@ -374,7 +364,7 @@ public class BuildWall : MonoBehaviour
             position +
             wallRight * (gridSize / 2f);
 
-        // 壁の下辺が地面に接続
+        // 下辺が地面に接続
         if (IsBottomEdgeConnectedToGround(
                 bottomEdgeCenter,
                 wallRight))
@@ -382,7 +372,7 @@ public class BuildWall : MonoBehaviour
             return true;
         }
 
-        // 壁の下辺が既存建築に接続
+        // 下辺が既存建築に接続
         if (IsHorizontalEdgeConnectedToBuild(
                 bottomEdgeCenter,
                 wallRight))
@@ -390,7 +380,7 @@ public class BuildWall : MonoBehaviour
             return true;
         }
 
-        // 壁の上辺が既存建築に接続
+        // 上辺が既存建築に接続
         if (IsHorizontalEdgeConnectedToBuild(
                 topEdgeCenter,
                 wallRight))
@@ -398,14 +388,14 @@ public class BuildWall : MonoBehaviour
             return true;
         }
 
-        // 壁の左辺が既存建築に接続
+        // 左辺が既存建築に接続
         if (IsVerticalEdgeConnectedToBuild(
                 leftEdgeCenter))
         {
             return true;
         }
 
-        // 壁の右辺が既存建築に接続
+        // 右辺が既存建築に接続
         if (IsVerticalEdgeConnectedToBuild(
                 rightEdgeCenter))
         {
@@ -417,9 +407,7 @@ public class BuildWall : MonoBehaviour
 
     /// <summary>
     /// 壁の下辺が地面に接しているか確認する
-    ///
-    /// 左・中央・右の3点から真下へRayを飛ばすため、
-    /// 壁の4方向すべてで同じ判定になる。
+    /// 4方向すべて同じように判定する
     /// </summary>
     private bool IsBottomEdgeConnectedToGround(
         Vector3 bottomEdgeCenter,
@@ -429,6 +417,7 @@ public class BuildWall : MonoBehaviour
         float sideOffset =
             gridSize * edgeCheckRatio;
 
+        // 壁の下辺にある左・中央・右
         Vector3[] checkPoints =
         {
             bottomEdgeCenter - wallRight * sideOffset,
@@ -438,7 +427,6 @@ public class BuildWall : MonoBehaviour
 
         foreach (Vector3 point in checkPoints)
         {
-            // 地面の少し上から下へRayを飛ばす
             Vector3 rayStart =
                 point +
                 Vector3.up * 0.25f;
@@ -452,20 +440,18 @@ public class BuildWall : MonoBehaviour
                 QueryTriggerInteraction.Ignore
             );
 
-            // 1点でも地面に接していなければ失敗
+            // 1点でも地面がなければ辺全体は接続していない
             if (!hitGround)
             {
                 return false;
             }
         }
 
-        // 左・中央・右すべてが地面に接している
         return true;
     }
 
     /// <summary>
-    /// 横辺の左・中央・右が
-    /// 同じ建築物に接続しているか確認する
+    /// 横辺の左・中央・右が同じ建築物に接続しているか確認する
     /// </summary>
     private bool IsHorizontalEdgeConnectedToBuild(
         Vector3 edgeCenter,
@@ -488,8 +474,7 @@ public class BuildWall : MonoBehaviour
     }
 
     /// <summary>
-    /// 縦辺の下・中央・上が
-    /// 同じ建築物に接続しているか確認する
+    /// 縦辺の下・中央・上が同じ建築物に接続しているか確認する
     /// </summary>
     private bool IsVerticalEdgeConnectedToBuild(
         Vector3 edgeCenter
@@ -545,7 +530,7 @@ public class BuildWall : MonoBehaviour
                 break;
             }
 
-            // 1点でも建築物に触れていない
+            // この確認点が建築物に触れていない
             if (foundRoot == null)
             {
                 return false;
@@ -557,7 +542,7 @@ public class BuildWall : MonoBehaviour
             }
             else if (connectedRoot != foundRoot)
             {
-                // 3点が別々の建築物なら接続失敗
+                // 各点が別の建築物に触れている場合は失敗
                 return false;
             }
         }
@@ -584,23 +569,24 @@ public class BuildWall : MonoBehaviour
     }
 
     /// <summary>
-    /// 壁の内部に既存建築が重なっているか確認する
+    /// 完成済みの壁と重なっているか確認する
+    ///
+    /// wallLayerだけを調べるため、階段とは共存できる。
     /// </summary>
-    private bool IsOverlappingBuild(
+    private bool IsOverlappingWall(
         Vector3 position,
         Quaternion rotation
     )
     {
         /*
-         * 壁の幅・高さ・厚みに近いBox。
-         * 隣の壁と辺だけ接する場合は検出しないよう
-         * 幅と高さを少し小さくする。
+         * 壁の実際の範囲より少し小さい箱を使う。
+         * 隣の壁と辺が接するだけの場合は検出しない。
          */
         Vector3 halfExtents =
             new Vector3(
                 gridSize / 2f - 0.15f,
                 gridSize / 2f - 0.15f,
-                0.05f
+                0.03f
             );
 
         Collider[] hits =
@@ -608,17 +594,19 @@ public class BuildWall : MonoBehaviour
                 position,
                 halfExtents,
                 rotation,
-                buildLayer,
+                wallLayer,
                 QueryTriggerInteraction.Ignore
             );
 
         foreach (Collider hit in hits)
         {
+            // 現在のプレビュー自身は無視
             if (IsPreviewCollider(hit))
             {
                 continue;
             }
 
+            // 完成済みの壁が重なっている
             return true;
         }
 
@@ -648,6 +636,7 @@ public class BuildWall : MonoBehaviour
 
         toBuild.y = 0f;
 
+        // 同じ水平位置の場合は後ろ扱いにしない
         if (toBuild.sqrMagnitude <= 0.01f)
         {
             return false;
@@ -749,7 +738,6 @@ public class BuildWall : MonoBehaviour
                 90f
             ) * 90;
 
-        // 角度を0～359にする
         snappedY =
             ((snappedY % 360) + 360) % 360;
 

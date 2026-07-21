@@ -318,7 +318,7 @@ MonoBehaviour:
   targetHeight: 1.5
   collisionLayer:
     serializedVersion: 2
-    m_Bits: 64
+    m_Bits: 328
   cameraRadius: 0.3
   wallOffset: 0.2
   minDistance: 1.2
@@ -503,7 +503,10 @@ MonoBehaviour:
     m_Bits: 8
   buildLayer:
     serializedVersion: 2
-    m_Bits: 256
+    m_Bits: 768
+  wallLayer:
+    serializedVersion: 2
+    m_Bits: 512
   buildDistance: 2
   gridSize: 4
   connectionThickness: 0.15
