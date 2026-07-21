@@ -1,3 +1,4 @@
+using GameKit.Dependencies.Utilities;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,6 +8,8 @@ public abstract class UIBase : MonoBehaviour
 {
     protected PlayerManager myPlayer;
     protected GUIManager gui;
+    protected CanvasGroup canvasGroup;
+    protected RectTransform rect;
     protected bool isInitialized = false;
 
     /// <summary>
@@ -27,4 +30,9 @@ public abstract class UIBase : MonoBehaviour
     /// 継承先べつでの初期化
     /// </summary>
     protected abstract void OnInitialize();
+
+    public virtual void Show() { }
+    public virtual void Hide() { }
+
+    public CanvasGroup GetcanvasGroup() { return canvasGroup; }
 }

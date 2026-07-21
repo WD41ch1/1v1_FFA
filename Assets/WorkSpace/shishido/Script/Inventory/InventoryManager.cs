@@ -1,13 +1,19 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using static GameConst;
+using static UnityEditor.Progress;
 
 public class InventoryManager : MonoBehaviour
 {
     //  収集ツールスロット
     [SerializeField]
     public ItemData pickel;
+    [Header("---ドロップオブジェクト---")]
+    [SerializeField] public GameObject AmmodropObj;
+    [SerializeField] public GameObject MaterialdropObj;
+    [SerializeField] public GameObject ItemdropObj;
 
     //  アイテムスロット
     public List<ItemData> slots /*{ get; private set; } */= new();
@@ -20,9 +26,16 @@ public class InventoryManager : MonoBehaviour
     public Dictionary<BildingMatType, int> bildMatDict
          = new Dictionary<BildingMatType, int>();
 
-    //  装備通知処理
+    //  ホットバーUI側装備通知処理
     public event Action<int> OnAddItem;
     public event Action<int> OnRemoveItem;
+
+    //  インベントリUI側通知処理
+    public event Action<AmmoType, int, ResourceChangeType> OnChangeAmmo;
+    public event Action<BildingMatType, int, ResourceChangeType> OnChangeBildMat;
+
+    //  その他
+    public DoOnce once = new DoOnce();
 
     private void Awake()
     {
@@ -101,11 +114,50 @@ public class InventoryManager : MonoBehaviour
         // 上限チェック
         if (dict[key] > maxValue)
         {
+            //  超過分の数を取得
             int overValue = dict[key] - maxValue;
-            dict[key] = maxValue;
-
+            //  dict[key]の計算はonOverflow内で行われるので省く
             onOverflow?.Invoke(key, overValue);
         }
+    }
+    /// <summary>
+    /// 共通Droping関数
+    /// </summary>
+    /// <typeparam name="TKey"></typeparam>
+    /// <param name="dict"></param>
+    /// <param name="key"></param>
+    /// <param name="amount"></param>
+    private void DropingResource<TKey>(
+    Dictionary<TKey, int> dict,
+    TKey key,
+    int amount,
+    GameObject prefab,
+    Transform trans,
+    out GameObject obj,
+    out int dropAmount)
+    {
+        //  キーが無ければ
+        if (!dict.TryGetValue(key, out int current))
+        {
+            obj = null;
+            dropAmount = 0;
+            return;
+        }
+
+        dropAmount = Mathf.Min(current, amount);
+        dict[key] -= dropAmount;
+
+        if (dropAmount == 0)
+        {
+            obj = null;
+            return;
+        }
+
+        //  ドロップオブジェクトを生成
+        obj = Instantiate(
+            prefab,
+            trans.position + trans.forward * 5f,
+            Quaternion.identity);
     }
 
     /// <summary>
@@ -159,12 +211,53 @@ public class InventoryManager : MonoBehaviour
 
         return value;
     }
+
+    /// <summary>
+    /// 共通Remove関数
+    /// </summary>
+    /// <typeparam name="TKey"></typeparam>
+    /// <param name="dict"></param>
+    /// <param name="key"></param>
+    public void RemoveResouce<TKey>(TKey key)
+        where TKey : Enum
+    {
+        var dict = GetDictionary<TKey>();
+
+        // keyが存在するか確認
+        if (dict == null ||
+            !dict.TryGetValue(key, out int value))
+            return;
+
+        //   Dictionary内のリソースが無くなれば
+        if (dict[key] == 0)
+            dict.Remove(key);
+    }
+
+    /// <summary>
+    /// 共通Dictionary取得関数
+    /// </summary>
+    /// <typeparam name="TKey"></typeparam>
+    /// <returns></returns>
+    private Dictionary<TKey, int> GetDictionary<TKey>()
+    where TKey : Enum
+    {
+        if (typeof(TKey) == typeof(AmmoType))
+            return ammoDict as Dictionary<TKey, int>;
+
+        if (typeof(TKey) == typeof(BildingMatType))
+            return bildMatDict as Dictionary<TKey, int>;
+
+        return null;
+    }
+
     #endregion
 
     #region 弾薬系
 
     public void AddAmmo(AmmoType type, int amount)
     {
+        bool isNew = !ammoDict.ContainsKey(type);
+
         //  Add共通関数実行
         AddResource(
         ammoDict,
@@ -172,6 +265,13 @@ public class InventoryManager : MonoBehaviour
         amount,
         MAX_AMMO,
         AmmoDroping);
+
+        //  新規追加かどうか
+        if (isNew)
+            OnChangeAmmo?.Invoke(type, ammoDict[type], ResourceChangeType.AddedNew);
+        else
+            OnChangeAmmo?.Invoke(type, ammoDict[type], ResourceChangeType.Updated);
+
     }
 
     /// <summary>
@@ -181,7 +281,25 @@ public class InventoryManager : MonoBehaviour
     /// <param name="amount"></param>
     public void AmmoDroping(AmmoType type, int amount)
     {
+#if true
+        GameObject obj;
+        int dropAmount = 0;
 
+        DropingResource(
+        ammoDict,
+        type,
+        amount,
+        AmmodropObj,
+        transform,
+        out obj,
+        out dropAmount);
+
+        //  AmmoPickupを取得
+        AmmoPickup ap = obj?.GetComponent<AmmoPickup>();
+        ap?.Initialize(type, dropAmount);
+
+        OnChangeAmmo?.Invoke(type, ammoDict[type], ResourceChangeType.Removed);
+#endif
     }
 
     /// <summary>
@@ -192,7 +310,21 @@ public class InventoryManager : MonoBehaviour
     /// <returns></returns>
     public bool TryConsumeAmmo(AmmoType type, int amount)
     {
-        return TryConsumeResouce(ammoDict, type, amount);
+        bool flag;
+
+        if (TryConsumeResouce(ammoDict, type, amount))
+        {
+            //  UI更新通知
+            OnChangeAmmo?.Invoke(type, ammoDict[type],
+                ResourceChangeType.Updated);
+            flag = true;
+        }
+        else
+        {
+            flag = false;
+        }
+
+        return flag;
     }
 
     public int GetAmmo(AmmoType type)
@@ -206,6 +338,8 @@ public class InventoryManager : MonoBehaviour
 
     public void AddBildMat(BildingMatType type, int amount)
     {
+        bool isNew = !bildMatDict.ContainsKey(type);
+
         //  Add共通関数実行
         AddResource(
         bildMatDict,
@@ -213,6 +347,12 @@ public class InventoryManager : MonoBehaviour
         amount,
         MAX_BILDMAT,
         MatDroping);
+
+        //  新規追加かどうか
+        if (isNew)
+            OnChangeBildMat?.Invoke(type, bildMatDict[type], ResourceChangeType.AddedNew);
+        else
+            OnChangeBildMat?.Invoke(type, bildMatDict[type], ResourceChangeType.Updated);
     }
 
     /// <summary>
@@ -222,6 +362,23 @@ public class InventoryManager : MonoBehaviour
     /// <param name="amount"></param>
     public void MatDroping(BildingMatType type, int amount)
     {
+#if true
+        DropingResource(
+        bildMatDict,
+        type,
+        amount,
+        MaterialdropObj,
+        transform,
+        out GameObject obj,
+        out int dropAmount);
+
+        //  AmmoPickupを取得
+        MaterialPickup mp = obj?.GetComponent<MaterialPickup>();
+        mp?.Initialize(type, dropAmount);
+
+        OnChangeBildMat?.Invoke(type, bildMatDict[type], ResourceChangeType.Removed);
+
+#endif
 
     }
 
@@ -233,7 +390,21 @@ public class InventoryManager : MonoBehaviour
     /// <returns></returns>
     public bool TryConsumeBildMat(BildingMatType type, int amount)
     {
-        return TryConsumeResouce(bildMatDict, type, amount);
+        bool flag;
+
+        if (TryConsumeResouce(bildMatDict, type, amount))
+        {
+            //  UI更新通知
+            OnChangeBildMat?.Invoke(type, bildMatDict[type],
+                ResourceChangeType.Updated);
+            flag = true;
+        }
+        else
+        {
+            flag = false;
+        }
+
+        return flag;
     }
 
     public int GetMat(BildingMatType type)

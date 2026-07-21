@@ -26,11 +26,18 @@ public class HotbarUI : UIBase
     }
     protected override void OnInitialize()
     {
+        canvasGroup = GetComponent<CanvasGroup>();
+
+        //  イベント登録
         myPlayer.equipmentManager.OnEquipChanged += UpdateSelectFrame;
         myPlayer.inventoryManager.OnAddItem += UpdateSlotIcon;
         myPlayer.inventoryManager.OnRemoveItem += UpdateSlotIcon;
     }
 
+    /// <summary>
+    /// 装備中アイコン更新
+    /// </summary>
+    /// <param name="num"></param>
     public void UpdateSelectFrame(int num)
     {
         foreach (BerSlot slot in SlotIcons)
@@ -41,11 +48,17 @@ public class HotbarUI : UIBase
                 slot.OnSelected(false);
         }
     }
+
+    /// <summary>
+    /// アイテム取得時のスロットアイコン更新
+    /// </summary>
+    /// <param name="num"></param>
     public void UpdateSlotIcon(int num)
     {
         ShowItemIcon(num);
     }
 
+    //  アイテムアイコン表示
     public void ShowItemIcon(int number)
     {
         if (!isInitialized ||
