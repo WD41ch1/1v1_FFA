@@ -550,6 +550,7 @@ GameObject:
   - component: {fileID: 266056087}
   - component: {fileID: 266056088}
   - component: {fileID: 266056089}
+  - component: {fileID: 266056090}
   m_Layer: 5
   m_Name: HotBerUI
   m_TagString: Untagged
@@ -625,6 +626,18 @@ MonoBehaviour:
   - {fileID: 835580459}
   - {fileID: 1511876818}
   - {fileID: 1837741700}
+--- !u!225 &266056090
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 266056086}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &350066695
 GameObject:
   m_ObjectHideFlags: 0
@@ -676,7 +689,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 0.9372549}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -1168,7 +1181,10 @@ GameObject:
   m_Component:
   - component: {fileID: 1117395789}
   - component: {fileID: 1117395790}
-  m_Layer: 5
+  - component: {fileID: 1117395792}
+  - component: {fileID: 1117395793}
+  - component: {fileID: 1117395794}
+  m_Layer: 8
   m_Name: InventoryUI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1213,6 +1229,56 @@ MonoBehaviour:
   ItemListTrans: {fileID: 848625233}
   AmmoListPrefab: {fileID: 5552373153150844825, guid: 2b94225d6c94b574c9d2960ae465d227, type: 3}
   BIldMatListPrefab: {fileID: 5552373153150844825, guid: 4df97046863c0e440b12b3fee7e87aa2, type: 3}
+--- !u!222 &1117395792
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1117395788}
+  m_CullTransparentMesh: 1
+--- !u!225 &1117395793
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1117395788}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
+--- !u!114 &1117395794
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1117395788}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
 --- !u!1 &1118795602
 GameObject:
   m_ObjectHideFlags: 0
@@ -1223,6 +1289,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1118795603}
   - component: {fileID: 1118795604}
+  - component: {fileID: 1118795605}
   m_Layer: 5
   m_Name: GUIManager
   m_TagString: Untagged
@@ -1267,6 +1334,18 @@ MonoBehaviour:
   UIList:
   - {fileID: 266056089}
   - {fileID: 1117395790}
+--- !u!225 &1118795605
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1118795602}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &1251197953
 GameObject:
   m_ObjectHideFlags: 0
@@ -1512,6 +1591,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   pickel: {fileID: 11400000, guid: 659ad35d1007c8649b911de55e5c8426, type: 2}
+  AmmodropObj: {fileID: 584293302234795832, guid: d0c011e2874b6a646ab3d13550880813, type: 3}
+  MaterialdropObj: {fileID: 3564781315763711787, guid: ea5437e65bbc0a64eb4dd2e602469e47, type: 3}
+  ItemdropObj: {fileID: 625260886240656399, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
   slots: []
 --- !u!114 &1251862650 stripped
 MonoBehaviour:
@@ -2366,16 +2448,14 @@ GameObject:
   m_Component:
   - component: {fileID: 1428777444}
   - component: {fileID: 1428777443}
-  - component: {fileID: 1428777448}
-  - component: {fileID: 1428777446}
-  - component: {fileID: 1428777447}
+  - component: {fileID: 1428777445}
   m_Layer: 0
   m_Name: DebugTestOBj
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1428777443
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2383,7 +2463,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1428777442}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a21fbf189c7d6b746a9771339f06af33, type: 3}
   m_Name: 
@@ -2410,7 +2490,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1428777446
+--- !u!114 &1428777445
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2419,44 +2499,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1428777442}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3e03644c7bb4ae74c88681fab8718e6d, type: 3}
+  m_Script: {fileID: 11500000, guid: dc36f34011069a044a614f99cbbdb8fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pickel: {fileID: 0}
-  slots: []
---- !u!114 &1428777447
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1428777442}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d9633721c51cfdb4ba72174e0c7473f6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  itemSocket: {fileID: 96031078}
---- !u!114 &1428777448
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1428777442}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f3ca7fa01e186a64394305f49e746666, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  inputController: {fileID: 0}
-  controller: {fileID: 0}
-  cameraController: {fileID: 0}
-  equipmentManager: {fileID: 0}
-  inventoryManager: {fileID: 0}
-  si: {fileID: 720832909}
-  itemData: {fileID: 11400000, guid: 5ddaaa04021ec3c41be821974a526c9c, type: 2}
-  itemData2: {fileID: 11400000, guid: 86bf548c0bdc9da49bf20813f883f633, type: 2}
+  dropZoneObject: {fileID: 1117395788}
 --- !u!1001 &1511876816
 PrefabInstance:
   m_ObjectHideFlags: 0

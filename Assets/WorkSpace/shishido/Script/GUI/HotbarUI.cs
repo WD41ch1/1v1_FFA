@@ -26,6 +26,8 @@ public class HotbarUI : UIBase
     }
     protected override void OnInitialize()
     {
+        canvasGroup = GetComponent<CanvasGroup>();
+
         //  イベント登録
         myPlayer.equipmentManager.OnEquipChanged += UpdateSelectFrame;
         myPlayer.inventoryManager.OnAddItem += UpdateSlotIcon;
