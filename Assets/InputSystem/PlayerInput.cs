@@ -136,6 +136,15 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Floor"",
+                    ""type"": ""Button"",
+                    ""id"": ""463120a8-b23f-492c-b957-9e3fdebb734f"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -237,6 +246,17 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
                     ""action"": ""Ramp"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""020be919-56a2-4d1c-9755-91513506c836"",
+                    ""path"": ""<Keyboard>/v"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Floor"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -250,6 +270,7 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
         m_Player_Move = m_Player.FindAction("Move", throwIfNotFound: true);
         m_Player_Wall = m_Player.FindAction("Wall", throwIfNotFound: true);
         m_Player_Ramp = m_Player.FindAction("Ramp", throwIfNotFound: true);
+        m_Player_Floor = m_Player.FindAction("Floor", throwIfNotFound: true);
     }
 
     ~@PlayerInput()
@@ -335,6 +356,7 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_Move;
     private readonly InputAction m_Player_Wall;
     private readonly InputAction m_Player_Ramp;
+    private readonly InputAction m_Player_Floor;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -366,6 +388,10 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Player/Ramp".
         /// </summary>
         public InputAction @Ramp => m_Wrapper.m_Player_Ramp;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/Floor".
+        /// </summary>
+        public InputAction @Floor => m_Wrapper.m_Player_Floor;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -407,6 +433,9 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
             @Ramp.started += instance.OnRamp;
             @Ramp.performed += instance.OnRamp;
             @Ramp.canceled += instance.OnRamp;
+            @Floor.started += instance.OnFloor;
+            @Floor.performed += instance.OnFloor;
+            @Floor.canceled += instance.OnFloor;
         }
 
         /// <summary>
@@ -433,6 +462,9 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
             @Ramp.started -= instance.OnRamp;
             @Ramp.performed -= instance.OnRamp;
             @Ramp.canceled -= instance.OnRamp;
+            @Floor.started -= instance.OnFloor;
+            @Floor.performed -= instance.OnFloor;
+            @Floor.canceled -= instance.OnFloor;
         }
 
         /// <summary>
@@ -508,5 +540,12 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnRamp(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Floor" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnFloor(InputAction.CallbackContext context);
     }
 }

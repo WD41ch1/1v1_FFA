@@ -4,11 +4,13 @@ using UnityEngine;
 /// <summary>
 /// 壁建築を担当するクラス
 ///
-/// ・地面では通常どおり建築できる
+/// ・地面では4方向すべてに建築可能
 /// ・高所ではPlayerがいる階層に候補を出す
-/// ・既存建築と辺がつながる場合は空中でも建築できる
+/// ・既存建築と辺がつながっていれば高所でも建築可能
 /// ・何にもつながらない空中建築は禁止
-/// ・建築できない場所は赤く表示する
+/// ・階段と壁は同じマスに共存可能
+/// ・同じ位置に壁がある場合だけ重複禁止
+/// ・建築できない場所は赤いプレビュー
 /// </summary>
 public class BuildWall : MonoBehaviour
 {
@@ -30,23 +32,27 @@ public class BuildWall : MonoBehaviour
     [Tooltip("地面に設定しているLayer")]
     public LayerMask groundLayer;
 
-    [Tooltip("WallやRampなどに設定しているLayer")]
+    [Tooltip("接続判定に使用する全建築Layer。BuildとWallBuildを選択する")]
     public LayerMask buildLayer;
+
+    [Tooltip("完成した壁だけに設定するLayer。WallBuildだけを選択する")]
+    public LayerMask wallLayer;
 
     [Header("基本設定")]
     public float buildDistance = 6f;
     public float gridSize = 4f;
 
     [Header("接続判定")]
-    [Tooltip("辺の接続を確認する球判定の大きさ")]
+    [Tooltip("辺の接続判定に使う球の大きさ")]
     public float connectionThickness = 0.15f;
 
-    [Tooltip("辺の左・中央・右を確認する位置")]
+    [Tooltip("辺の中央から左右・上下の確認点までの割合")]
     [Range(0.1f, 0.49f)]
     public float edgeCheckRatio = 0.4f;
 
     private GameObject currentPreview;
 
+    // このスクリプトから建てた壁の位置を記録する
     private readonly HashSet<string> builtPositions =
         new HashSet<string>();
 
@@ -93,7 +99,7 @@ public class BuildWall : MonoBehaviour
             out bool canBuild
         );
 
-        // 地面にも建築物にも接続していない場合は候補を消す
+        // 地面にも建築物にもつながっていない
         if (!hasCandidate)
         {
             currentPreview.SetActive(false);
@@ -102,7 +108,7 @@ public class BuildWall : MonoBehaviour
 
         string key = GetBuildKey(position, rotation);
 
-        // すでに同じ壁がある場合は候補を消す
+        // このスクリプトで同じ場所に建築済みなら候補を消す
         if (builtPositions.Contains(key))
         {
             currentPreview.SetActive(false);
@@ -110,6 +116,7 @@ public class BuildWall : MonoBehaviour
         }
 
         currentPreview.SetActive(true);
+
         currentPreview.transform.SetPositionAndRotation(
             position,
             rotation
@@ -119,7 +126,7 @@ public class BuildWall : MonoBehaviour
     }
 
     /// <summary>
-    /// 壁を建築する
+    /// 壁を実際に建築する
     /// </summary>
     public void Build()
     {
@@ -146,7 +153,7 @@ public class BuildWall : MonoBehaviour
     }
 
     /// <summary>
-    /// 壁の候補位置と建築可能状態を取得する
+    /// 建築候補の位置・向き・建築可能状態を取得する
     /// </summary>
     private bool TryGetBuildPoint(
         out Vector3 position,
@@ -158,6 +165,7 @@ public class BuildWall : MonoBehaviour
         rotation = GetWallRotation();
         canBuild = true;
 
+        // Groundとすべての建築物へRayを当てる
         int rayMask =
             groundLayer.value |
             buildLayer.value;
@@ -176,7 +184,7 @@ public class BuildWall : MonoBehaviour
                 rayMask,
                 QueryTriggerInteraction.Ignore))
         {
-            // 建築物に当たった場合は面の少し外側へ出す
+            // 建築物に当たった場合は面の少し外側を使う
             if (IsLayerInMask(
                     hit.collider.gameObject.layer,
                     buildLayer))
@@ -193,7 +201,7 @@ public class BuildWall : MonoBehaviour
         }
         else
         {
-            // Rayが当たらない場合はPlayerの前へ候補を出す
+            // Rayが当たらなければPlayerの前へ候補を出す
             Vector3 forward =
                 playerCamera.transform.forward;
 
@@ -210,26 +218,18 @@ public class BuildWall : MonoBehaviour
                 player.position +
                 forward * buildDistance;
 
-            /*
-             * 重要：
-             * 下の地面まで候補を落とさず、
-             * Playerの足元から現在いる階層を求める。
-             *
-             * Playerの足元が0付近 → Y=0
-             * Playerの足元が4付近 → Y=4
-             * Playerの足元が8付近 → Y=8
-             */
+            // 下の地面へ落とさず、Playerがいる階層を使う
             buildPoint.y = GetPlayerGridLevel();
         }
 
-        // 壁をグリッドの境界へ配置
+        // 壁をグリッド境界へ配置
         position = GetWallGridPosition(
             buildPoint,
             rotation
         );
 
         /*
-         * 地面または既存建築に接続していなければ、
+         * 地面または既存建築に接続していなければ
          * 空中建築になるため候補を表示しない。
          */
         if (!IsWallConnected(position, rotation))
@@ -237,14 +237,17 @@ public class BuildWall : MonoBehaviour
             return false;
         }
 
-        // カメラの後ろ側では建築不可
+        // カメラより後ろ側なら建築不可
         if (IsBehindCamera(position))
         {
             canBuild = false;
         }
 
-        // 既存建築と壁の内部が重なる場合は建築不可
-        if (IsOverlappingBuild(position, rotation))
+        /*
+         * 完成済みの壁と重なる場合だけ建築不可。
+         * 階段はwallLayerに含まれないため無視される。
+         */
+        if (IsOverlappingWall(position, rotation))
         {
             canBuild = false;
         }
@@ -253,7 +256,7 @@ public class BuildWall : MonoBehaviour
     }
 
     /// <summary>
-    /// Playerの足元を基準に現在のグリッド階層を取得する
+    /// Playerの足元から現在のグリッド階層を取得する
     /// </summary>
     private float GetPlayerGridLevel()
     {
@@ -264,14 +267,11 @@ public class BuildWall : MonoBehaviour
 
         if (playerCollider != null)
         {
-            // Transformの中心ではなく足元を使用する
-            playerBottomY = playerCollider.bounds.min.y;
+            playerBottomY =
+                playerCollider.bounds.min.y;
         }
 
-        /*
-         * Floorを使うことで、階段の途中にいても
-         * 不必要に1段上へ丸められるのを防ぐ。
-         */
+        // 誤差で1段下へ落ちないように0.1を足す
         return Mathf.Floor(
             (playerBottomY + 0.1f) / gridSize
         ) * gridSize;
@@ -288,35 +288,35 @@ public class BuildWall : MonoBehaviour
         Vector3 position =
             SnapToGrid(buildPoint);
 
-        // 壁のPivotが中心なので半分上げる
+        // 壁PrefabのPivotが中心なので半分上げる
         position.y += gridSize / 2f;
 
-        float rotationY =
-            Mathf.Round(
+        int rotationY =
+            Mathf.RoundToInt(
                 rotation.eulerAngles.y / 90f
-            ) * 90f;
+            ) * 90;
 
-        if (rotationY >= 360f)
-        {
-            rotationY = 0f;
-        }
+        rotationY =
+            ((rotationY % 360) + 360) % 360;
 
-        // 壁をマスの境界へ半マスずらす
-        if (rotationY == 0f)
+        // 壁をグリッドの境界へ半マスずらす
+        switch (rotationY)
         {
-            position.z += gridSize / 2f;
-        }
-        else if (rotationY == 90f)
-        {
-            position.x += gridSize / 2f;
-        }
-        else if (rotationY == 180f)
-        {
-            position.z -= gridSize / 2f;
-        }
-        else if (rotationY == 270f)
-        {
-            position.x -= gridSize / 2f;
+            case 0:
+                position.z += gridSize / 2f;
+                break;
+
+            case 90:
+                position.x += gridSize / 2f;
+                break;
+
+            case 180:
+                position.z -= gridSize / 2f;
+                break;
+
+            case 270:
+                position.x -= gridSize / 2f;
+                break;
         }
 
         return position;
@@ -336,25 +336,35 @@ public class BuildWall : MonoBehaviour
         wallRight.y = 0f;
         wallRight.x = Mathf.Round(wallRight.x);
         wallRight.z = Mathf.Round(wallRight.z);
+
+        if (wallRight.sqrMagnitude <= 0.001f)
+        {
+            return false;
+        }
+
         wallRight.Normalize();
 
+        // 壁の下辺中央
         Vector3 bottomEdgeCenter =
             position -
             Vector3.up * (gridSize / 2f);
 
+        // 壁の上辺中央
         Vector3 topEdgeCenter =
             position +
             Vector3.up * (gridSize / 2f);
 
+        // 壁の左側の縦辺中央
         Vector3 leftEdgeCenter =
             position -
             wallRight * (gridSize / 2f);
 
+        // 壁の右側の縦辺中央
         Vector3 rightEdgeCenter =
             position +
             wallRight * (gridSize / 2f);
 
-        // 壁の下辺が地面に接続している
+        // 下辺が地面に接続
         if (IsBottomEdgeConnectedToGround(
                 bottomEdgeCenter,
                 wallRight))
@@ -362,7 +372,7 @@ public class BuildWall : MonoBehaviour
             return true;
         }
 
-        // 壁の下辺が既存建築に接続している
+        // 下辺が既存建築に接続
         if (IsHorizontalEdgeConnectedToBuild(
                 bottomEdgeCenter,
                 wallRight))
@@ -370,7 +380,7 @@ public class BuildWall : MonoBehaviour
             return true;
         }
 
-        // 壁の上辺が既存建築に接続している
+        // 上辺が既存建築に接続
         if (IsHorizontalEdgeConnectedToBuild(
                 topEdgeCenter,
                 wallRight))
@@ -378,14 +388,14 @@ public class BuildWall : MonoBehaviour
             return true;
         }
 
-        // 壁の左辺が既存建築に接続している
+        // 左辺が既存建築に接続
         if (IsVerticalEdgeConnectedToBuild(
                 leftEdgeCenter))
         {
             return true;
         }
 
-        // 壁の右辺が既存建築に接続している
+        // 右辺が既存建築に接続
         if (IsVerticalEdgeConnectedToBuild(
                 rightEdgeCenter))
         {
@@ -397,11 +407,7 @@ public class BuildWall : MonoBehaviour
 
     /// <summary>
     /// 壁の下辺が地面に接しているか確認する
-    /// </summary>
-    /// <summary>
-    /// 壁の下辺が地面に接しているか確認する。
-    /// 左・中央・右の3点から真下へRayを飛ばすため、
-    /// 壁の向きが0・90・180・270度のどれでも同じように判定できる。
+    /// 4方向すべて同じように判定する
     /// </summary>
     private bool IsBottomEdgeConnectedToGround(
         Vector3 bottomEdgeCenter,
@@ -411,19 +417,19 @@ public class BuildWall : MonoBehaviour
         float sideOffset =
             gridSize * edgeCheckRatio;
 
-        // 壁の下辺にある左・中央・右の3点
+        // 壁の下辺にある左・中央・右
         Vector3[] checkPoints =
         {
-        bottomEdgeCenter - wallRight * sideOffset,
-        bottomEdgeCenter,
-        bottomEdgeCenter + wallRight * sideOffset
-    };
+            bottomEdgeCenter - wallRight * sideOffset,
+            bottomEdgeCenter,
+            bottomEdgeCenter + wallRight * sideOffset
+        };
 
         foreach (Vector3 point in checkPoints)
         {
-            // 地面の少し上から下へRayを飛ばす
             Vector3 rayStart =
-                point + Vector3.up * 0.25f;
+                point +
+                Vector3.up * 0.25f;
 
             bool hitGround = Physics.Raycast(
                 rayStart,
@@ -434,14 +440,13 @@ public class BuildWall : MonoBehaviour
                 QueryTriggerInteraction.Ignore
             );
 
-            // 3点のうち1点でも地面がなければ接続していない
+            // 1点でも地面がなければ辺全体は接続していない
             if (!hitGround)
             {
                 return false;
             }
         }
 
-        // 左・中央・右すべてが地面に接している
         return true;
     }
 
@@ -456,14 +461,16 @@ public class BuildWall : MonoBehaviour
         float offset =
             gridSize * edgeCheckRatio;
 
-        Vector3[] points =
+        Vector3[] checkPoints =
         {
             edgeCenter - edgeRight * offset,
             edgeCenter,
             edgeCenter + edgeRight * offset
         };
 
-        return ArePointsConnectedToSameBuild(points);
+        return ArePointsConnectedToSameBuild(
+            checkPoints
+        );
     }
 
     /// <summary>
@@ -476,38 +483,42 @@ public class BuildWall : MonoBehaviour
         float offset =
             gridSize * edgeCheckRatio;
 
-        Vector3[] points =
+        Vector3[] checkPoints =
         {
             edgeCenter - Vector3.up * offset,
             edgeCenter,
             edgeCenter + Vector3.up * offset
         };
 
-        return ArePointsConnectedToSameBuild(points);
+        return ArePointsConnectedToSameBuild(
+            checkPoints
+        );
     }
 
     /// <summary>
     /// すべての確認点が同じ建築物に接続しているか確認する
     /// </summary>
     private bool ArePointsConnectedToSameBuild(
-        Vector3[] points
+        Vector3[] checkPoints
     )
     {
         Transform connectedRoot = null;
 
-        foreach (Vector3 point in points)
+        foreach (Vector3 point in checkPoints)
         {
-            Collider[] hits = Physics.OverlapSphere(
-                point,
-                connectionThickness,
-                buildLayer,
-                QueryTriggerInteraction.Ignore
-            );
+            Collider[] hits =
+                Physics.OverlapSphere(
+                    point,
+                    connectionThickness,
+                    buildLayer,
+                    QueryTriggerInteraction.Ignore
+                );
 
             Transform foundRoot = null;
 
             foreach (Collider hit in hits)
             {
+                // プレビュー自身は接続元にしない
                 if (IsPreviewCollider(hit))
                 {
                     continue;
@@ -519,7 +530,7 @@ public class BuildWall : MonoBehaviour
                 break;
             }
 
-            // 1点でも接続していなければ失敗
+            // この確認点が建築物に触れていない
             if (foundRoot == null)
             {
                 return false;
@@ -531,6 +542,7 @@ public class BuildWall : MonoBehaviour
             }
             else if (connectedRoot != foundRoot)
             {
+                // 各点が別の建築物に触れている場合は失敗
                 return false;
             }
         }
@@ -557,34 +569,44 @@ public class BuildWall : MonoBehaviour
     }
 
     /// <summary>
-    /// 壁の内部に既存建築が重なっているか確認する
+    /// 完成済みの壁と重なっているか確認する
+    ///
+    /// wallLayerだけを調べるため、階段とは共存できる。
     /// </summary>
-    private bool IsOverlappingBuild(
+    private bool IsOverlappingWall(
         Vector3 position,
         Quaternion rotation
     )
     {
-        Vector3 halfExtents = new Vector3(
-            gridSize / 2f - 0.15f,
-            gridSize / 2f - 0.15f,
-            0.05f
-        );
+        /*
+         * 壁の実際の範囲より少し小さい箱を使う。
+         * 隣の壁と辺が接するだけの場合は検出しない。
+         */
+        Vector3 halfExtents =
+            new Vector3(
+                gridSize / 2f - 0.15f,
+                gridSize / 2f - 0.15f,
+                0.03f
+            );
 
-        Collider[] hits = Physics.OverlapBox(
-            position,
-            halfExtents,
-            rotation,
-            buildLayer,
-            QueryTriggerInteraction.Ignore
-        );
+        Collider[] hits =
+            Physics.OverlapBox(
+                position,
+                halfExtents,
+                rotation,
+                wallLayer,
+                QueryTriggerInteraction.Ignore
+            );
 
         foreach (Collider hit in hits)
         {
+            // 現在のプレビュー自身は無視
             if (IsPreviewCollider(hit))
             {
                 continue;
             }
 
+            // 完成済みの壁が重なっている
             return true;
         }
 
@@ -592,21 +614,21 @@ public class BuildWall : MonoBehaviour
     }
 
     /// <summary>
-    /// 候補位置がカメラの後ろか確認する
+    /// 候補位置がカメラの後ろにあるか確認する
     /// </summary>
     private bool IsBehindCamera(Vector3 position)
     {
-        Vector3 forward =
+        Vector3 cameraForward =
             playerCamera.transform.forward;
 
-        forward.y = 0f;
+        cameraForward.y = 0f;
 
-        if (forward.sqrMagnitude <= 0.001f)
+        if (cameraForward.sqrMagnitude <= 0.001f)
         {
             return false;
         }
 
-        forward.Normalize();
+        cameraForward.Normalize();
 
         Vector3 toBuild =
             position -
@@ -614,17 +636,21 @@ public class BuildWall : MonoBehaviour
 
         toBuild.y = 0f;
 
+        // 同じ水平位置の場合は後ろ扱いにしない
         if (toBuild.sqrMagnitude <= 0.01f)
         {
             return false;
         }
 
         return Vector3.Dot(
-            forward,
+            cameraForward,
             toBuild.normalized
         ) < 0f;
     }
 
+    /// <summary>
+    /// Colliderが現在のプレビュー自身か確認する
+    /// </summary>
     private bool IsPreviewCollider(Collider hit)
     {
         if (currentPreview == null)
@@ -639,6 +665,9 @@ public class BuildWall : MonoBehaviour
             );
     }
 
+    /// <summary>
+    /// LayerがLayerMaskに含まれているか確認する
+    /// </summary>
     private bool IsLayerInMask(
         int layer,
         LayerMask mask
@@ -649,7 +678,7 @@ public class BuildWall : MonoBehaviour
     }
 
     /// <summary>
-    /// プレビューの色を変更する
+    /// 建築可能・不可能でプレビュー色を変更する
     /// </summary>
     private void SetPreviewMaterial(bool canBuild)
     {
@@ -673,12 +702,13 @@ public class BuildWall : MonoBehaviour
 
         foreach (Renderer renderer in renderers)
         {
-            renderer.material = targetMaterial;
+            renderer.material =
+                targetMaterial;
         }
     }
 
     /// <summary>
-    /// 座標をグリッドに合わせる
+    /// 座標をグリッドに吸着させる
     /// </summary>
     private Vector3 SnapToGrid(Vector3 position)
     {
@@ -702,12 +732,14 @@ public class BuildWall : MonoBehaviour
     /// </summary>
     private Quaternion GetWallRotation()
     {
-        float cameraY =
-            playerCamera.transform.eulerAngles.y;
+        int snappedY =
+            Mathf.RoundToInt(
+                playerCamera.transform.eulerAngles.y /
+                90f
+            ) * 90;
 
-        float snappedY =
-            Mathf.Round(cameraY / 90f) *
-            90f;
+        snappedY =
+            ((snappedY % 360) + 360) % 360;
 
         return Quaternion.Euler(
             0f,
@@ -725,13 +757,19 @@ public class BuildWall : MonoBehaviour
     )
     {
         int x =
-            Mathf.RoundToInt(position.x * 100f);
+            Mathf.RoundToInt(
+                position.x * 100f
+            );
 
         int y =
-            Mathf.RoundToInt(position.y * 100f);
+            Mathf.RoundToInt(
+                position.y * 100f
+            );
 
         int z =
-            Mathf.RoundToInt(position.z * 100f);
+            Mathf.RoundToInt(
+                position.z * 100f
+            );
 
         int rotationY =
             Mathf.RoundToInt(
