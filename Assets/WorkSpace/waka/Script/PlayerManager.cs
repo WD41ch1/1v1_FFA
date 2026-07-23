@@ -36,11 +36,13 @@ public class PlayerManager: MonoBehaviour
     /// <returns></returns>
     public bool TryConsumeAmmo(
     AmmoType type,
-    int amount)
+    int amount,
+    out int approvalValue)
     {
         return inventoryManager.TryConsumeAmmo(
             type,
-            amount);
+            amount,
+            out approvalValue);
     }
 
 }

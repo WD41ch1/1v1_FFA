@@ -55,7 +55,7 @@ public class Test : MonoBehaviour
     public void TestInventoryInit()
     {
         im.AddAmmo(AmmoType.SmallAmmo, 200);
-        im.AddAmmo(AmmoType.MiddleAmmo, 400);
+        im.AddAmmo(AmmoType.MiddleAmmo, 40);
         im.AddAmmo(AmmoType.BigAmmo, 50);
         im.AddAmmo(AmmoType.ShotgunAmmo, 100);
         im.AddBildMat(BildingMatType.Wood, 500);

@@ -50,6 +50,9 @@ public abstract class InventorySlotBase<T> : MonoBehaviour,
         return quantity;
     }
 
+    public abstract void Open();
+    public abstract void Hide();
+
     #region ドラッグアンドドロップ関係
 
     /// <summary>
@@ -58,8 +61,9 @@ public abstract class InventorySlotBase<T> : MonoBehaviour,
     public virtual void OnBeginDrag(PointerEventData eventData)
     {
         isDragging = true;
+        initParent = transform.parent;
+        transform.SetParent(transform.root.root);
         //canvasGroup.blocksRaycasts = false;
-        //transform.SetParent(transform.parent.parent); 
 
         // マウス位置を親のローカル座標系に変換
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
@@ -112,7 +116,7 @@ public abstract class InventorySlotBase<T> : MonoBehaviour,
         else
         {
             Debug.Log("ドロップゾーンが見つかりません");
-            //transform.SetParent(initParent);
+            transform.SetParent(initParent);
             Droping();
         }
     }

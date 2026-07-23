@@ -1,5 +1,7 @@
+using NaughtyAttributes;
 using System;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using static GameConst;
@@ -7,6 +9,8 @@ using static UnityEditor.Progress;
 
 public class InventoryManager : MonoBehaviour
 {
+    [InfoBox("建材、弾、アイテムを管理している場所です")]
+
     //  収集ツールスロット
     [SerializeField]
     public ItemData pickel;
@@ -33,9 +37,6 @@ public class InventoryManager : MonoBehaviour
     //  インベントリUI側通知処理
     public event Action<AmmoType, int, ResourceChangeType> OnChangeAmmo;
     public event Action<BildingMatType, int, ResourceChangeType> OnChangeBildMat;
-
-    //  その他
-    public DoOnce once = new DoOnce();
 
     private void Awake()
     {
@@ -171,8 +172,11 @@ public class InventoryManager : MonoBehaviour
     private bool TryConsumeResouce<TKey>(
     Dictionary<TKey, int> dict,
     TKey key,
-    int amount)
+    int amount,
+    out int r)
     {
+        r = 0;
+
         // 弾種が存在するか確認
         if (!dict.TryGetValue(key, out int currentAmmo))
         {
@@ -182,11 +186,13 @@ public class InventoryManager : MonoBehaviour
         // 弾が足りるか確認
         if (currentAmmo < amount)
         {
-            return false;
+            //  消費数を残弾数に変更
+            amount = currentAmmo;
         }
 
         // 消費
         dict[key] -= amount;
+        r = amount;
 
         return true;
     }
@@ -308,15 +314,16 @@ public class InventoryManager : MonoBehaviour
     /// <param name="type"></param>
     /// <param name="amount"></param>
     /// <returns></returns>
-    public bool TryConsumeAmmo(AmmoType type, int amount)
+    public bool TryConsumeAmmo(AmmoType type, int amount, out int r)
     {
         bool flag;
 
-        if (TryConsumeResouce(ammoDict, type, amount))
+        if (TryConsumeResouce(ammoDict, type, amount, out r))
         {
             //  UI更新通知
             OnChangeAmmo?.Invoke(type, ammoDict[type],
                 ResourceChangeType.Updated);
+
             flag = true;
         }
         else
@@ -338,6 +345,7 @@ public class InventoryManager : MonoBehaviour
 
     public void AddBildMat(BildingMatType type, int amount)
     {
+        //  新規追加かどうか
         bool isNew = !bildMatDict.ContainsKey(type);
 
         //  Add共通関数実行
@@ -348,7 +356,7 @@ public class InventoryManager : MonoBehaviour
         MAX_BILDMAT,
         MatDroping);
 
-        //  新規追加かどうか
+        //  新規追加なら
         if (isNew)
             OnChangeBildMat?.Invoke(type, bildMatDict[type], ResourceChangeType.AddedNew);
         else
@@ -388,11 +396,11 @@ public class InventoryManager : MonoBehaviour
     /// <param name="type"></param>
     /// <param name="amount"></param>
     /// <returns></returns>
-    public bool TryConsumeBildMat(BildingMatType type, int amount)
+    public bool TryConsumeBildMat(BildingMatType type, int amount, out int r)
     {
         bool flag;
 
-        if (TryConsumeResouce(bildMatDict, type, amount))
+        if (TryConsumeResouce(bildMatDict, type, amount, out r))
         {
             //  UI更新通知
             OnChangeBildMat?.Invoke(type, bildMatDict[type],
@@ -414,4 +422,30 @@ public class InventoryManager : MonoBehaviour
 
     #endregion
 
+    #region デバッグ用
+#if UNITY_EDITOR
+    [Button]
+    public void ShowDictionary()
+    {
+        StringBuilder sb = new StringBuilder();
+
+        //  弾
+        sb.AppendLine("========弾薬========");
+        foreach (var pair in ammoDict)
+        {
+            sb.AppendLine($"{pair.Key} : {pair.Value}");
+        }
+
+        //  建材
+        sb.AppendLine("========建材========");
+        foreach (var pair in bildMatDict)
+        {
+            sb.AppendLine($"{pair.Key} : {pair.Value}");
+        }
+
+        Debug.Log(sb.ToString());
+    }
+
+#endif
+    #endregion
 }

@@ -1,4 +1,5 @@
 using DG.Tweening;
+using NaughtyAttributes;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -11,6 +12,8 @@ using static UnityEditor.Progress;
 
 public class InventoryUI : UIBase, IDropHandler
 {
+
+
     public InventoryManager im { private set; get; }
 
     //  表示切り替え変数
@@ -66,7 +69,7 @@ public class InventoryUI : UIBase, IDropHandler
         switch (changeType)
         {
             case ResourceChangeType.AddedNew:
-                CreateSlot(AmmoListPrefab, ammoListTrans, ammoList, type, amount);
+                InitializeSlot(AmmoListPrefab, ammoListTrans, ammoList, type, amount);
                 break;
             case ResourceChangeType.Updated:
                 UpdateSlot(ammoList, type, amount);
@@ -81,7 +84,7 @@ public class InventoryUI : UIBase, IDropHandler
         switch (changeType)
         {
             case ResourceChangeType.AddedNew:
-                CreateSlot(BIldMatListPrefab, BildMatListTrans, BIldMatList, type, amount);
+                InitializeSlot(BIldMatListPrefab, BildMatListTrans, BIldMatList, type, amount);
                 break;
             case ResourceChangeType.Updated:
                 UpdateSlot(BIldMatList, type, amount);
@@ -105,7 +108,7 @@ public class InventoryUI : UIBase, IDropHandler
     /// <param name="listTrans">プレファブを置く場所</param>
     /// <param name="list">置いておくlist</param>
     /// <param name="type">アイテムの種類(AmmoType,BildingMatType)</param>
-    private void CreateSlot<TSlot, TEnum>(
+    private void InitializeSlot<TSlot, TEnum>(
     GameObject prefab,
     Transform listTrans,
     List<TSlot> list,
@@ -114,16 +117,39 @@ public class InventoryUI : UIBase, IDropHandler
     where TSlot : InventorySlotBase<TEnum>
     where TEnum : Enum
     {
-        //  生成
-        GameObject ob = Instantiate(prefab, listTrans);
-        //  特定のジェネリック型を持つInventorySlotBaseを取得
-        TSlot slot = ob.GetComponent<TSlot>();
-        //  初期化
-        slot.Initialize(this, type);
+        TSlot slot = null;
+
+        foreach (var item in list)
+        {
+            //  ２つのTEnum値が同じなら
+            if (EqualityComparer<TEnum>.Default.Equals(type, item.GetResourceType()))
+            {
+                //  同Typeのアイテムを見つけられたらslotに代入
+                slot = item;
+                slot.Open();
+                break;
+            }
+        }
+
+        //  slotが見つからなかった時
+        if (slot == null)
+        {
+            //  生成
+            GameObject ob = Instantiate(prefab, listTrans);
+            //  特定のジェネリック型を持つInventorySlotBaseを取得
+            slot = ob.GetComponent<TSlot>();
+        }
+
+        //  リストに追加
+        if (!list.Contains(slot))
+        {
+            list.Add(slot);
+            //  初期化
+            slot.Initialize(this, type);
+        }
+
         //  UI更新
         slot.UpdateUI(amount);
-        //  リストに追加
-        list.Add(slot);
     }
 
     /// <summary>
@@ -180,13 +206,8 @@ public class InventoryUI : UIBase, IDropHandler
                     //  そのSlot(InventorySlotBase<TEnum>を継承したクラス)を格納
                     targetItem = item;
                 }
-
             }
         }
-
-        //  Listから削除
-        if (targetItem != null)
-            list.Remove(targetItem);
 
         //  インベントリ内のリソース削除
         im?.RemoveResouce(type);
