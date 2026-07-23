@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 7239817469598700573}
   - component: {fileID: 4825842454943874564}
   - component: {fileID: 6326381892330888663}
-  m_Layer: 3
+  m_Layer: 10
   m_Name: ramp
   m_TagString: Untagged
   m_Icon: {fileID: 0}
