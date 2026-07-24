@@ -465,7 +465,7 @@ MonoBehaviour:
   input: {fileID: 3707898}
   wallBuilder: {fileID: 1604397112}
   rampBuilder: {fileID: 1604397113}
-  floorBuilder: {fileID: 0}
+  floorBuilder: {fileID: 1604397114}
   buildInterval: 0.15
 --- !u!4 &1604397111
 Transform:
@@ -505,12 +505,14 @@ MonoBehaviour:
     m_Bits: 8
   buildLayer:
     serializedVersion: 2
-    m_Bits: 768
+    m_Bits: 1792
   wallLayer:
     serializedVersion: 2
     m_Bits: 512
   buildDistance: 2
   gridSize: 4
+  candidateSearchRadius: 2
+  candidateSearchHeight: 1
   connectionThickness: 0.15
   edgeCheckRatio: 0.4
 --- !u!114 &1604397113
@@ -537,8 +539,12 @@ MonoBehaviour:
   buildLayer:
     serializedVersion: 2
     m_Bits: 1792
+  rampLayer:
+    serializedVersion: 2
+    m_Bits: 0
   buildDistance: 7
   gridSize: 4
+  lookDownThreshold: -0.45
   playerBlockHeight: 1.2
   connectionThickness: 0.15
   edgeCheckRatio: 0.4

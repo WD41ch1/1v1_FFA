@@ -4,13 +4,13 @@ using UnityEngine;
 /// <summary>
 /// 階段建築を担当するクラス
 ///
-/// ・グリッドに沿って配置する
-/// ・Playerより後ろには建築できない
-/// ・Playerと重なる場合は建築できない
-/// ・ジャンプしてPlayerと重ならなければ足元にも建築できる
-/// ・既存建築と内部が重なる場合は建築できない
-/// ・地面、または既存建築の辺と正しく接続している場合だけ建築できる
-/// ・角だけ触れている状態や、何もない空中には建築できない
+/// ・階段をグリッドの中心に配置
+/// ・真下を向くとPlayerと同じマスに候補を表示
+/// ・Playerに重なる間は赤色で建築不可
+/// ・ジャンプして重ならなくなると建築可能
+/// ・地面や既存建築につながる場所だけ候補を表示
+/// ・既存の階段と重なる場所には建築不可
+/// ・Playerより後ろには建築不可
 /// </summary>
 public class BuildRamp : MonoBehaviour
 {
@@ -27,36 +27,44 @@ public class BuildRamp : MonoBehaviour
     public Material cannotBuildMaterial;
 
     [Header("判定するLayer")]
-    [Tooltip("地面に設定しているLayerを選択する")]
+    [Tooltip("地面に設定しているLayer")]
     public LayerMask groundLayer;
 
-    [Tooltip("WallやRampなどの建築物に設定しているLayerを選択する")]
+    [Tooltip("Wall・Ramp・Floorなど、全建築物のLayer")]
     public LayerMask buildLayer;
+
+    [Tooltip("完成したRampだけに設定しているLayer")]
+    public LayerMask rampLayer;
 
     [Header("基本設定")]
     public float buildDistance = 6f;
     public float gridSize = 4f;
 
+    [Header("真下への建築")]
+    [Tooltip("カメラのY方向がこの値以下なら自分のマスを候補にする")]
+    [Range(-1f, 0f)]
+    public float lookDownThreshold = -0.45f;
+
     [Header("Player重なり判定")]
-    [Tooltip("Playerの足元がこの高さより上なら、ジャンプで避けていると判断する")]
+    [Tooltip("Playerの足元がこの高さ以下ならRampに埋まると判断する")]
     public float playerBlockHeight = 1.2f;
 
-    [Header("辺の接続判定")]
-    [Tooltip("辺の接続を確認する球判定の大きさ")]
+    [Header("接続判定")]
+    [Tooltip("辺や床との接続を確認する判定の大きさ")]
     public float connectionThickness = 0.15f;
 
-    [Tooltip("辺の中央から左右の確認点までの割合。0.4なら幅4の時に左右1.6")]
+    [Tooltip("辺の中央から左右の確認点までの割合")]
     [Range(0.1f, 0.49f)]
     public float edgeCheckRatio = 0.4f;
 
     private GameObject currentPreview;
 
-    // このBuildRampから建築したRampの位置を記録する
+    // このスクリプトから建築した階段を記録する
     private readonly HashSet<string> builtPositions =
         new HashSet<string>();
 
     /// <summary>
-    /// Rampのプレビューを生成する
+    /// プレビューを生成する
     /// </summary>
     public void ShowPreview()
     {
@@ -65,11 +73,21 @@ public class BuildRamp : MonoBehaviour
             Destroy(currentPreview);
         }
 
+        if (rampPreviewPrefab == null)
+        {
+            Debug.LogError(
+                "BuildRamp：Ramp Preview Prefabが設定されていません。",
+                this
+            );
+
+            return;
+        }
+
         currentPreview = Instantiate(rampPreviewPrefab);
     }
 
     /// <summary>
-    /// Rampのプレビューを削除する
+    /// プレビューを削除する
     /// </summary>
     public void HidePreview()
     {
@@ -83,7 +101,7 @@ public class BuildRamp : MonoBehaviour
     }
 
     /// <summary>
-    /// プレビューの位置・向き・色を毎フレーム更新する
+    /// プレビューの位置・向き・色を更新する
     /// </summary>
     public void UpdatePreview()
     {
@@ -98,8 +116,8 @@ public class BuildRamp : MonoBehaviour
             out bool canBuild
         );
 
-        // 地面にも建築物にも辺が接続していない場合は、
-        // プレビュー自体を表示しない
+        // 地面にも建築物にも接続していない場合は
+        // 候補そのものを表示しない
         if (!hasCandidate)
         {
             currentPreview.SetActive(false);
@@ -113,12 +131,12 @@ public class BuildRamp : MonoBehaviour
             rotation
         );
 
-        // 建築可能なら通常色、建築不可能なら赤色
+        // 建築可能なら通常色、建築不可なら赤色
         SetPreviewMaterial(canBuild);
     }
 
     /// <summary>
-    /// Rampを実際に建築する
+    /// 階段を実際に建築する
     /// </summary>
     public void Build()
     {
@@ -128,7 +146,6 @@ public class BuildRamp : MonoBehaviour
             out bool canBuild
         );
 
-        // 候補がない、または建築不可能なら何もしない
         if (!hasCandidate || !canBuild)
         {
             return;
@@ -142,21 +159,30 @@ public class BuildRamp : MonoBehaviour
             return;
         }
 
-        Instantiate(rampPrefab, position, rotation);
+        if (rampPrefab == null)
+        {
+            Debug.LogError(
+                "BuildRamp：Ramp Prefabが設定されていません。",
+                this
+            );
 
+            return;
+        }
+
+        Instantiate(rampPrefab, position, rotation);
         builtPositions.Add(key);
     }
 
     /// <summary>
-    /// 建築候補の位置と向きを取得する
+    /// 階段の候補位置と建築可能状態を取得する
     ///
     /// 戻り値：
-    /// true  = プレビュー候補を表示する
-    /// false = プレビュー候補自体を表示しない
+    /// true  = 候補を表示する
+    /// false = 候補そのものを表示しない
     ///
     /// canBuild：
-    /// true  = 実際に建築可能
-    /// false = 赤プレビューとして表示
+    /// true  = 建築可能
+    /// false = 赤色候補
     /// </summary>
     private bool TryGetBuildPoint(
         out Vector3 position,
@@ -168,83 +194,114 @@ public class BuildRamp : MonoBehaviour
         rotation = GetRampRotation();
         canBuild = true;
 
-        // RayはGroundとBuildだけに当てる
-        int rayMask =
-            groundLayer.value |
-            buildLayer.value;
-
-        Ray ray = new Ray(
-            playerCamera.transform.position,
-            playerCamera.transform.forward
-        );
-
-        Vector3 buildPoint;
-
-        if (Physics.Raycast(
-                ray,
-                out RaycastHit hit,
-                buildDistance,
-                rayMask,
-                QueryTriggerInteraction.Ignore))
-        {
-            // 当たった面の少し外側を候補位置の基準にする
-            buildPoint =
-                hit.point +
-                hit.normal * 0.1f;
-        }
-        else
-        {
-            // Rayが何にも当たらなかった場合は、
-            // Playerの正面1マスを候補にする
-            Vector3 forward =
-                GetSnappedForward(rotation);
-
-            buildPoint =
-                player.position +
-                forward * gridSize;
-
-            // Playerの高さをグリッドに合わせる
-            buildPoint.y =
-                Mathf.Round(
-                    player.position.y / gridSize
-                ) * gridSize;
-        }
-
-        // XYZをグリッドに吸着させる
-        position = SnapToGrid(buildPoint);
-
-        /*
-         * 地面、または既存建築の辺と
-         * 正しく接続していない場合は、
-         * プレビュー候補自体を表示しない
-         */
-        if (!IsEdgeConnected(position, rotation))
+        if (playerCamera == null || player == null)
         {
             return false;
         }
 
-        // Playerより後ろなら建築不可
+        Vector3 cameraForward =
+            playerCamera.transform.forward;
+
+        Vector3 buildPoint;
+
+        // カメラが真下付近を向いているか
+        bool lookingDown =
+            cameraForward.y <= lookDownThreshold;
+
+        if (lookingDown)
+        {
+            /*
+             * 真下を向いた場合はRayの当たった場所ではなく、
+             * PlayerがいるXZマスを候補にする。
+             */
+            buildPoint = player.position;
+
+            // Playerの足元の高さを建築グリッドに合わせる
+            float playerBottomY = GetPlayerBottomY();
+
+            buildPoint.y =
+                Mathf.Round(playerBottomY / gridSize) *
+                gridSize;
+        }
+        else
+        {
+            int rayMask =
+                groundLayer.value |
+                buildLayer.value;
+
+            Ray ray = new Ray(
+                playerCamera.transform.position,
+                cameraForward
+            );
+
+            if (Physics.Raycast(
+                    ray,
+                    out RaycastHit hit,
+                    buildDistance,
+                    rayMask,
+                    QueryTriggerInteraction.Ignore))
+            {
+                // 当たった面の少し外側を候補位置にする
+                buildPoint =
+                    hit.point +
+                    hit.normal * 0.1f;
+            }
+            else
+            {
+                // 何にも当たらない場合はPlayerの前1マス
+                Vector3 forward =
+                    GetSnappedForward(rotation);
+
+                buildPoint =
+                    player.position +
+                    forward * gridSize;
+
+                // 地面へ落とさず、現在いる高さを使用する
+                buildPoint.y =
+                    Mathf.Round(
+                        GetPlayerBottomY() / gridSize
+                    ) * gridSize;
+            }
+        }
+
+        // 階段をグリッドの中心に吸着させる
+        position = SnapToGrid(buildPoint);
+
+        /*
+         * 地面・床・壁・階段のいずれにも
+         * 接続していなければ候補を表示しない。
+         */
+        if (!IsRampConnected(position, rotation))
+        {
+            return false;
+        }
+
+        // Playerより後ろなら赤色
         if (IsBehindPlayer(position))
         {
             canBuild = false;
         }
 
-        // Playerの体がRampに埋まるなら建築不可
+        /*
+         * Playerが階段に埋まる場合は赤色。
+         * 真下候補自体は消さない。
+         */
         if (IsPlayerOverlappingRamp(position))
         {
             canBuild = false;
         }
 
-        string key = GetBuildKey(position, rotation);
+        string key =
+            GetBuildKey(position, rotation);
 
-        // 同じ位置・同じ向きのRampがすでにある
+        // 同じ位置・同じ向きの階段がある
         if (builtPositions.Contains(key))
         {
             canBuild = false;
         }
 
-        // 既存建築とRampの内部が重なっている
-        if (IsOverlappingBuild(position, rotation))
+        // 別の完成Rampと重なっている
+        if (IsOverlappingRamp(position, rotation))
         {
             canBuild = false;
         }
@@ -253,45 +310,45 @@ public class BuildRamp : MonoBehaviour
     }
 
     /// <summary>
-    /// Rampの辺が、地面または既存建築の辺と
-    /// 幅全体で正しく接続しているか確認する
+    /// Rampが地面または既存建築に接続しているか確認する
     /// </summary>
-    private bool IsEdgeConnected(
+    private bool IsRampConnected(
         Vector3 position,
         Quaternion rotation
     )
     {
+        /*
+         * Rampの真下に地面・床などがある場合。
+         * Playerと同じマスに候補を出す時にも使う。
+         */
+        if (HasGroundDirectlyUnderRamp(position))
+        {
+            return true;
+        }
+
+        if (HasBuildDirectlyUnderRamp(position))
+        {
+            return true;
+        }
+
         Vector3 forward =
             GetSnappedForward(rotation);
 
         Vector3 right =
             GetSnappedRight(rotation);
 
-        /*
-         * Rampを横から見たイメージ
-         *
-         *                 上端
-         *              ─────────
-         *             ／
-         *            ／
-         *  ─────────
-         *     下端
-         *
-         * positionはRampPrefabの地面側Pivotを想定
-         */
-
-        // Rampの下端中央
+        // Rampの低い側の辺
         Vector3 lowEdgeCenter =
             position -
             forward * (gridSize / 2f);
 
-        // Rampの上端中央
+        // Rampの高い側の辺
         Vector3 highEdgeCenter =
             position +
             forward * (gridSize / 2f) +
             Vector3.up * gridSize;
 
-        // 下端の左・中央・右が地面に接していればOK
+        // 低い側の辺が地面につながっている
         if (IsEdgeConnectedToGround(
                 lowEdgeCenter,
                 right))
@@ -299,7 +356,7 @@ public class BuildRamp : MonoBehaviour
             return true;
         }
 
-        // 下端の左・中央・右が同じ建築物に接していればOK
+        // 低い側の辺が建築物につながっている
         if (IsEdgeConnectedToBuild(
                 lowEdgeCenter,
                 right))
@@ -307,7 +364,7 @@ public class BuildRamp : MonoBehaviour
             return true;
         }
 
-        // 上端の左・中央・右が同じ建築物に接していればOK
+        // 高い側の辺が建築物につながっている
         if (IsEdgeConnectedToBuild(
                 highEdgeCenter,
                 right))
@@ -315,13 +372,80 @@ public class BuildRamp : MonoBehaviour
             return true;
         }
 
-        // どの辺も正しく接続していない
         return false;
     }
 
     /// <summary>
-    /// Rampの辺の左・中央・右が、
-    /// すべて地面に接しているか確認する
+    /// Rampの真下に地面があるか確認する
+    /// </summary>
+    private bool HasGroundDirectlyUnderRamp(
+        Vector3 position
+    )
+    {
+        Vector3 checkCenter =
+            position -
+            Vector3.up * connectionThickness;
+
+        Vector3 halfExtents = new Vector3(
+            gridSize / 2f - 0.1f,
+            connectionThickness,
+            gridSize / 2f - 0.1f
+        );
+
+        return Physics.CheckBox(
+            checkCenter,
+            halfExtents,
+            Quaternion.identity,
+            groundLayer,
+            QueryTriggerInteraction.Ignore
+        );
+    }
+
+    /// <summary>
+    /// Rampの真下にFloorなどの建築物があるか確認する
+    /// </summary>
+    private bool HasBuildDirectlyUnderRamp(
+        Vector3 position
+    )
+    {
+        Vector3 checkCenter =
+            position -
+            Vector3.up * connectionThickness;
+
+        Vector3 halfExtents = new Vector3(
+            gridSize / 2f - 0.1f,
+            connectionThickness,
+            gridSize / 2f - 0.1f
+        );
+
+        Collider[] hits = Physics.OverlapBox(
+            checkCenter,
+            halfExtents,
+            Quaternion.identity,
+            buildLayer,
+            QueryTriggerInteraction.Ignore
+        );
+
+        foreach (Collider hit in hits)
+        {
+            if (IsPreviewCollider(hit))
+            {
+                continue;
+            }
+
+            if (IsPlayerCollider(hit))
+            {
+                continue;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// 辺の左・中央・右がすべて地面に接しているか確認する
     /// </summary>
     private bool IsEdgeConnectedToGround(
         Vector3 edgeCenter,
@@ -329,10 +453,8 @@ public class BuildRamp : MonoBehaviour
     )
     {
         float sideOffset =
-            gridSize *
-            edgeCheckRatio;
+            gridSize * edgeCheckRatio;
 
-        // 辺の左・中央・右の3点
         Vector3[] checkPoints =
         {
             edgeCenter - edgeRight * sideOffset,
@@ -342,34 +464,27 @@ public class BuildRamp : MonoBehaviour
 
         foreach (Vector3 point in checkPoints)
         {
-            // 地面の少し上を中心に球判定する
-            Vector3 checkCenter =
-                point +
-                Vector3.up * connectionThickness;
-
             bool touchingGround =
                 Physics.CheckSphere(
-                    checkCenter,
+                    point +
+                    Vector3.up * connectionThickness,
                     connectionThickness,
                     groundLayer,
                     QueryTriggerInteraction.Ignore
                 );
 
-            // 1点でも地面に触れていないなら、
-            // 辺全体は接続していない
             if (!touchingGround)
             {
                 return false;
             }
         }
 
-        // 左・中央・右すべて地面に接している
         return true;
     }
 
     /// <summary>
-    /// Rampの辺の左・中央・右が、
-    /// すべて同じ建築物に接しているか確認する
+    /// 辺の左・中央・右がすべて同じ建築物に
+    /// 接しているか確認する
     /// </summary>
     private bool IsEdgeConnectedToBuild(
         Vector3 edgeCenter,
@@ -377,10 +492,8 @@ public class BuildRamp : MonoBehaviour
     )
     {
         float sideOffset =
-            gridSize *
-            edgeCheckRatio;
+            gridSize * edgeCheckRatio;
 
-        // 辺の左・中央・右の3点
         Vector3[] checkPoints =
         {
             edgeCenter - edgeRight * sideOffset,
@@ -404,58 +517,52 @@ public class BuildRamp : MonoBehaviour
 
             foreach (Collider hit in hits)
             {
-                // プレビュー自身は無視
                 if (IsPreviewCollider(hit))
                 {
                     continue;
                 }
 
-                // Playerは無視
                 if (IsPlayerCollider(hit))
                 {
                     continue;
                 }
 
-                // Colliderが付いている建築物の一番上の親を取得
                 foundBuildRoot =
                     GetBuildRoot(hit.transform);
 
                 break;
             }
 
-            // この確認点に建築物が接していない
+            // この点が建築物につながっていない
             if (foundBuildRoot == null)
             {
                 return false;
             }
 
-            // 最初の確認点で見つけた建築物を記録
             if (connectedBuildRoot == null)
             {
                 connectedBuildRoot =
                     foundBuildRoot;
             }
-            // 左・中央・右が別々の建築物なら、
-            // 1本の辺として接続していない
             else if (connectedBuildRoot != foundBuildRoot)
             {
+                // 3点が別々の建築物なら接続失敗
                 return false;
             }
         }
 
-        // 左・中央・右が同じ建築物に接している
         return true;
     }
 
     /// <summary>
-    /// Colliderが属している建築物の親を取得する
-    /// Build Layerではない親まで上へたどらない
+    /// Build Layerに属する建築物の親を取得する
     /// </summary>
-    private Transform GetBuildRoot(Transform target)
+    private Transform GetBuildRoot(
+        Transform target
+    )
     {
         Transform result = target;
 
-        // 親もBuild Layerなら、その親までたどる
         while (result.parent != null &&
                IsLayerInMask(
                    result.parent.gameObject.layer,
@@ -481,9 +588,12 @@ public class BuildRamp : MonoBehaviour
     }
 
     /// <summary>
-    /// 建築候補がPlayerより後ろにあるか確認する
+    /// 候補位置がPlayerより後ろか確認する
+    /// 同じマスの場合は後ろ扱いにしない
     /// </summary>
-    private bool IsBehindPlayer(Vector3 position)
+    private bool IsBehindPlayer(
+        Vector3 position
+    )
     {
         Vector3 playerForward =
             player.forward;
@@ -503,7 +613,7 @@ public class BuildRamp : MonoBehaviour
 
         toBuild.y = 0f;
 
-        // 同じマスなら後ろ判定を行わない
+        // Playerと同じマスは後ろ判定しない
         if (toBuild.sqrMagnitude <= 0.01f)
         {
             return false;
@@ -516,15 +626,17 @@ public class BuildRamp : MonoBehaviour
     }
 
     /// <summary>
-    /// Playerの体が配置予定Rampに埋まるか確認する
-    /// ジャンプして足元が十分上なら建築可能
+    /// Playerが配置予定のRampに埋まるか確認する
+    ///
+    /// 同じマスでも、ジャンプして足元が
+    /// blockedHeightより上なら建築可能になる。
     /// </summary>
     private bool IsPlayerOverlappingRamp(
         Vector3 rampPosition
     )
     {
         Collider playerCollider =
-            player.GetComponent<Collider>();
+            GetPlayerCollider();
 
         if (playerCollider == null)
         {
@@ -544,7 +656,6 @@ public class BuildRamp : MonoBehaviour
                 playerGrid.z
             );
 
-        // PlayerとRampのXZマスが違う
         if (!sameXZ)
         {
             return false;
@@ -557,56 +668,57 @@ public class BuildRamp : MonoBehaviour
             rampPosition.y +
             playerBlockHeight;
 
-        // Playerの足元が低い場合はRampに埋まる
+        // 足元が低ければRampに埋まるため建築不可
         return playerBottomY <= blockedHeight;
     }
 
     /// <summary>
-    /// 配置予定Rampの内部に既存建築が重なっているか確認する
-    /// 辺同士が接しているだけなら重なり扱いにしない
+    /// 配置予定位置に完成済みRampが重なっているか確認する
+    ///
+    /// rampLayerだけを見るので、
+    /// 下にあるFloorは重複扱いにならない。
     /// </summary>
-    private bool IsOverlappingBuild(
+    private bool IsOverlappingRamp(
         Vector3 position,
         Quaternion rotation
     )
     {
+        // Ramp Layerが未設定ならこの判定を行わない
+        if (rampLayer.value == 0)
+        {
+            return false;
+        }
+
         Vector3 center =
             position +
             Vector3.up * (gridSize / 2f);
 
-        // 1マスより少し小さくして、
-        // 辺だけ接している隣の建築を誤検出しない
-        Vector3 halfExtents =
-            new Vector3(
-                gridSize / 2f - 0.15f,
-                gridSize / 2f - 0.15f,
-                gridSize / 2f - 0.15f
-            );
+        Vector3 halfExtents = new Vector3(
+            gridSize / 2f - 0.15f,
+            gridSize / 2f - 0.15f,
+            gridSize / 2f - 0.15f
+        );
 
-        Collider[] hits =
-            Physics.OverlapBox(
-                center,
-                halfExtents,
-                rotation,
-                buildLayer,
-                QueryTriggerInteraction.Ignore
-            );
+        Collider[] hits = Physics.OverlapBox(
+            center,
+            halfExtents,
+            rotation,
+            rampLayer,
+            QueryTriggerInteraction.Ignore
+        );
 
         foreach (Collider hit in hits)
         {
-            // プレビュー自身は無視
             if (IsPreviewCollider(hit))
             {
                 continue;
             }
 
-            // Playerは別の判定で見るので無視
             if (IsPlayerCollider(hit))
             {
                 continue;
             }
 
-            // Rampの内部に建築物がある
             return true;
         }
 
@@ -614,9 +726,45 @@ public class BuildRamp : MonoBehaviour
     }
 
     /// <summary>
-    /// ColliderがPlayer自身、またはPlayerの子か確認する
+    /// PlayerのColliderを取得する
+    /// Colliderが子にある場合にも対応する
     /// </summary>
-    private bool IsPlayerCollider(Collider hit)
+    private Collider GetPlayerCollider()
+    {
+        Collider playerCollider =
+            player.GetComponent<Collider>();
+
+        if (playerCollider == null)
+        {
+            playerCollider =
+                player.GetComponentInChildren<Collider>();
+        }
+
+        return playerCollider;
+    }
+
+    /// <summary>
+    /// Playerの足元のY座標を取得する
+    /// </summary>
+    private float GetPlayerBottomY()
+    {
+        Collider playerCollider =
+            GetPlayerCollider();
+
+        if (playerCollider != null)
+        {
+            return playerCollider.bounds.min.y;
+        }
+
+        return player.position.y;
+    }
+
+    /// <summary>
+    /// ColliderがPlayerまたはPlayerの子か確認する
+    /// </summary>
+    private bool IsPlayerCollider(
+        Collider hit
+    )
     {
         return
             hit.transform == player ||
@@ -626,7 +774,9 @@ public class BuildRamp : MonoBehaviour
     /// <summary>
     /// Colliderが現在のプレビュー自身か確認する
     /// </summary>
-    private bool IsPreviewCollider(Collider hit)
+    private bool IsPreviewCollider(
+        Collider hit
+    )
     {
         if (currentPreview == null)
         {
@@ -648,16 +798,11 @@ public class BuildRamp : MonoBehaviour
     )
     {
         Vector3 forward =
-            rotation *
-            Vector3.forward;
+            rotation * Vector3.forward;
 
         forward.y = 0f;
-
-        forward.x =
-            Mathf.Round(forward.x);
-
-        forward.z =
-            Mathf.Round(forward.z);
+        forward.x = Mathf.Round(forward.x);
+        forward.z = Mathf.Round(forward.z);
 
         return forward.normalized;
     }
@@ -670,16 +815,11 @@ public class BuildRamp : MonoBehaviour
     )
     {
         Vector3 right =
-            rotation *
-            Vector3.right;
+            rotation * Vector3.right;
 
         right.y = 0f;
-
-        right.x =
-            Mathf.Round(right.x);
-
-        right.z =
-            Mathf.Round(right.z);
+        right.x = Mathf.Round(right.x);
+        right.z = Mathf.Round(right.z);
 
         return right.normalized;
     }
@@ -687,7 +827,9 @@ public class BuildRamp : MonoBehaviour
     /// <summary>
     /// 建築可能・不可能でプレビュー色を変更する
     /// </summary>
-    private void SetPreviewMaterial(bool canBuild)
+    private void SetPreviewMaterial(
+        bool canBuild
+    )
     {
         if (currentPreview == null)
         {
@@ -717,22 +859,21 @@ public class BuildRamp : MonoBehaviour
     /// <summary>
     /// 座標をグリッドに吸着させる
     /// </summary>
-    private Vector3 SnapToGrid(Vector3 position)
+    private Vector3 SnapToGrid(
+        Vector3 position
+    )
     {
         position.x =
-            Mathf.Round(
-                position.x / gridSize
-            ) * gridSize;
+            Mathf.Round(position.x / gridSize) *
+            gridSize;
 
         position.y =
-            Mathf.Round(
-                position.y / gridSize
-            ) * gridSize;
+            Mathf.Round(position.y / gridSize) *
+            gridSize;
 
         position.z =
-            Mathf.Round(
-                position.z / gridSize
-            ) * gridSize;
+            Mathf.Round(position.z / gridSize) *
+            gridSize;
 
         return position;
     }
@@ -746,9 +887,8 @@ public class BuildRamp : MonoBehaviour
             playerCamera.transform.eulerAngles.y;
 
         float snappedY =
-            Mathf.Round(
-                cameraY / 90f
-            ) * 90f;
+            Mathf.Round(cameraY / 90f) *
+            90f;
 
         return Quaternion.Euler(
             0f,
@@ -766,19 +906,13 @@ public class BuildRamp : MonoBehaviour
     )
     {
         int x =
-            Mathf.RoundToInt(
-                position.x * 100f
-            );
+            Mathf.RoundToInt(position.x * 100f);
 
         int y =
-            Mathf.RoundToInt(
-                position.y * 100f
-            );
+            Mathf.RoundToInt(position.y * 100f);
 
         int z =
-            Mathf.RoundToInt(
-                position.z * 100f
-            );
+            Mathf.RoundToInt(position.z * 100f);
 
         int rotationY =
             Mathf.RoundToInt(
