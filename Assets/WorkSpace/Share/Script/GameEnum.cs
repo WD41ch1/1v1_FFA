@@ -21,6 +21,10 @@ public enum ItemType
     BildingMat
 }
 
+public enum BerItemType
+{
+
+}
 
 /// <summary>
 /// 弾の種類
@@ -34,6 +38,16 @@ public enum AmmoType
 }
 
 /// <summary>
+/// 建材の種類
+/// </summary>
+public enum BildingMatType
+{
+    Wood,
+    Brick,
+    Iron,
+}
+
+/// <summary>
 /// 体の判定部位
 /// </summary>
 public enum HitPart
@@ -43,15 +57,6 @@ public enum HitPart
     Leg         //  足
 }
 
-/// <summary>
-/// 建材の種類
-/// </summary>
-public enum BildingMatType
-{
-    Wood,
-    Brick,
-    Iron,
-}
 
 /// <summary>
 /// 

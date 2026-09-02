@@ -62,8 +62,24 @@ public class InventoryUI : UIBase, IDropHandler
 
     }
 
-    #region イベント発火関数
+    #region アイテム
 
+
+    public ItemData GetItemData(int slotNumber)
+    {
+        return im.GetItem(slotNumber);
+    }
+
+    #endregion
+
+    #region 弾薬・建材 /イベント発火
+
+    /// <summary>
+    /// 弾薬の更新
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="amount"></param>
+    /// <param name="changeType"></param>
     private void UpdateAmmo(AmmoType type, int amount, ResourceChangeType changeType)
     {
         switch (changeType)
@@ -79,6 +95,13 @@ public class InventoryUI : UIBase, IDropHandler
                 break;
         }
     }
+
+    /// <summary>
+    /// 建材の更新 
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="amount"></param>
+    /// <param name="changeType"></param>
     private void UpdateBIldMat(BildingMatType type, int amount, ResourceChangeType changeType)
     {
         switch (changeType)
