@@ -100,7 +100,7 @@ public class BuildCone : MonoBehaviour
         currentPreview = null;
     }
 
-    /// <summary>
+    /// <summary>  
     /// コーンプレビューの位置・向き・色を更新する
     /// </summary>
     public void UpdatePreview()
