@@ -145,6 +145,15 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Cone"",
+                    ""type"": ""Button"",
+                    ""id"": ""7106bbeb-04b2-4bc1-b4e1-43cd38dec49c"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -257,6 +266,17 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
                     ""action"": ""Floor"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""675286f1-78bd-4bc1-9075-d4419f520fc6"",
+                    ""path"": ""<Keyboard>/c"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Cone"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -271,6 +291,7 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
         m_Player_Wall = m_Player.FindAction("Wall", throwIfNotFound: true);
         m_Player_Ramp = m_Player.FindAction("Ramp", throwIfNotFound: true);
         m_Player_Floor = m_Player.FindAction("Floor", throwIfNotFound: true);
+        m_Player_Cone = m_Player.FindAction("Cone", throwIfNotFound: true);
     }
 
     ~@PlayerInput()
@@ -357,6 +378,7 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_Wall;
     private readonly InputAction m_Player_Ramp;
     private readonly InputAction m_Player_Floor;
+    private readonly InputAction m_Player_Cone;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -392,6 +414,10 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Player/Floor".
         /// </summary>
         public InputAction @Floor => m_Wrapper.m_Player_Floor;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/Cone".
+        /// </summary>
+        public InputAction @Cone => m_Wrapper.m_Player_Cone;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -436,6 +462,9 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
             @Floor.started += instance.OnFloor;
             @Floor.performed += instance.OnFloor;
             @Floor.canceled += instance.OnFloor;
+            @Cone.started += instance.OnCone;
+            @Cone.performed += instance.OnCone;
+            @Cone.canceled += instance.OnCone;
         }
 
         /// <summary>
@@ -465,6 +494,9 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
             @Floor.started -= instance.OnFloor;
             @Floor.performed -= instance.OnFloor;
             @Floor.canceled -= instance.OnFloor;
+            @Cone.started -= instance.OnCone;
+            @Cone.performed -= instance.OnCone;
+            @Cone.canceled -= instance.OnCone;
         }
 
         /// <summary>
@@ -547,5 +579,12 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnFloor(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Cone" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnCone(InputAction.CallbackContext context);
     }
 }
