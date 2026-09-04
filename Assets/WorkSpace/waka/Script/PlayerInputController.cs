@@ -19,6 +19,8 @@ public class PlayerInputController : MonoBehaviour
 
     public bool BuildFloorPressed {  get; private set; }
 
+    public bool BuildConePressed { get; private set; }
+
     // Moveイベントから呼ばれる
     public void OnMove(InputAction.CallbackContext context)
     {
@@ -74,6 +76,15 @@ public class PlayerInputController : MonoBehaviour
         }
     }
 
+    public void OnBuildCone(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            BuildConePressed = true;
+            Debug.Log("Build Cone");
+        }
+    }
+
     // ジャンプ処理が終わったらfalseに戻す
     public void ResetJump()
     {
@@ -95,5 +106,10 @@ public class PlayerInputController : MonoBehaviour
     public void ResetBuildFloor() 
     {
         BuildFloorPressed = false; 
+    }
+
+    public void ResetBuildCone()
+    {
+        BuildConePressed = false;
     }
 }

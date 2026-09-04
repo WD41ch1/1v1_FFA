@@ -2,81 +2,83 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// コーン建築を担当するクラス
+/// コーン建築を担当する独立クラス
 ///
-/// ・コーンをグリッド中心へ配置する
-/// ・下を向くとPlayerの真下へ候補を出す
-/// ・正面ではPlayerの前の隣接マスへ候補を出す
-/// ・階段の上では階段の先へ候補を出す
-/// ・地面または既存建築につながる場合だけ建築可能
-/// ・何にもつながらない空中建築は禁止
-/// ・同じ場所への重複建築は禁止
-/// ・建築不可能な場所は赤いプレビュー
+/// ・床と同じグリッドへ配置
+/// ・床に照準が当たった場合は、その床の中央へ配置
+/// ・床の上へ重ねて建築可能
+/// ・Cone同士の重複は禁止
+/// ・Prefabの向きをY回転で補正可能
 /// </summary>
 public class BuildCone : MonoBehaviour
 {
     [Header("参照")]
     public Camera playerCamera;
 
-    [Tooltip("Player本体を設定する")]
+    [Tooltip("Player本体")]
     public Transform player;
 
-    [Header("コーンPrefab")]
+    [Header("Prefab")]
     public GameObject conePrefab;
     public GameObject conePreviewPrefab;
 
-    [Header("プレビュー色")]
+    [Header("プレビューMaterial")]
     public Material canBuildMaterial;
     public Material cannotBuildMaterial;
 
-    [Header("判定するLayer")]
-    [Tooltip("地面に設定しているLayer")]
+    [Header("Layer")]
+    [Tooltip("地面のLayer")]
     public LayerMask groundLayer;
 
-    [Tooltip("Wall・Ramp・Coneなど、すべての建築Layer")]
+    [Tooltip("Wall・Ramp・Floor・Coneなどの建築Layer")]
     public LayerMask buildLayer;
 
-    [Tooltip("完成したコーンだけに設定しているLayer")]
+    [Tooltip("完成した床だけのLayer")]
+    public LayerMask floorLayer;
+
+    [Tooltip("完成したConeだけのLayer")]
     public LayerMask coneLayer;
 
-    [Header("基本設定")]
-    public float buildDistance = 6f;
+    [Header("グリッド設定")]
+    [Tooltip("BuildFloorと同じ値にする")]
     public float gridSize = 4f;
 
-    [Tooltip("コーンPrefabの厚さ。コーンのScale Yと同じ値にする")]
-    public float coneThickness = 0.1f;
+    public float buildDistance = 6f;
 
-    [Header("真下判定")]
-    [Tooltip("この値よりカメラが下向きならPlayerの真下へ候補を出す")]
+    [Header("Cone設定")]
+    [Tooltip("Cone底面からPrefabのPivotまでの高さ")]
+    public float conePivotFromBottom = 0f;
+
+    [Tooltip("Cone全体の高さ")]
+    public float coneHeight = 2f;
+
+    [Tooltip("床と向きを合わせる回転。画像のConeなら45")]
+    public float coneRotationY = 45f;
+
+    [Header("視線設定")]
     [Range(-1f, 0f)]
     public float lookDownThreshold = -0.45f;
 
     [Header("接続判定")]
-    [Tooltip("既存建築との接続判定に使う厚さ")]
-    public float connectionThickness = 0.15f;
+    public float connectionThickness = 0.2f;
 
     private GameObject currentPreview;
 
-    // このスクリプトから建築したコーンの位置を記録する
     private readonly HashSet<string> builtPositions =
         new HashSet<string>();
 
     /// <summary>
-    /// コーンプレビューを生成する
+    /// プレビューを生成
     /// </summary>
     public void ShowPreview()
     {
-        if (currentPreview != null)
-        {
-            Destroy(currentPreview);
-        }
+        HidePreview();
 
         if (conePreviewPrefab == null)
         {
             Debug.LogError(
-                "BuildConeのCone Preview Prefabが未設定です"
+                "BuildCone: Cone Preview Prefabが未設定です"
             );
-
             return;
         }
 
@@ -87,7 +89,7 @@ public class BuildCone : MonoBehaviour
     }
 
     /// <summary>
-    /// コーンプレビューを削除する
+    /// プレビューを削除
     /// </summary>
     public void HidePreview()
     {
@@ -100,8 +102,8 @@ public class BuildCone : MonoBehaviour
         currentPreview = null;
     }
 
-    /// <summary>  
-    /// コーンプレビューの位置・向き・色を更新する
+    /// <summary>
+    /// プレビューを更新
     /// </summary>
     public void UpdatePreview()
     {
@@ -116,7 +118,6 @@ public class BuildCone : MonoBehaviour
             out bool canBuild
         );
 
-        // 何にもつながらない空中なら候補を消す
         if (!hasCandidate)
         {
             currentPreview.SetActive(false);
@@ -134,7 +135,7 @@ public class BuildCone : MonoBehaviour
     }
 
     /// <summary>
-    /// コーンを実際に建築する
+    /// Coneを建築
     /// </summary>
     public void Build()
     {
@@ -149,21 +150,18 @@ public class BuildCone : MonoBehaviour
             return;
         }
 
-        string key =
-            GetBuildKey(position);
-
-        // 同じ場所には建築しない
-        if (builtPositions.Contains(key))
-        {
-            return;
-        }
-
         if (conePrefab == null)
         {
             Debug.LogError(
-                "BuildConeのCone Prefabが未設定です"
+                "BuildCone: Cone Prefabが未設定です"
             );
+            return;
+        }
 
+        string key = GetBuildKey(position);
+
+        if (builtPositions.Contains(key))
+        {
             return;
         }
 
@@ -177,15 +175,7 @@ public class BuildCone : MonoBehaviour
     }
 
     /// <summary>
-    /// コーンの候補位置と建築可能状態を取得する
-    ///
-    /// 戻り値：
-    /// true  = 候補を表示する
-    /// false = 候補自体を表示しない
-    ///
-    /// canBuild：
-    /// true  = 建築可能
-    /// false = 赤いプレビュー
+    /// 建築候補を取得
     /// </summary>
     private bool TryGetBuildPoint(
         out Vector3 position,
@@ -194,8 +184,14 @@ public class BuildCone : MonoBehaviour
     )
     {
         position = Vector3.zero;
-        rotation = Quaternion.identity;
-        canBuild = true;
+
+        rotation = Quaternion.Euler(
+            0f,
+            coneRotationY,
+            0f
+        );
+
+        canBuild = false;
 
         if (playerCamera == null || player == null)
         {
@@ -207,28 +203,26 @@ public class BuildCone : MonoBehaviour
 
         Vector3 buildPoint;
 
-        /*
-         * カメラを下へ向けている場合は
-         * Rayの当たり位置ではなくPlayer自身のマスを使用する。
-         */
         bool lookingDown =
             cameraForward.y <
             lookDownThreshold;
 
         if (lookingDown)
         {
-            buildPoint =
-                new Vector3(
-                    player.position.x,
-                    GetPlayerConeBuildLevel(),
-                    player.position.z
-                );
+            // Playerと同じグリッド
+            buildPoint = new Vector3(
+                player.position.x,
+                GetPlayerBuildLevel(),
+                player.position.z
+            );
         }
         else
         {
             int rayMask =
                 groundLayer.value |
-                buildLayer.value;
+                buildLayer.value |
+                floorLayer.value |
+                coneLayer.value;
 
             Ray ray = new Ray(
                 playerCamera.transform.position,
@@ -236,26 +230,35 @@ public class BuildCone : MonoBehaviour
             );
 
             if (Physics.Raycast(
-                    ray,
-                    out RaycastHit hit,
-                    buildDistance,
-                    rayMask,
-                    QueryTriggerInteraction.Ignore))
+                ray,
+                out RaycastHit hit,
+                buildDistance,
+                rayMask,
+                QueryTriggerInteraction.Ignore))
             {
-                /*
-                 * 地面や建築物にRayが当たった場合は、
-                 * 当たった面の少し外側を候補にする。
-                 */
-                buildPoint =
-                    hit.point +
-                    hit.normal * 0.1f;
+                if (IsLayerInMask(
+                    hit.collider.gameObject.layer,
+                    floorLayer))
+                {
+                    /*
+                     * 床に当たった場合は命中位置ではなく、
+                     * 床Colliderの中央を使用する。
+                     */
+                    buildPoint = new Vector3(
+                        hit.collider.bounds.center.x,
+                        hit.collider.bounds.max.y,
+                        hit.collider.bounds.center.z
+                    );
+                }
+                else
+                {
+                    buildPoint =
+                        hit.point +
+                        hit.normal * 0.1f;
+                }
             }
             else
             {
-                /*
-                 * Rayが当たらなければ、
-                 * Playerの前の隣接グリッドへ候補を出す。
-                 */
                 Vector3 forward =
                     GetSnappedPlayerForward();
 
@@ -264,64 +267,54 @@ public class BuildCone : MonoBehaviour
                     return false;
                 }
 
-                Vector3 playerGrid =
-                    new Vector3(
-                        Mathf.Round(
-                            player.position.x /
-                            gridSize
-                        ) * gridSize,
+                Vector3 playerGrid = new Vector3(
+                    Mathf.Round(
+                        player.position.x / gridSize
+                    ) * gridSize,
 
-                        GetPlayerConeBuildLevel(),
+                    GetPlayerBuildLevel(),
 
-                        Mathf.Round(
-                            player.position.z /
-                            gridSize
-                        ) * gridSize
-                    );
+                    Mathf.Round(
+                        player.position.z / gridSize
+                    ) * gridSize
+                );
 
-                /*
-                 * buildDistanceではなくgridSizeを使用する。
-                 * これで階段の先の次の1マスに配置される。
-                 */
                 buildPoint =
                     playerGrid +
                     forward * gridSize;
             }
         }
 
-        // コーンをグリッド位置へ変換
         position =
             GetConeGridPosition(buildPoint);
 
         /*
-         * 地面または既存建築につながっていなければ
-         * 空中建築になるため候補を表示しない。
+         * 地面・床・既存建築のどれにも
+         * 接続していない場合は候補を非表示。
          */
-        if (!IsConeConnected(position))
+        if (!IsConnected(position))
         {
             return false;
         }
 
-        /*
-         * Playerと同じマスなら後ろ判定をしない。
-         * これによってPlayerの真下へ建築できる。
-         */
+        canBuild = true;
+
+        // Playerより後ろのマスは建築不可
         if (!IsSamePlayerGrid(position) &&
             IsBehindPlayer(position))
         {
             canBuild = false;
         }
 
-        string key =
-            GetBuildKey(position);
+        string key = GetBuildKey(position);
 
-        // このスクリプトから同じ場所に建築済み
+        // このスクリプトが配置したConeと重複
         if (builtPositions.Contains(key))
         {
             canBuild = false;
         }
 
-        // シーン内に完成済みのコーンがある
+        // シーン内の完成済みConeと重複
         if (IsOverlappingCone(position))
         {
             canBuild = false;
@@ -331,13 +324,67 @@ public class BuildCone : MonoBehaviour
     }
 
     /// <summary>
-    /// Playerが向いている方向を前後左右の4方向へ丸める
+    /// 床と同じグリッドへ変換
+    /// </summary>
+    private Vector3 GetConeGridPosition(
+        Vector3 buildPoint
+    )
+    {
+        float gridX =
+            Mathf.Round(buildPoint.x / gridSize) *
+            gridSize;
+
+        float gridZ =
+            Mathf.Round(buildPoint.z / gridSize) *
+            gridSize;
+
+        float buildLevel =
+            Mathf.Round(buildPoint.y / gridSize) *
+            gridSize;
+
+        /*
+         * Coneの底面を0、4、8...へ合わせる。
+         * Transform位置はPivot分だけ上へ移動する。
+         */
+        float pivotY =
+            buildLevel +
+            conePivotFromBottom;
+
+        return new Vector3(
+            gridX,
+            pivotY,
+            gridZ
+        );
+    }
+
+    /// <summary>
+    /// Playerの足元に近い建築階層を取得
+    /// </summary>
+    private float GetPlayerBuildLevel()
+    {
+        float playerBottomY =
+            player.position.y;
+
+        Collider playerCollider =
+            player.GetComponent<Collider>();
+
+        if (playerCollider != null)
+        {
+            playerBottomY =
+                playerCollider.bounds.min.y;
+        }
+
+        return Mathf.Round(
+            playerBottomY / gridSize
+        ) * gridSize;
+    }
+
+    /// <summary>
+    /// Playerの向きを前後左右へ丸める
     /// </summary>
     private Vector3 GetSnappedPlayerForward()
     {
-        Vector3 forward =
-            player.forward;
-
+        Vector3 forward = player.forward;
         forward.y = 0f;
 
         if (forward.sqrMagnitude <= 0.001f)
@@ -373,235 +420,38 @@ public class BuildCone : MonoBehaviour
     }
 
     /// <summary>
-    /// コーンをグリッド位置へ配置する
+    /// 地面・床・既存建築への接続判定
     /// </summary>
-    private Vector3 GetConeGridPosition(
-        Vector3 buildPoint
-    )
+    private bool IsConnected(Vector3 conePosition)
     {
-        Vector3 position =
-            buildPoint;
-
-        // XとZはグリッド中心へ吸着
-        position.x =
-            Mathf.Round(position.x / gridSize) *
-            gridSize;
-
-        position.z =
-            Mathf.Round(position.z / gridSize) *
-            gridSize;
-
-        // コーンを配置する高さを0、4、8...へ合わせる
-        float coneLevel =
-            Mathf.Round(position.y / gridSize) *
-            gridSize;
-
-        /*
-         * コーンPrefabのPivotが中央にあるため、
-         * 実際の厚さの半分だけ上へ持ち上げる。
-         */
-        position.y =
-            coneLevel +
-            GetActualConeThickness() / 2f;
-
-        return position;
-    }
-
-    /// <summary>
-    /// Playerの足元からコーンを置く階層を取得する
-    ///
-    /// 階段の下半分では下の階層、
-    /// 階段の上半分まで登ると上の階層になる。
-    /// </summary>
-    private float GetPlayerConeBuildLevel()
-    {
-        float playerBottomY =
-            player.position.y;
-
-        Collider playerCollider =
-            player.GetComponent<Collider>();
-
-        if (playerCollider != null)
-        {
-            playerBottomY =
-                playerCollider.bounds.min.y;
-        }
-
-        return Mathf.Round(
-            playerBottomY / gridSize
-        ) * gridSize;
-    }
-
-    /// <summary>
-    /// コーンPrefabのColliderから実際の厚さを取得する
-    /// Colliderがない場合はCone Thicknessを使用する
-    /// </summary>
-    private float GetActualConeThickness()
-    {
-        if (conePrefab == null)
-        {
-            return coneThickness;
-        }
-
-        BoxCollider coneCollider =
-            conePrefab.GetComponentInChildren<BoxCollider>();
-
-        if (coneCollider == null)
-        {
-            return coneThickness;
-        }
-
-        float thickness =
-            coneCollider.size.y *
-            Mathf.Abs(
-                coneCollider.transform.lossyScale.y
-            );
-
-        if (thickness <= 0.001f)
-        {
-            return coneThickness;
-        }
-
-        return thickness;
-    }
-
-    /// <summary>
-    /// 候補がPlayerと同じXZグリッドか確認する
-    /// </summary>
-    private bool IsSamePlayerGrid(
-        Vector3 conePosition
-    )
-    {
-        float playerGridX =
-            Mathf.Round(
-                player.position.x / gridSize
-            ) * gridSize;
-
-        float playerGridZ =
-            Mathf.Round(
-                player.position.z / gridSize
-            ) * gridSize;
-
-        return
-            Mathf.Approximately(
-                conePosition.x,
-                playerGridX
-            ) &&
-            Mathf.Approximately(
-                conePosition.z,
-                playerGridZ
-            );
-    }
-
-    /// <summary>
-    /// コーンが地面または既存建築につながっているか確認する
-    /// </summary>
-    private bool IsConeConnected(
-        Vector3 conePosition
-    )
-    {
-        // 地面に接している
-        if (IsConnectedToGround(conePosition))
-        {
-            return true;
-        }
-
-        // コーンの真下に建築物がある
-        if (HasBuildBelow(conePosition))
-        {
-            return true;
-        }
-
-        // コーンの前後左右の辺に建築物がある
-        if (HasBuildBeside(conePosition))
-        {
-            return true;
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// コーンの下に地面があるか確認する
-    /// </summary>
-    private bool IsConnectedToGround(
-        Vector3 conePosition
-    )
-    {
-        float actualThickness =
-            GetActualConeThickness();
-
-        float coneLevel =
+        float coneBaseY =
             conePosition.y -
-            actualThickness / 2f;
+            conePivotFromBottom;
 
-        // 地面階以外では地面判定を行わない
-        if (coneLevel > 0.1f)
-        {
-            return false;
-        }
+        Vector3 checkCenter = new Vector3(
+            conePosition.x,
+            coneBaseY - connectionThickness,
+            conePosition.z
+        );
 
-        /*
-         * コーンのすぐ下をBoxで確認する。
-         * 四隅Rayより安定して地面を検出できる。
-         */
-        Vector3 checkCenter =
-            conePosition -
-            Vector3.up *
-            (
-                actualThickness / 2f +
-                0.1f
-            );
+        Vector3 halfExtents = new Vector3(
+            gridSize / 2f - 0.15f,
+            connectionThickness,
+            gridSize / 2f - 0.15f
+        );
 
-        Vector3 halfExtents =
-            new Vector3(
-                gridSize / 2f - 0.15f,
-                0.15f,
-                gridSize / 2f - 0.15f
-            );
+        int connectionMask =
+            groundLayer.value |
+            buildLayer.value |
+            floorLayer.value;
 
-        return Physics.CheckBox(
+        Collider[] hits = Physics.OverlapBox(
             checkCenter,
             halfExtents,
             Quaternion.identity,
-            groundLayer,
+            connectionMask,
             QueryTriggerInteraction.Ignore
         );
-    }
-
-    /// <summary>
-    /// コーンの真下に建築物があるか確認する
-    /// </summary>
-    private bool HasBuildBelow(
-        Vector3 conePosition
-    )
-    {
-        float actualThickness =
-            GetActualConeThickness();
-
-        Vector3 checkCenter =
-            conePosition -
-            Vector3.up *
-            (
-                actualThickness / 2f +
-                connectionThickness
-            );
-
-        Vector3 halfExtents =
-            new Vector3(
-                gridSize / 2f - 0.15f,
-                connectionThickness,
-                gridSize / 2f - 0.15f
-            );
-
-        Collider[] hits =
-            Physics.OverlapBox(
-                checkCenter,
-                halfExtents,
-                Quaternion.identity,
-                buildLayer,
-                QueryTriggerInteraction.Ignore
-            );
 
         foreach (Collider hit in hits)
         {
@@ -613,69 +463,69 @@ public class BuildCone : MonoBehaviour
             return true;
         }
 
-        return false;
+        return IsConnectedBeside(conePosition);
     }
 
     /// <summary>
-    /// コーンの前後左右の辺に建築物があるか確認する
+    /// 前後左右に建築物があるか確認
     /// </summary>
-    private bool HasBuildBeside(
+    private bool IsConnectedBeside(
         Vector3 conePosition
     )
     {
+        float coneBaseY =
+            conePosition.y -
+            conePivotFromBottom;
+
         float halfGrid =
             gridSize / 2f;
 
-        Vector3[] checkCenters =
+        Vector3 basePosition = new Vector3(
+            conePosition.x,
+            coneBaseY,
+            conePosition.z
+        );
+
+        Vector3[] centers =
         {
-            conePosition +
-            Vector3.forward * halfGrid,
-
-            conePosition +
-            Vector3.back * halfGrid,
-
-            conePosition +
-            Vector3.right * halfGrid,
-
-            conePosition +
-            Vector3.left * halfGrid
+            basePosition + Vector3.forward * halfGrid,
+            basePosition + Vector3.back * halfGrid,
+            basePosition + Vector3.right * halfGrid,
+            basePosition + Vector3.left * halfGrid
         };
 
-        for (int i = 0;
-             i < checkCenters.Length;
-             i++)
+        int connectionMask =
+            buildLayer.value |
+            floorLayer.value;
+
+        for (int i = 0; i < centers.Length; i++)
         {
             Vector3 halfExtents;
 
-            // 前後の辺
             if (i < 2)
             {
-                halfExtents =
-                    new Vector3(
-                        halfGrid - 0.15f,
-                        connectionThickness,
-                        connectionThickness
-                    );
+                halfExtents = new Vector3(
+                    halfGrid - 0.15f,
+                    connectionThickness,
+                    connectionThickness
+                );
             }
-            // 左右の辺
             else
             {
-                halfExtents =
-                    new Vector3(
-                        connectionThickness,
-                        connectionThickness,
-                        halfGrid - 0.15f
-                    );
+                halfExtents = new Vector3(
+                    connectionThickness,
+                    connectionThickness,
+                    halfGrid - 0.15f
+                );
             }
 
-            Collider[] hits =
-                Physics.OverlapBox(
-                    checkCenters[i],
-                    halfExtents,
-                    Quaternion.identity,
-                    buildLayer,
-                    QueryTriggerInteraction.Ignore
-                );
+            Collider[] hits = Physics.OverlapBox(
+                centers[i],
+                halfExtents,
+                Quaternion.identity,
+                connectionMask,
+                QueryTriggerInteraction.Ignore
+            );
 
             foreach (Collider hit in hits)
             {
@@ -692,30 +542,39 @@ public class BuildCone : MonoBehaviour
     }
 
     /// <summary>
-    /// 同じ場所に完成済みのコーンがあるか確認する
+    /// 完成済みConeとの重複判定
+    /// 床は重複判定へ含めない
     /// </summary>
     private bool IsOverlappingCone(
         Vector3 position
     )
     {
-        float actualThickness =
-            GetActualConeThickness();
+        float coneBaseY =
+            position.y -
+            conePivotFromBottom;
 
-        Vector3 halfExtents =
-            new Vector3(
-                gridSize / 2f - 0.1f,
-                actualThickness / 2f,
-                gridSize / 2f - 0.1f
-            );
+        Vector3 checkCenter = new Vector3(
+            position.x,
+            coneBaseY + coneHeight / 2f,
+            position.z
+        );
 
-        Collider[] hits =
-            Physics.OverlapBox(
-                position,
-                halfExtents,
-                Quaternion.identity,
-                coneLayer,
-                QueryTriggerInteraction.Ignore
-            );
+        Vector3 halfExtents = new Vector3(
+            gridSize / 2f - 0.1f,
+            Mathf.Max(
+                coneHeight / 2f - 0.05f,
+                0.05f
+            ),
+            gridSize / 2f - 0.1f
+        );
+
+        Collider[] hits = Physics.OverlapBox(
+            checkCenter,
+            halfExtents,
+            Quaternion.identity,
+            coneLayer,
+            QueryTriggerInteraction.Ignore
+        );
 
         foreach (Collider hit in hits)
         {
@@ -731,7 +590,33 @@ public class BuildCone : MonoBehaviour
     }
 
     /// <summary>
-    /// コーン候補がPlayerより後ろにあるか確認する
+    /// Playerと同じXZグリッドか確認
+    /// </summary>
+    private bool IsSamePlayerGrid(
+        Vector3 position
+    )
+    {
+        float playerGridX =
+            Mathf.Round(player.position.x / gridSize) *
+            gridSize;
+
+        float playerGridZ =
+            Mathf.Round(player.position.z / gridSize) *
+            gridSize;
+
+        return
+            Mathf.Approximately(
+                position.x,
+                playerGridX
+            ) &&
+            Mathf.Approximately(
+                position.z,
+                playerGridZ
+            );
+    }
+
+    /// <summary>
+    /// 候補がPlayerの後ろか確認
     /// </summary>
     private bool IsBehindPlayer(
         Vector3 position
@@ -747,8 +632,6 @@ public class BuildCone : MonoBehaviour
             return false;
         }
 
-        playerForward.Normalize();
-
         Vector3 toBuild =
             position -
             player.position;
@@ -761,17 +644,15 @@ public class BuildCone : MonoBehaviour
         }
 
         return Vector3.Dot(
-            playerForward,
+            playerForward.normalized,
             toBuild.normalized
         ) < 0f;
     }
 
     /// <summary>
-    /// Colliderが現在のプレビュー自身か確認する
+    /// プレビュー自身のColliderか確認
     /// </summary>
-    private bool IsPreviewCollider(
-        Collider hit
-    )
+    private bool IsPreviewCollider(Collider hit)
     {
         if (currentPreview == null)
         {
@@ -787,11 +668,21 @@ public class BuildCone : MonoBehaviour
     }
 
     /// <summary>
-    /// 建築可能状態に応じてプレビュー色を変更する
+    /// LayerMaskにLayerが含まれるか確認
     /// </summary>
-    private void SetPreviewMaterial(
-        bool canBuild
+    private bool IsLayerInMask(
+        int layer,
+        LayerMask layerMask
     )
+    {
+        return
+            (layerMask.value & (1 << layer)) != 0;
+    }
+
+    /// <summary>
+    /// プレビューのMaterialを変更
+    /// </summary>
+    private void SetPreviewMaterial(bool canBuild)
     {
         if (currentPreview == null)
         {
@@ -809,40 +700,47 @@ public class BuildCone : MonoBehaviour
         }
 
         Renderer[] renderers =
-            currentPreview.GetComponentsInChildren<Renderer>();
+            currentPreview
+                .GetComponentsInChildren<Renderer>();
 
-        foreach (Renderer renderer in renderers)
+        foreach (Renderer targetRenderer in renderers)
         {
-            renderer.material =
+            targetRenderer.material =
                 targetMaterial;
         }
     }
 
     /// <summary>
-    /// 建築済み判定用のキーを作る
+    /// 建築済み位置のキーを生成
     /// </summary>
-    private string GetBuildKey(
-        Vector3 position
-    )
+    private string GetBuildKey(Vector3 position)
     {
-        int x =
+        /*
+         * Pivotの位置ではなくCone底面の
+         * グリッド階層をキーに使用する。
+         */
+        float baseY =
+            position.y -
+            conePivotFromBottom;
+
+        int gridX =
             Mathf.RoundToInt(
-                position.x * 100f
+                position.x / gridSize
             );
 
-        int y =
+        int gridY =
             Mathf.RoundToInt(
-                position.y * 100f
+                baseY / gridSize
             );
 
-        int z =
+        int gridZ =
             Mathf.RoundToInt(
-                position.z * 100f
+                position.z / gridSize
             );
 
         return
-            x + "_" +
-            y + "_" +
-            z;
+            gridX + "_" +
+            gridY + "_" +
+            gridZ;
     }
 }

@@ -18,7 +18,8 @@ public class BuildingSystem : MonoBehaviour
         None,
         Wall,
         Ramp,
-        Floor
+        Floor,
+        Cone
     }
 
     [Header("入力")]
@@ -29,6 +30,7 @@ public class BuildingSystem : MonoBehaviour
     public BuildWall wallBuilder;
     public BuildRamp rampBuilder;
     public BuildFloor floorBuilder;
+    public BuildCone coneBuilder;
 
     [Header("連続建築設定")]
     [Tooltip("左クリック長押し中に建築する間隔")]
@@ -72,6 +74,12 @@ public class BuildingSystem : MonoBehaviour
                 FindObjectOfType<BuildFloor>();
         }
 
+        if (coneBuilder == null)
+        {
+            coneBuilder =
+                FindObjectOfType<BuildCone>();
+        }
+
         // 必要な参照が見つからなかった場合はエラーを表示
         ValidateReferences();
     }
@@ -111,6 +119,15 @@ public class BuildingSystem : MonoBehaviour
                 "BuildingSystem: " +
                 "BuildFloorが見つかりません。" +
                 "BuildFloorをシーン内のGameObjectへ追加してください"
+            );
+        }
+
+        if (coneBuilder == null)
+        {
+            Debug.LogError(
+                "BuildingSystem: " +
+                "BuildConeが見つかりません。" +
+                "BuildConeをシーン内のGameObjectへ追加してください"
             );
         }
     }
@@ -154,6 +171,17 @@ public class BuildingSystem : MonoBehaviour
 
             SelectBuild(BuildType.Floor);
             input.ResetBuildFloor();
+        }
+
+        // コーンモードへ切り替える
+        if (input.BuildConePressed)
+        {
+            Debug.Log(
+                "コーン建築モードへ切り替え"
+            );
+
+            SelectBuild(BuildType.Cone);
+            input.ResetBuildCone();
         }
 
         // 選択中の建築プレビューを更新する
@@ -200,6 +228,10 @@ public class BuildingSystem : MonoBehaviour
 
             case BuildType.Floor:
                 SelectFloor();
+                break;
+
+            case BuildType.Cone:
+                SelectCone();
                 break;
 
             default:
@@ -298,6 +330,38 @@ public class BuildingSystem : MonoBehaviour
     }
 
     /// <summary>
+    /// コーンモードを開始する
+    /// </summary>
+    private void SelectCone()
+    {
+        if (coneBuilder == null)
+        {
+            coneBuilder =
+                FindObjectOfType<BuildCone>();
+        }
+
+        if (coneBuilder == null)
+        {
+            Debug.LogError(
+                "Cone Builderが設定されていません。" +
+                "BuildConeをGameObjectへ追加し、" +
+                "BuildingSystemのCone Builderへ設定してください"
+            );
+
+            currentBuildType =
+                BuildType.None;
+
+            return;
+        }
+
+        coneBuilder.ShowPreview();
+
+        Debug.Log(
+            "コーンPreviewの生成処理が完了しました"
+        );
+    }
+
+    /// <summary>
     /// 選択中の建築プレビューを更新する
     /// </summary>
     private void UpdateCurrentPreview()
@@ -322,6 +386,13 @@ public class BuildingSystem : MonoBehaviour
                 if (floorBuilder != null)
                 {
                     floorBuilder.UpdatePreview();
+                }
+                break;
+
+            case BuildType.Cone:
+                if (coneBuilder != null)
+                {
+                    coneBuilder.UpdatePreview();
                 }
                 break;
         }
@@ -354,6 +425,13 @@ public class BuildingSystem : MonoBehaviour
                     floorBuilder.Build();
                 }
                 break;
+
+            case BuildType.Cone:
+                if (coneBuilder != null)
+                {
+                    coneBuilder.Build();
+                }
+                break;
         }
     }
 
@@ -375,6 +453,11 @@ public class BuildingSystem : MonoBehaviour
         if (floorBuilder != null)
         {
             floorBuilder.HidePreview();
+        }
+
+        if (coneBuilder != null)
+        {
+            coneBuilder.HidePreview();
         }
     }
 
