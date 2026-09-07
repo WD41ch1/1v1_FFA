@@ -5,7 +5,8 @@ using UnityEngine;
 /// コーン建築を担当する独立クラス
 ///
 /// ・床と同じグリッドへ配置
-/// ・床に照準が当たった場合は、その床の中央へ配置
+/// ・カメラ方向の隣接1マスへ配置（視線の命中位置は使用しない）
+/// ・上向きで前方1マス・1段上、下向きで足元へ配置
 /// ・床の上へ重ねて建築可能
 /// ・Cone同士の重複は禁止
 /// ・Prefabの向きをY回転で補正可能
@@ -58,6 +59,10 @@ public class BuildCone : MonoBehaviour
     [Header("視線設定")]
     [Range(-1f, 0f)]
     public float lookDownThreshold = -0.45f;
+
+    [Tooltip("この値より上を向くと、前方1マス・現在の建築階層の1段上を候補にする")]
+    [Range(0f, 1f)]
+    public float lookUpThreshold = 0.3f;
 
     [Header("接続判定")]
     public float connectionThickness = 0.2f;
@@ -198,90 +203,36 @@ public class BuildCone : MonoBehaviour
             return false;
         }
 
-        Vector3 cameraForward =
-            playerCamera.transform.forward;
+        // 視線の命中位置は使わず、上下の向きで候補階層を切り替える。
+        // Playerのいるマスから、カメラ側の隣接1マスに統一する。
+        Vector3 forward = GetSnappedPlayerForward();
+        if (forward.sqrMagnitude <= 0.001f)
+        {
+            return false;
+        }
+
+        Vector3 playerGrid = new Vector3(
+            Mathf.Round(player.position.x / gridSize) * gridSize,
+            GetPlayerBuildLevel(),
+            Mathf.Round(player.position.z / gridSize) * gridSize
+        );
+
+        float lookY = playerCamera.transform.forward.y;
+        bool lookingDown = lookY < lookDownThreshold;
+        bool lookingUp = lookY > lookUpThreshold;
 
         Vector3 buildPoint;
-
-        bool lookingDown =
-            cameraForward.y <
-            lookDownThreshold;
-
         if (lookingDown)
         {
-            // Playerと同じグリッド
-            buildPoint = new Vector3(
-                player.position.x,
-                GetPlayerBuildLevel(),
-                player.position.z
-            );
+            buildPoint = playerGrid;
         }
         else
         {
-            int rayMask =
-                groundLayer.value |
-                buildLayer.value |
-                floorLayer.value |
-                coneLayer.value;
-
-            Ray ray = new Ray(
-                playerCamera.transform.position,
-                cameraForward
-            );
-
-            if (Physics.Raycast(
-                ray,
-                out RaycastHit hit,
-                buildDistance,
-                rayMask,
-                QueryTriggerInteraction.Ignore))
+            buildPoint = playerGrid + forward * gridSize;
+            if (lookingUp)
             {
-                if (IsLayerInMask(
-                    hit.collider.gameObject.layer,
-                    floorLayer))
-                {
-                    /*
-                     * 床に当たった場合は命中位置ではなく、
-                     * 床Colliderの中央を使用する。
-                     */
-                    buildPoint = new Vector3(
-                        hit.collider.bounds.center.x,
-                        hit.collider.bounds.max.y,
-                        hit.collider.bounds.center.z
-                    );
-                }
-                else
-                {
-                    buildPoint =
-                        hit.point +
-                        hit.normal * 0.1f;
-                }
-            }
-            else
-            {
-                Vector3 forward =
-                    GetSnappedPlayerForward();
-
-                if (forward.sqrMagnitude <= 0.001f)
-                {
-                    return false;
-                }
-
-                Vector3 playerGrid = new Vector3(
-                    Mathf.Round(
-                        player.position.x / gridSize
-                    ) * gridSize,
-
-                    GetPlayerBuildLevel(),
-
-                    Mathf.Round(
-                        player.position.z / gridSize
-                    ) * gridSize
-                );
-
-                buildPoint =
-                    playerGrid +
-                    forward * gridSize;
+                // 高さだけを1段上げる。接続判定は必ず下で実行する。
+                buildPoint.y += gridSize;
             }
         }
 
@@ -316,6 +267,12 @@ public class BuildCone : MonoBehaviour
 
         // シーン内の完成済みConeと重複
         if (IsOverlappingCone(position))
+        {
+            canBuild = false;
+        }
+
+        // Player本体または子のColliderと重なる場合は建築不可。
+        if (IsOverlappingPlayer(position))
         {
             canBuild = false;
         }
@@ -380,24 +337,18 @@ public class BuildCone : MonoBehaviour
     }
 
     /// <summary>
-    /// Playerの向きを前後左右へ丸める
+    /// カメラの向きを前後左右へ丸める
     /// </summary>
     private Vector3 GetSnappedPlayerForward()
     {
-        Vector3 forward = player.forward;
+        Vector3 forward = playerCamera.transform.forward;
         forward.y = 0f;
 
         if (forward.sqrMagnitude <= 0.001f)
         {
-            forward =
-                playerCamera.transform.forward;
-
-            forward.y = 0f;
-        }
-
-        if (forward.sqrMagnitude <= 0.001f)
-        {
-            return Vector3.zero;
+            forward = Quaternion.Euler(
+                0f, playerCamera.transform.eulerAngles.y, 0f
+            ) * Vector3.forward;
         }
 
         forward.Normalize();
@@ -443,7 +394,8 @@ public class BuildCone : MonoBehaviour
         int connectionMask =
             groundLayer.value |
             buildLayer.value |
-            floorLayer.value;
+            floorLayer.value |
+            coneLayer.value;
 
         Collider[] hits = Physics.OverlapBox(
             checkCenter,
@@ -455,7 +407,7 @@ public class BuildCone : MonoBehaviour
 
         foreach (Collider hit in hits)
         {
-            if (IsPreviewCollider(hit))
+            if (IsPreviewCollider(hit) || IsPlayerCollider(hit))
             {
                 continue;
             }
@@ -496,7 +448,8 @@ public class BuildCone : MonoBehaviour
 
         int connectionMask =
             buildLayer.value |
-            floorLayer.value;
+            floorLayer.value |
+            coneLayer.value;
 
         for (int i = 0; i < centers.Length; i++)
         {
@@ -529,7 +482,7 @@ public class BuildCone : MonoBehaviour
 
             foreach (Collider hit in hits)
             {
-                if (IsPreviewCollider(hit))
+                if (IsPreviewCollider(hit) || IsPlayerCollider(hit))
                 {
                     continue;
                 }
@@ -541,6 +494,55 @@ public class BuildCone : MonoBehaviour
         return false;
     }
 
+    /// <summary>
+    /// Coneの占有範囲とPlayerのColliderが重なるか確認。
+    /// 既存のCone重複判定と同じく、底面と高さを囲むBoxで判定する。
+    /// </summary>
+    private bool IsOverlappingPlayer(Vector3 position)
+    {
+        if (player == null)
+        {
+            return false;
+        }
+
+        float baseY = position.y - conePivotFromBottom;
+        Vector3 center = new Vector3(
+            position.x,
+            baseY + coneHeight / 2f,
+            position.z
+        );
+
+        // 接するだけで弾かれにくいよう、境界を少し内側にする。
+        Vector3 halfExtents = new Vector3(
+            Mathf.Max(gridSize / 2f - 0.02f, 0.01f),
+            Mathf.Max(coneHeight / 2f - 0.02f, 0.01f),
+            Mathf.Max(gridSize / 2f - 0.02f, 0.01f)
+        );
+
+        Collider[] hits = Physics.OverlapBox(
+            center,
+            halfExtents,
+            Quaternion.identity,
+            ~0,
+            QueryTriggerInteraction.Ignore
+        );
+
+        foreach (Collider hit in hits)
+        {
+            if (IsPreviewCollider(hit))
+            {
+                continue;
+            }
+
+            if (hit.transform == player ||
+                hit.transform.IsChildOf(player))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
     /// <summary>
     /// 完成済みConeとの重複判定
     /// 床は重複判定へ含めない
@@ -616,14 +618,13 @@ public class BuildCone : MonoBehaviour
     }
 
     /// <summary>
-    /// 候補がPlayerの後ろか確認
+    /// 候補が配置方向の後ろか確認
     /// </summary>
     private bool IsBehindPlayer(
         Vector3 position
     )
     {
-        Vector3 playerForward =
-            player.forward;
+        Vector3 playerForward = GetSnappedPlayerForward();
 
         playerForward.y = 0f;
 
@@ -667,6 +668,12 @@ public class BuildCone : MonoBehaviour
             );
     }
 
+    // Player自身を建築の接続先として扱わない。
+    private bool IsPlayerCollider(Collider hit)
+    {
+        return player != null &&
+            (hit.transform == player || hit.transform.IsChildOf(player));
+    }
     /// <summary>
     /// LayerMaskにLayerが含まれるか確認
     /// </summary>

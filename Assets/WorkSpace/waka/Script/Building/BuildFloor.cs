@@ -6,7 +6,8 @@ using UnityEngine;
 ///
 /// ・床をグリッド中心へ配置する
 /// ・下を向くとPlayerの真下へ候補を出す
-/// ・正面ではPlayerの前の隣接マスへ候補を出す
+/// ・正面ではカメラ方向の隣接マスへ候補を出す
+/// ・上向きでは前方1マス・現在の建築階層の1段上へ候補を出す
 /// ・階段の上では階段の先へ候補を出す
 /// ・地面または既存建築につながる場合だけ建築可能
 /// ・何にもつながらない空中建築は禁止
@@ -50,6 +51,11 @@ public class BuildFloor : MonoBehaviour
     [Tooltip("この値よりカメラが下向きならPlayerの真下へ候補を出す")]
     [Range(-1f, 0f)]
     public float lookDownThreshold = -0.45f;
+
+    [Header("上向き判定")]
+    [Tooltip("この値より上を向くと、前方1マス・現在の建築階層の1段上を候補にする")]
+    [Range(0f, 1f)]
+    public float lookUpThreshold = 0.3f;
 
     [Header("接続判定")]
     [Tooltip("既存建築との接続判定に使う厚さ")]
@@ -202,90 +208,34 @@ public class BuildFloor : MonoBehaviour
             return false;
         }
 
-        Vector3 cameraForward =
-            playerCamera.transform.forward;
+        // 屋根と同じカメラ方向・同じグリッド階層を使用する。
+        Vector3 forward = GetSnappedPlayerForward();
+        if (forward.sqrMagnitude <= 0.001f)
+        {
+            return false;
+        }
+
+        Vector3 playerGrid = new Vector3(
+            Mathf.Round(player.position.x / gridSize) * gridSize,
+            GetPlayerFloorBuildLevel(),
+            Mathf.Round(player.position.z / gridSize) * gridSize
+        );
+
+        float lookY = playerCamera.transform.forward.y;
+        bool lookingDown = lookY < lookDownThreshold;
+        bool lookingUp = lookY > lookUpThreshold;
 
         Vector3 buildPoint;
-
-        /*
-         * カメラを下へ向けている場合は
-         * Rayの当たり位置ではなくPlayer自身のマスを使用する。
-         */
-        bool lookingDown =
-            cameraForward.y <
-            lookDownThreshold;
-
         if (lookingDown)
         {
-            buildPoint =
-                new Vector3(
-                    player.position.x,
-                    GetPlayerFloorBuildLevel(),
-                    player.position.z
-                );
+            buildPoint = playerGrid;
         }
         else
         {
-            int rayMask =
-                groundLayer.value |
-                buildLayer.value;
-
-            Ray ray = new Ray(
-                playerCamera.transform.position,
-                cameraForward
-            );
-
-            if (Physics.Raycast(
-                    ray,
-                    out RaycastHit hit,
-                    buildDistance,
-                    rayMask,
-                    QueryTriggerInteraction.Ignore))
+            buildPoint = playerGrid + forward * gridSize;
+            if (lookingUp)
             {
-                /*
-                 * 地面や建築物にRayが当たった場合は、
-                 * 当たった面の少し外側を候補にする。
-                 */
-                buildPoint =
-                    hit.point +
-                    hit.normal * 0.1f;
-            }
-            else
-            {
-                /*
-                 * Rayが当たらなければ、
-                 * Playerの前の隣接グリッドへ候補を出す。
-                 */
-                Vector3 forward =
-                    GetSnappedPlayerForward();
-
-                if (forward.sqrMagnitude <= 0.001f)
-                {
-                    return false;
-                }
-
-                Vector3 playerGrid =
-                    new Vector3(
-                        Mathf.Round(
-                            player.position.x /
-                            gridSize
-                        ) * gridSize,
-
-                        GetPlayerFloorBuildLevel(),
-
-                        Mathf.Round(
-                            player.position.z /
-                            gridSize
-                        ) * gridSize
-                    );
-
-                /*
-                 * buildDistanceではなくgridSizeを使用する。
-                 * これで階段の先の次の1マスに配置される。
-                 */
-                buildPoint =
-                    playerGrid +
-                    forward * gridSize;
+                buildPoint.y += gridSize;
             }
         }
 
@@ -327,30 +277,28 @@ public class BuildFloor : MonoBehaviour
             canBuild = false;
         }
 
+        // 空中でもPlayerの体を横切る床は配置しない。
+        if (IsOverlappingPlayer(position))
+        {
+            canBuild = false;
+        }
+
         return true;
     }
 
     /// <summary>
-    /// Playerが向いている方向を前後左右の4方向へ丸める
+    /// カメラの向きを前後左右の4方向へ丸める
     /// </summary>
     private Vector3 GetSnappedPlayerForward()
     {
-        Vector3 forward =
-            player.forward;
-
+        Vector3 forward = playerCamera.transform.forward;
         forward.y = 0f;
 
         if (forward.sqrMagnitude <= 0.001f)
         {
-            forward =
-                playerCamera.transform.forward;
-
-            forward.y = 0f;
-        }
-
-        if (forward.sqrMagnitude <= 0.001f)
-        {
-            return Vector3.zero;
+            forward = Quaternion.Euler(
+                0f, playerCamera.transform.eulerAngles.y, 0f
+            ) * Vector3.forward;
         }
 
         forward.Normalize();
@@ -599,13 +547,13 @@ public class BuildFloor : MonoBehaviour
                 checkCenter,
                 halfExtents,
                 Quaternion.identity,
-                buildLayer,
+                buildLayer.value | floorLayer.value,
                 QueryTriggerInteraction.Ignore
             );
 
         foreach (Collider hit in hits)
         {
-            if (IsPreviewCollider(hit))
+            if (IsPreviewCollider(hit) || IsPlayerCollider(hit))
             {
                 continue;
             }
@@ -673,13 +621,13 @@ public class BuildFloor : MonoBehaviour
                     checkCenters[i],
                     halfExtents,
                     Quaternion.identity,
-                    buildLayer,
+                    buildLayer.value | floorLayer.value,
                     QueryTriggerInteraction.Ignore
                 );
 
             foreach (Collider hit in hits)
             {
-                if (IsPreviewCollider(hit))
+                if (IsPreviewCollider(hit) || IsPlayerCollider(hit))
                 {
                     continue;
                 }
@@ -737,8 +685,7 @@ public class BuildFloor : MonoBehaviour
         Vector3 position
     )
     {
-        Vector3 playerForward =
-            player.forward;
+        Vector3 playerForward = GetSnappedPlayerForward();
 
         playerForward.y = 0f;
 
@@ -786,6 +733,49 @@ public class BuildFloor : MonoBehaviour
             );
     }
 
+    /// <summary>
+    /// 床の厚みを含む占有BoxとPlayerのColliderの重なりを確認する。
+    /// 足元より下にある床は許可し、胴体を横切る床は拒否する。
+    /// </summary>
+    private bool IsOverlappingPlayer(Vector3 position)
+    {
+        if (player == null)
+        {
+            return false;
+        }
+
+        // Transformで移動した直後の建築でも最新位置で確認する。
+        Physics.SyncTransforms();
+
+        Vector3 halfExtents = new Vector3(
+            Mathf.Max(gridSize / 2f, 0.001f),
+            Mathf.Max(GetActualFloorThickness() / 2f, 0.001f),
+            Mathf.Max(gridSize / 2f, 0.001f)
+        );
+
+        Collider[] hits = Physics.OverlapBox(
+            position,
+            halfExtents,
+            Quaternion.identity,
+            ~0,
+            QueryTriggerInteraction.Ignore
+        );
+
+        foreach (Collider hit in hits)
+        {
+            if (!IsPreviewCollider(hit) && IsPlayerCollider(hit))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+    private bool IsPlayerCollider(Collider hit)
+    {
+        return player != null &&
+            (hit.transform == player || hit.transform.IsChildOf(player));
+    }
     /// <summary>
     /// 建築可能状態に応じてプレビュー色を変更する
     /// </summary>

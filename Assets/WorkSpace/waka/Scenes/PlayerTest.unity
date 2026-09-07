@@ -507,7 +507,7 @@ MonoBehaviour:
     m_Bits: 8
   buildLayer:
     serializedVersion: 2
-    m_Bits: 1792
+    m_Bits: 7936
   wallLayer:
     serializedVersion: 2
     m_Bits: 512
@@ -540,10 +540,10 @@ MonoBehaviour:
     m_Bits: 8
   buildLayer:
     serializedVersion: 2
-    m_Bits: 1792
+    m_Bits: 7936
   rampLayer:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 2048
   buildDistance: 7
   gridSize: 4
   lookDownThreshold: -0.45
@@ -573,7 +573,7 @@ MonoBehaviour:
     m_Bits: 8
   buildLayer:
     serializedVersion: 2
-    m_Bits: 1792
+    m_Bits: 7936
   floorLayer:
     serializedVersion: 2
     m_Bits: 1024
@@ -605,14 +605,20 @@ MonoBehaviour:
     m_Bits: 8
   buildLayer:
     serializedVersion: 2
-    m_Bits: 3840
+    m_Bits: 7936
+  floorLayer:
+    serializedVersion: 2
+    m_Bits: 1024
   coneLayer:
     serializedVersion: 2
     m_Bits: 4096
-  buildDistance: 6
   gridSize: 4
-  coneThickness: 0.1
+  buildDistance: 6
+  conePivotFromBottom: 0
+  coneHeight: 0
+  coneRotationY: 45
   lookDownThreshold: -0.45
+  lookUpThreshold: 0.3
   connectionThickness: 0.15
 --- !u!4 &1666229339 stripped
 Transform:
