@@ -55,7 +55,7 @@ public class Test : MonoBehaviour
     public void TestInventoryInit()
     {
         im.AddAmmo(AmmoType.SmallAmmo, 200);
-        im.AddAmmo(AmmoType.MiddleAmmo, 400);
+        im.AddAmmo(AmmoType.MiddleAmmo, 40);
         im.AddAmmo(AmmoType.BigAmmo, 50);
         im.AddAmmo(AmmoType.ShotgunAmmo, 100);
         im.AddBildMat(BildingMatType.Wood, 500);
@@ -106,12 +106,12 @@ public class Test : MonoBehaviour
         float scroll = Input.GetAxis("Mouse ScrollWheel");
         if (scroll > 0)
         {
-            Debug.Log("上にスクロール");
+            //Debug.Log("上にスクロール");
             em.PreviousItemEquip(this.pm);
         }
         else if (scroll < 0)
         {
-            Debug.Log("下にスクロール");
+            //Debug.Log("下にスクロール");
             em.NextItemEquip(this.pm);
         }
 

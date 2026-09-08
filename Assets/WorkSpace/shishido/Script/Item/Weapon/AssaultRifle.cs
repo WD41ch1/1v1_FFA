@@ -50,16 +50,19 @@ public class AssaultRifle : WeaponBase
 
         //  補充必要数取得
         int requestValue = weaponData.maxAmmo - currentAmmo;
-
+        //  承認
+        int approvalValue = 0;
         //  inventory内弾数消費要求
         if (owner.inventoryManager.TryConsumeAmmo(
             weaponData.ammoType,
-            requestValue))
+            requestValue,
+            out approvalValue))
         {
+            //  リロード時間
             StartCoroutine(ReloadAnimation(weaponData.reloadTime));
 
             //  弾補充     
-            currentAmmo += requestValue;
+            currentAmmo += approvalValue;
             //  TODO:現状武器を切り替え、落としてすぐに拾うなどをするとリロードしていないにもかかわらず弾が装填される
 
             //  万が一マガジン数が上限より上を行った場合

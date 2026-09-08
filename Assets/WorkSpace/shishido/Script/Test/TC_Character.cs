@@ -48,14 +48,14 @@ public class TC_Character : MonoBehaviour
     /// <param name="type"></param>
     /// <param name="amount"></param>
     /// <returns></returns>
-    public bool TryConsumeAmmo(
-    AmmoType type,
-    int amount)
-    {
-        return inventoryManager.TryConsumeAmmo(
-            type,
-            amount);
-    }
+    //public bool TryConsumeAmmo(
+    //AmmoType type,
+    //int amount)
+    //{
+    //    return inventoryManager.TryConsumeAmmo(
+    //        type,
+    //        amount);
+    //}
 
     #region デバッグ用関数
 

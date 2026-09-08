@@ -14,7 +14,7 @@ public abstract class InventorySlotBase<T> : MonoBehaviour,
     where T : Enum
 {
     [SerializeField]
-    private Image icon;
+    protected Image icon;
     [SerializeField]
     protected TextMeshProUGUI quantityText;
 
@@ -29,9 +29,9 @@ public abstract class InventorySlotBase<T> : MonoBehaviour,
     protected CanvasGroup canvasGroup;
     protected Transform initParent;
     protected Transform prevParent;
-    private Vector2 pointerOffset;
-    private bool isDragging = false;
-    private IDropHandler currentDropZone; // 現在ホバー中のドロップゾーン
+    protected Vector2 pointerOffset;
+    protected bool isDragging = false;
+    protected IDropHandler currentDropZone; // 現在ホバー中のドロップゾーン
 
 
     public abstract void Initialize(InventoryUI _inventory, T _type);
@@ -50,6 +50,9 @@ public abstract class InventorySlotBase<T> : MonoBehaviour,
         return quantity;
     }
 
+    public abstract void Open();
+    public abstract void Hide();
+
     #region ドラッグアンドドロップ関係
 
     /// <summary>
@@ -58,8 +61,9 @@ public abstract class InventorySlotBase<T> : MonoBehaviour,
     public virtual void OnBeginDrag(PointerEventData eventData)
     {
         isDragging = true;
+        initParent = transform.parent;
+        transform.SetParent(transform.root.root);
         //canvasGroup.blocksRaycasts = false;
-        //transform.SetParent(transform.parent.parent); 
 
         // マウス位置を親のローカル座標系に変換
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
@@ -112,7 +116,7 @@ public abstract class InventorySlotBase<T> : MonoBehaviour,
         else
         {
             Debug.Log("ドロップゾーンが見つかりません");
-            //transform.SetParent(initParent);
+            transform.SetParent(initParent);
             Droping();
         }
     }
@@ -120,7 +124,7 @@ public abstract class InventorySlotBase<T> : MonoBehaviour,
     /// <summary>
     /// Raycast でドロップ可能なオブジェクトを検出
     /// </summary>
-    private void DetectDropZone(PointerEventData eventData)
+    public virtual void DetectDropZone(PointerEventData eventData)
     {
         // UI Raycast を使って、マウス位置の UI 要素を全て取得
         var results = new System.Collections.Generic.List<RaycastResult>();

@@ -13,8 +13,11 @@ public class ItemData : ScriptableObject
     public Sprite rarityBackGroundIcon;
 
     [Header("--基本情報--")]
-    [Header("武器名")]
+    [Header("アイテム名")]
     public string ItemName;
+
+    [Header("アイテムのタイプ")]
+    public BerItemType itemType;
 
     [Header("アイテムの見た目")]
     public GameObject itemPrefab;

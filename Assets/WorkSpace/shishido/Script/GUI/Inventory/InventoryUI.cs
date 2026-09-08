@@ -1,4 +1,5 @@
 using DG.Tweening;
+using NaughtyAttributes;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -8,9 +9,11 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using static UnityEditor.Progress;
+using static GameConst;
 
 public class InventoryUI : UIBase, IDropHandler
 {
+
     public InventoryManager im { private set; get; }
 
     //  表示切り替え変数
@@ -18,18 +21,25 @@ public class InventoryUI : UIBase, IDropHandler
     private Vector2 hidePos = new Vector2(400, -30);
     private float toggleTime = 0.2f;
 
+    [SerializeField]
+    private List<InventoryUI_ItemDrop> ItemHolderList;
+
     //  アイコンの配置場所
     [SerializeField] private Transform BildMatListTrans;
     [SerializeField] private Transform ammoListTrans;
     [SerializeField] private Transform ItemListTrans;
+    [SerializeField] private List<Transform> ItemHoldersTrams;
 
     //  プレファブ
+    [SerializeField, Header("アイテムアイコンPrefab")]
+    private GameObject ItemListPrefab;
     [SerializeField, Header("弾アイコンPrefab")]
     private GameObject AmmoListPrefab;
     [SerializeField, Header("建材アイコンPrefab")]
     private GameObject BIldMatListPrefab;
 
 
+    private List<IS_Item> items = new List<IS_Item>();
     private List<IS_Ammo> ammoList = new List<IS_Ammo>();
     private List<IS_BIldMat> BIldMatList = new List<IS_BIldMat>();
     protected override void OnInitialize()
@@ -49,7 +59,28 @@ public class InventoryUI : UIBase, IDropHandler
             image.raycastTarget = true;
         }
 
+        int holderIndex = 0;
+        //  各ItemHolderの初期化
+        foreach (InventoryUI_ItemDrop holder in ItemHolderList)
+        {
+            //  初期化
+            holder.Initialize(myPlayer, gui);
+
+            //  その他設定
+            holder.Setting(this,holderIndex);
+            holderIndex++;
+        }
+        //  transformの割り当て
+        SetHolderTrans();
+
+        //  UIアイテムスロットを全て空で登録
+        for (int i = 0; i < ITEM_SLOT_MAX; i++)
+        {
+            items.Add(null);
+        }
+
         //  イベント登録
+        im.OnAddInventoryItem += UpdateItem;
         im.OnChangeAmmo += UpdateAmmo;
         im.OnChangeBildMat += UpdateBIldMat;
     }
@@ -59,14 +90,162 @@ public class InventoryUI : UIBase, IDropHandler
 
     }
 
-    #region イベント発火関数
+    /// <summary>
+    /// transformの割り当て
+    /// </summary>
+    private void SetHolderTrans()
+    {
+        if (ItemHolderList == null) return;
 
+        for (int i = 0; i < ITEM_SLOT_MAX; i++)
+        {
+            ItemHoldersTrams.Add(ItemHolderList[i].transform);
+        }
+    }
+
+    /// <summary>
+    /// アイテムホルダーのTransformGetter
+    /// </summary>
+    /// <param name="number"></param>
+    /// <returns></returns>
+    public Transform GetHolderTrans(int number)
+    {
+        return ItemHoldersTrams[number];
+    }
+
+    #region アイテム
+
+    /// <summary>
+    /// アイテム更新
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="amount"></param>
+    /// <param name="changeType"></param>
+    private void UpdateItem(int slotNum, ItemData data, ResourceChangeType changeType)
+    {
+        switch (changeType)
+        {
+            case ResourceChangeType.AddedNew:
+                InitializeItemSlot(slotNum, data, ItemListPrefab, AddedNewItem(slotNum), items);
+                break;
+            case ResourceChangeType.Updated:
+                UpdateSlot(items, data.itemType, 0);
+                break;
+            case ResourceChangeType.Removed:
+                RemovedSlot(items, data.itemType, 0);
+                break;
+        }
+    }
+
+    private Transform AddedNewItem(int slotNum)
+    {
+        if (ItemHoldersTrams == null) return null;
+
+        Transform ItemHolder = null;
+
+        for (int i = 0; i <= ItemHoldersTrams.Count; i++)
+        {
+            if (i == slotNum)
+            {
+                ItemHolder = ItemHoldersTrams[i];
+                break;
+            }
+        }
+
+        return ItemHolder;
+    }
+
+    /// <summary>
+    /// インベントリ内のアイテムスロット生成
+    /// </summary>
+    /// <param name="slotNum"></param>
+    /// <param name="prefab"></param>
+    /// <param name="trans"></param>
+    /// <param name="data"></param>
+    /// <param name="list"></param>
+    private void InitializeItemSlot(
+        int slotNum,
+        ItemData data,
+        GameObject prefab,
+        Transform trans,
+        List<IS_Item> list
+       )
+    {
+        //  スロットの番号を内部インベントリの番号に登録
+        IS_Item slot = list[slotNum];
+
+        //  slotに何も入っていないなら
+        if (slot == null)
+        {
+            //  生成
+            GameObject ob = Instantiate(prefab, trans);
+            //  特定のジェネリック型を持つInventorySlotBaseを取得
+            slot = ob.GetComponent<IS_Item>();
+        }
+
+        //  リストに追加
+        if (!list.Contains(slot))
+        {
+            list.Add(slot);
+            //  初期化
+            slot.Initialize(this, data.itemType);
+            slot.DataInitialize(trans, data.itemIcon, slotNum);
+        }
+
+        int itemAmont = 0;
+        switch (data.itemType)
+        {
+            case BerItemType.Weapon:
+                if (data is WeaponData weapon)
+                {
+                    itemAmont = weapon.maxAmmo;
+                }
+
+                break;
+            case BerItemType.Healing:
+                break;
+            case BerItemType.Throwing:
+                break;
+        }
+
+        //  UI更新:アイコン
+        slot.UpdateUI(itemAmont);
+        //  UI更新:スロット
+        SlotALLUpdate();
+    }
+
+    /// <summary>
+    /// スロット全体の更新
+    /// </summary>
+    public void SlotALLUpdate()
+    {
+        foreach (var holder in ItemHolderList)
+        {
+            holder.SlotUpdate();
+        }
+    }
+
+    public ItemData GetItemData(int slotNumber)
+    {
+        return im.GetItem(slotNumber);
+    }
+
+    #endregion
+
+    #region 弾薬・建材 /イベント発火
+
+    /// <summary>
+    /// 弾薬の更新
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="amount"></param>
+    /// <param name="changeType"></param>
     private void UpdateAmmo(AmmoType type, int amount, ResourceChangeType changeType)
     {
         switch (changeType)
         {
             case ResourceChangeType.AddedNew:
-                CreateSlot(AmmoListPrefab, ammoListTrans, ammoList, type, amount);
+                InitializeSlot(AmmoListPrefab, ammoListTrans, ammoList, type, amount);
                 break;
             case ResourceChangeType.Updated:
                 UpdateSlot(ammoList, type, amount);
@@ -76,12 +255,19 @@ public class InventoryUI : UIBase, IDropHandler
                 break;
         }
     }
+
+    /// <summary>
+    /// 建材の更新 
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="amount"></param>
+    /// <param name="changeType"></param>
     private void UpdateBIldMat(BildingMatType type, int amount, ResourceChangeType changeType)
     {
         switch (changeType)
         {
             case ResourceChangeType.AddedNew:
-                CreateSlot(BIldMatListPrefab, BildMatListTrans, BIldMatList, type, amount);
+                InitializeSlot(BIldMatListPrefab, BildMatListTrans, BIldMatList, type, amount);
                 break;
             case ResourceChangeType.Updated:
                 UpdateSlot(BIldMatList, type, amount);
@@ -105,7 +291,7 @@ public class InventoryUI : UIBase, IDropHandler
     /// <param name="listTrans">プレファブを置く場所</param>
     /// <param name="list">置いておくlist</param>
     /// <param name="type">アイテムの種類(AmmoType,BildingMatType)</param>
-    private void CreateSlot<TSlot, TEnum>(
+    private void InitializeSlot<TSlot, TEnum>(
     GameObject prefab,
     Transform listTrans,
     List<TSlot> list,
@@ -114,16 +300,39 @@ public class InventoryUI : UIBase, IDropHandler
     where TSlot : InventorySlotBase<TEnum>
     where TEnum : Enum
     {
-        //  生成
-        GameObject ob = Instantiate(prefab, listTrans);
-        //  特定のジェネリック型を持つInventorySlotBaseを取得
-        TSlot slot = ob.GetComponent<TSlot>();
-        //  初期化
-        slot.Initialize(this, type);
+        TSlot slot = null;
+
+        foreach (var item in list)
+        {
+            //  ２つのTEnum値が同じなら
+            if (EqualityComparer<TEnum>.Default.Equals(type, item.GetResourceType()))
+            {
+                //  同Typeのアイテムを見つけられたらslotに代入
+                slot = item;
+                slot.Open();
+                break;
+            }
+        }
+
+        //  slotが見つからなかった時
+        if (slot == null)
+        {
+            //  生成
+            GameObject ob = Instantiate(prefab, listTrans);
+            //  特定のジェネリック型を持つInventorySlotBaseを取得
+            slot = ob.GetComponent<TSlot>();
+        }
+
+        //  リストに追加
+        if (!list.Contains(slot))
+        {
+            list.Add(slot);
+            //  初期化
+            slot.Initialize(this, type);
+        }
+
         //  UI更新
         slot.UpdateUI(amount);
-        //  リストに追加
-        list.Add(slot);
     }
 
     /// <summary>
@@ -180,13 +389,8 @@ public class InventoryUI : UIBase, IDropHandler
                     //  そのSlot(InventorySlotBase<TEnum>を継承したクラス)を格納
                     targetItem = item;
                 }
-
             }
         }
-
-        //  Listから削除
-        if (targetItem != null)
-            list.Remove(targetItem);
 
         //  インベントリ内のリソース削除
         im?.RemoveResouce(type);
@@ -211,6 +415,11 @@ public class InventoryUI : UIBase, IDropHandler
 
     #region ドロップ
 
+
+    /// <summary>
+    /// アイテム系の大本のドロップ処理
+    /// </summary>
+    /// <param name="eventData"></param>
     public void OnDrop(PointerEventData eventData)
     {
         Debug.Log(" OnDrop が呼ばれました！"); // これが出るか確認
@@ -227,7 +436,13 @@ public class InventoryUI : UIBase, IDropHandler
                 switch (isb.GetItemType())
                 {
                     case ItemType.Item:
-                        target = ItemListTrans;
+                        Transform targetTrans = ItemListTrans;
+
+                        if (isb is IS_Item item)
+                            targetTrans = ItemHoldersTrams[item.slotNumber];
+
+                        target = targetTrans;
+
                         break;
                     case ItemType.Ammo:
                         target = ammoListTrans;

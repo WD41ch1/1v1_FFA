@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class IS_Ammo : InventorySlotBase<AmmoType>
@@ -7,11 +8,16 @@ public class IS_Ammo : InventorySlotBase<AmmoType>
 
     public override void Initialize(InventoryUI _inventory, AmmoType _type)
     {
+        //  ItemTypeの設定
         itemType = ItemType.Ammo;
-        rectTrans = GetComponent<RectTransform>();
+        //  誰のInventoryか(owner)
         inventory = _inventory;
+        //  必要コンポーネント取得
+        rectTrans = GetComponent<RectTransform>();
         canvasGroup = inventory.GetcanvasGroup();
         initParent = transform.parent;
+        if (quantityText == null) quantityText = GetComponentInChildren<TextMeshProUGUI>();
+        //  建材タイプ
         type = _type;
     }
 
@@ -27,7 +33,17 @@ public class IS_Ammo : InventorySlotBase<AmmoType>
         //  指定数捨てる
         inventory?.im.AmmoDroping(type, quantity);
         //  自身を削除
-        Destroy(gameObject);
+        Hide();
+        //Destroy(gameObject);
     }
 
+    public override void Open()
+    {
+        transform.gameObject.SetActive(true);
+    }
+
+    public override void Hide()
+    {
+        transform.gameObject.SetActive(false);
+    }
 }
