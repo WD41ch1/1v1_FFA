@@ -482,7 +482,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 1, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.8, y: 1, z: 0.8}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6421309607482773826}
@@ -718,6 +718,18 @@ MonoBehaviour:
         m_CallState: 2
     m_ActionId: eaf15718-16c0-42e8-b4c2-52a0bfd3a73a
     m_ActionName: Player/Build[/Mouse/backButton,/Mouse/forwardButton]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 5f70586e-36fa-44ff-9c61-9ad711a6b7be
+    m_ActionName: Player/Ramp[/Mouse/forwardButton]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 463120a8-b23f-492c-b957-9e3fdebb734f
+    m_ActionName: Player/Floor[/Keyboard/v]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 7106bbeb-04b2-4bc1-b4e1-43cd38dec49c
+    m_ActionName: Player/Cone[/Keyboard/c]
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
   m_DefaultActionMap: Player

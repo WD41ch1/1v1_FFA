@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 9023566013162510664}
   - component: {fileID: 5281558305002079994}
   - component: {fileID: 726265573102297635}
+  - component: {fileID: 7450735493655593999}
   m_Layer: 10
   m_Name: Floor
   m_TagString: Untagged
@@ -105,3 +106,46 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &7450735493655593999
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2207945317159536514}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d189e6fa8b60d0b40ab397b31b7fe40d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  localCenter: {x: 0, y: 0, z: 0}
+  width: 1
+  depth: 1
+  thickness: 1
+  floorMaterial: {fileID: 2100000, guid: fd548a6fb7828e04c86b55b33312edf9, type: 2}
+  gridMaterial: {fileID: 0}
+  patterns:
+  - name: Corner 0
+    removedCells: 00000000
+    resultPrefab: {fileID: 0}
+  - name: Corner 1
+    removedCells: 01000000
+    resultPrefab: {fileID: 0}
+  - name: Corner 2
+    removedCells: 02000000
+    resultPrefab: {fileID: 0}
+  - name: Corner 3
+    removedCells: 03000000
+    resultPrefab: {fileID: 0}
+  - name: Half near
+    removedCells: 0000000001000000
+    resultPrefab: {fileID: 0}
+  - name: Half far
+    removedCells: 0200000003000000
+    resultPrefab: {fileID: 0}
+  - name: Half left
+    removedCells: 0000000002000000
+    resultPrefab: {fileID: 0}
+  - name: Half right
+    removedCells: 0100000003000000
+    resultPrefab: {fileID: 0}
