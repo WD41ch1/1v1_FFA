@@ -14,7 +14,7 @@ public abstract class InventorySlotBase<T> : MonoBehaviour,
     where T : Enum
 {
     [SerializeField]
-    private Image icon;
+    protected Image icon;
     [SerializeField]
     protected TextMeshProUGUI quantityText;
 
@@ -29,9 +29,9 @@ public abstract class InventorySlotBase<T> : MonoBehaviour,
     protected CanvasGroup canvasGroup;
     protected Transform initParent;
     protected Transform prevParent;
-    private Vector2 pointerOffset;
-    private bool isDragging = false;
-    private IDropHandler currentDropZone; // 現在ホバー中のドロップゾーン
+    protected Vector2 pointerOffset;
+    protected bool isDragging = false;
+    protected IDropHandler currentDropZone; // 現在ホバー中のドロップゾーン
 
 
     public abstract void Initialize(InventoryUI _inventory, T _type);
@@ -124,7 +124,7 @@ public abstract class InventorySlotBase<T> : MonoBehaviour,
     /// <summary>
     /// Raycast でドロップ可能なオブジェクトを検出
     /// </summary>
-    private void DetectDropZone(PointerEventData eventData)
+    public virtual void DetectDropZone(PointerEventData eventData)
     {
         // UI Raycast を使って、マウス位置の UI 要素を全て取得
         var results = new System.Collections.Generic.List<RaycastResult>();

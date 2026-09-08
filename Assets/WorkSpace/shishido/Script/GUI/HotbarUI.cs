@@ -1,6 +1,8 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 using static GameConst;
@@ -30,7 +32,8 @@ public class HotbarUI : UIBase
 
         //  イベント登録
         myPlayer.equipmentManager.OnEquipChanged += UpdateSelectFrame;
-        myPlayer.inventoryManager.OnAddItem += UpdateSlotIcon;
+        myPlayer.inventoryManager.OnAddHotbarItem += UpdateSlotIcon;
+        myPlayer.inventoryManager.OnSwapHotbarItem += SwapSlotData;
         myPlayer.inventoryManager.OnRemoveItem += UpdateSlotIcon;
     }
 
@@ -58,7 +61,10 @@ public class HotbarUI : UIBase
         ShowItemIcon(num);
     }
 
-    //  アイテムアイコン表示
+    /// <summary>
+    ///  アイテムアイコン表示
+    /// </summary>
+    /// <param name="number"></param>
     public void ShowItemIcon(int number)
     {
         if (!isInitialized ||
@@ -66,10 +72,25 @@ public class HotbarUI : UIBase
             myPlayer.inventoryManager == null)
             return;
 
+        //  指定番号のアイテムデータを取得
         ItemData itemData = myPlayer.inventoryManager.GetItem(number);
+
+        //  データがあれば対応するスロット番号にデータをセット
         if (itemData != null)
             SlotIcons[number].SetData(itemData);
         else
             SlotIcons[number].RemoveData();
+    }
+
+    /// <summary>
+    /// スワップが時のデータ更新
+    /// </summary>
+    /// <param name="indexA"></param>
+    /// <param name="indexB"></param>
+    public void SwapSlotData(int indexA, int indexB)
+    {
+        //  変更が入ったデータを更新する
+        ShowItemIcon(indexA);
+        ShowItemIcon(indexB);
     }
 }

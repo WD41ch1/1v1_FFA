@@ -21,9 +21,14 @@ public enum ItemType
     BildingMat
 }
 
+/// <summary>
+/// アイテムの種類
+/// </summary>
 public enum BerItemType
 {
-
+    Weapon,         //  武器系
+    Healing,        //  回復系
+    Throwing,       //  投擲物
 }
 
 /// <summary>

@@ -106,12 +106,12 @@ public class Test : MonoBehaviour
         float scroll = Input.GetAxis("Mouse ScrollWheel");
         if (scroll > 0)
         {
-            Debug.Log("上にスクロール");
+            //Debug.Log("上にスクロール");
             em.PreviousItemEquip(this.pm);
         }
         else if (scroll < 0)
         {
-            Debug.Log("下にスクロール");
+            //Debug.Log("下にスクロール");
             em.NextItemEquip(this.pm);
         }
 

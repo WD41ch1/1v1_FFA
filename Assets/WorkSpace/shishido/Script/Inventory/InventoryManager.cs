@@ -9,7 +9,8 @@ using static UnityEditor.Progress;
 
 public class InventoryManager : MonoBehaviour
 {
-    [InfoBox("建材、弾、アイテムを管理している場所です")]
+    [InfoBox("インベントリ内部の処理" +
+        "建材、弾、アイテムを管理している場所です")]
 
     //  収集ツールスロット
     [SerializeField]
@@ -18,6 +19,10 @@ public class InventoryManager : MonoBehaviour
     [SerializeField] public GameObject AmmodropObj;
     [SerializeField] public GameObject MaterialdropObj;
     [SerializeField] public GameObject ItemdropObj;
+
+    //=======================================================
+    //              大本の個数管理変数
+    //=======================================================
 
     //  アイテムスロット
     public List<ItemData> slots /*{ get; private set; } */= new();
@@ -30,11 +35,15 @@ public class InventoryManager : MonoBehaviour
     public Dictionary<BildingMatType, int> bildMatDict
          = new Dictionary<BildingMatType, int>();
 
+    //=======================================================
+
     //  ホットバーUI側装備通知処理
-    public event Action<int> OnAddItem;
     public event Action<int> OnRemoveItem;
 
     //  インベントリUI側通知処理
+    public event Action<int, ItemData, ResourceChangeType> OnAddInventoryItem;
+    public event Action<int> OnAddHotbarItem;
+    public event Action<int,int> OnSwapHotbarItem;
     public event Action<AmmoType, int, ResourceChangeType> OnChangeAmmo;
     public event Action<BildingMatType, int, ResourceChangeType> OnChangeBildMat;
 
@@ -56,10 +65,14 @@ public class InventoryManager : MonoBehaviour
     {
         for (int i = 0; i < slots.Count; i++)
         {
+            //  何も入っていないなら
             if (slots[i] == null)
             {
+                //  スロット内にアイテムを装備(アイテムを取る)
                 slots[i] = item;
-                OnAddItem?.Invoke(i);
+                //  UI関係の呼び出し
+                OnAddInventoryItem?.Invoke(i, slots[i], ResourceChangeType.AddedNew);
+                OnAddHotbarItem?.Invoke(i);
                 return;
             }
         }
@@ -72,6 +85,26 @@ public class InventoryManager : MonoBehaviour
     {
         slots[number] = null;
         OnRemoveItem.Invoke(number);
+    }
+
+    /// <summary>
+    /// インベントリ内アイテムの入れ替え
+    /// </summary>
+    /// <param name="indexA">現在の番号</param>
+    /// <param name="indexB">変更予定の番号</param>
+    public bool SwapItem(int indexA, int indexB)
+    {
+        //  変更予定の場所に入っているデータを格納
+        ItemData temp = slots[indexB];
+        //  データを移動
+        slots[indexB] = slots[indexA];
+        slots[indexA] = temp;
+
+        //  ホットバーへ変更の通知
+        OnSwapHotbarItem?.Invoke(indexA, indexB);
+
+        //  移動完了を通知
+        return true;
     }
 
     public ItemData GetItem(int slotNumber)
