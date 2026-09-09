@@ -99,8 +99,9 @@ public class PlayerManager : MonoBehaviour
     /// <summary>
     /// 弾消費要求
     /// </summary>
-    /// <param name="type"></param>
-    /// <param name="amount"></param>
+    /// <param name="type">建材の種類</param>
+    /// <param name="amount">消費要求数</param>
+    /// <param name="approvalValue">消費承認数</param>
     /// <returns></returns>
     public bool TryConsumeAmmo(
     AmmoType type,
@@ -108,6 +109,24 @@ public class PlayerManager : MonoBehaviour
     out int approvalValue)
     {
         return inventoryManager.TryConsumeAmmo(
+            type,
+            amount,
+            out approvalValue);
+    }
+
+    /// <summary>
+    /// 建材消費要求
+    /// </summary>
+    /// <param name="type">建材の種類</param>
+    /// <param name="amount">消費要求数</param>
+    /// <param name="approvalValue">消費承認数 ※場合によっては使用しなくてもよい</param>
+    /// <returns></returns>
+    public bool TryConsumeBildMat(
+    BildingMatType type,
+    int amount,
+    out int approvalValue)
+    {
+        return inventoryManager.TryConsumeBildMat(
             type,
             amount,
             out approvalValue);

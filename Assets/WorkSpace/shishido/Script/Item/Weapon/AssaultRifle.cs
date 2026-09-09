@@ -53,7 +53,7 @@ public class AssaultRifle : WeaponBase
         //  承認
         int approvalValue = 0;
         //  inventory内弾数消費要求
-        if (owner.inventoryManager.TryConsumeAmmo(
+        if (owner.TryConsumeAmmo(
             weaponData.ammoType,
             requestValue,
             out approvalValue))

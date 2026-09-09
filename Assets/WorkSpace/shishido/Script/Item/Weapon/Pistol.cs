@@ -53,7 +53,7 @@ public class Pistol : WeaponBase
         int approvalValue = 0;
 
         //  inventory内弾数消費要求
-        if (owner.inventoryManager.TryConsumeAmmo(
+        if (owner.TryConsumeAmmo(
             weaponData.ammoType,
             requestValue,
             out approvalValue))
