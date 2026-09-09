@@ -41,9 +41,9 @@ public class InventoryManager : MonoBehaviour
     public event Action<int> OnRemoveItem;
 
     //  インベントリUI側通知処理
-    public event Action<int, ItemData, ResourceChangeType> OnAddInventoryItem;
+    public event Action<int, ItemData, ResourceChangeType> OnChangeInventoryItem;
     public event Action<int> OnAddHotbarItem;
-    public event Action<int,int> OnSwapHotbarItem;
+    public event Action<int, int> OnSwapHotbarItem;
     public event Action<AmmoType, int, ResourceChangeType> OnChangeAmmo;
     public event Action<BildingMatType, int, ResourceChangeType> OnChangeBildMat;
 
@@ -71,7 +71,7 @@ public class InventoryManager : MonoBehaviour
                 //  スロット内にアイテムを装備(アイテムを取る)
                 slots[i] = item;
                 //  UI関係の呼び出し
-                OnAddInventoryItem?.Invoke(i, slots[i], ResourceChangeType.AddedNew);
+                OnChangeInventoryItem?.Invoke(i, slots[i], ResourceChangeType.AddedNew);
                 OnAddHotbarItem?.Invoke(i);
                 return;
             }
@@ -104,6 +104,34 @@ public class InventoryManager : MonoBehaviour
         OnSwapHotbarItem?.Invoke(indexA, indexB);
 
         //  移動完了を通知
+        return true;
+    }
+
+    /// <summary>
+    /// アイテムの捨てる処理
+    /// </summary>
+    public bool ItemDroping(int number, ItemData dropData)
+    {
+        GameObject obj;
+
+        RemoveItem(number);
+
+        //  ドロップオブジェクトを生成
+        obj = Instantiate(
+            ItemdropObj,
+            transform.position + transform.forward * 5f,
+            Quaternion.identity);
+
+        //  ドロップアイテム(オブジェクト)の初期化
+        ItemPickup item = obj.GetComponent<ItemPickup>();
+        item.Initialize(dropData);
+
+        //  通知
+        OnChangeInventoryItem?.Invoke(
+            number,
+            dropData,
+            ResourceChangeType.Removed);
+
         return true;
     }
 

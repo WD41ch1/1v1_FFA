@@ -1,3 +1,4 @@
+using FishNet.Demo.AdditiveScenes;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -19,8 +20,20 @@ public class PlayerHealth : MonoBehaviour
     public event Action<float, float> OnHealthChanged;
     public event Action<float, float> OnShieldChanged;
 
+    //  自身
+    public PlayerManager myPlayer { get; private set; }
     //  攻撃者
     public PlayerManager lastAttacker { get; private set; }
+
+
+    /// <summary>
+    /// LocalPlayerの情報を接続
+    /// </summary>
+    /// <param name="player"></param>
+    public void RegisterPlayer(PlayerManager player)
+    {
+        myPlayer = player;
+    }
 
     /// <summary>
     /// 初期化処理
@@ -31,6 +44,10 @@ public class PlayerHealth : MonoBehaviour
     {
         currentHealth = Mathf.Clamp(health, 0, MaxHealth);
         currentShield = Mathf.Clamp(shield, 0, MaxShield);
+
+        //  UIの更新
+        OnShieldChanged.Invoke(currentShield, 0);
+        OnHealthChanged.Invoke(currentHealth, 0);
     }
 
     /// <summary>
@@ -57,7 +74,7 @@ public class PlayerHealth : MonoBehaviour
             result.ShieldDamage = shieldDamage;
 
             //  UI通知
-            //OnShieldChanged.Invoke();
+            OnShieldChanged.Invoke(currentShield, 0);
         }
 
 
@@ -72,7 +89,7 @@ public class PlayerHealth : MonoBehaviour
             result.HealthDamage = healthDamage;
 
             //  UI通知
-            //OnHealthChanged.Invoke();
+            OnHealthChanged.Invoke(currentHealth, 0);
         }
 
 
@@ -119,6 +136,6 @@ public class PlayerHealth : MonoBehaviour
     /// </summary>
     private void Die()
     {
-        Debug.Log($"{lastAttacker.name}に倒された");
+        Debug.Log($"{lastAttacker?.name}に倒された");
     }
 }

@@ -1,3 +1,4 @@
+using FishNet.Demo.AdditiveScenes;
 using System.Collections;
 using UnityEngine;
 using static GameConst;
@@ -26,7 +27,9 @@ public class Test : MonoBehaviour
         if (pm == null)
             pm = GetComponent<PlayerManager>();
 
-        StartCoroutine(GetCoroutine());
+        em = pm.equipmentManager;
+        im = pm.inventoryManager;
+        //gui = pm.guiManager;
     }
     void Update()
     {
@@ -36,15 +39,6 @@ public class Test : MonoBehaviour
     }
 
     #region デバッグ用関数
-
-    private IEnumerator GetCoroutine()
-    {
-        yield return null;
-        im = pm.inventoryManager;
-        em = pm.equipmentManager;
-        gui.Initialize(pm);
-
-    }
 
     public void showAmmoRemaining(int value)
     {
@@ -163,6 +157,18 @@ public class Test : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.E))
         {
             em.UnEquip();
+        }
+
+        //  被弾処理
+        if (Input.GetKeyDown(KeyCode.K))
+        {
+            DamageInfo testinfo = new DamageInfo();
+            testinfo.Damage = 30;
+            testinfo.Attacker = null;
+            testinfo.Weapon = null;
+            testinfo.IsHeadshot = false;
+
+            pm.playerHealth.TakeDamage(testinfo);
         }
     }
     #endregion

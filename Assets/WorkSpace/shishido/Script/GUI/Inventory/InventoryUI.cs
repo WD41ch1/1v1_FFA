@@ -80,7 +80,7 @@ public class InventoryUI : UIBase, IDropHandler
         }
 
         //  イベント登録
-        im.OnAddInventoryItem += UpdateItem;
+        im.OnChangeInventoryItem += UpdateItem;
         im.OnChangeAmmo += UpdateAmmo;
         im.OnChangeBildMat += UpdateBIldMat;
     }
@@ -132,7 +132,7 @@ public class InventoryUI : UIBase, IDropHandler
                 UpdateSlot(items, data.itemType, 0);
                 break;
             case ResourceChangeType.Removed:
-                RemovedSlot(items, data.itemType, 0);
+                //RemovedSlot(items, data.itemType, 0);
                 break;
         }
     }
@@ -189,7 +189,7 @@ public class InventoryUI : UIBase, IDropHandler
             list.Add(slot);
             //  初期化
             slot.Initialize(this, data.itemType);
-            slot.DataInitialize(trans, data.itemIcon, slotNum);
+            slot.DataInitialize(trans, data, slotNum);
         }
 
         int itemAmont = 0;
