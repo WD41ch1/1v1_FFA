@@ -1,3 +1,8 @@
+public enum PlayerType
+{
+    Player,
+    Bot
+}
 
 /// <summary>
 /// アイテムレアリティ

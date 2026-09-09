@@ -12,6 +12,8 @@ public class IS_Item : InventorySlotBase<BerItemType>
 
     public Image rarityIcon;
 
+    public ItemData itemData;
+
     public override void Initialize(InventoryUI _inventory, BerItemType _type)
     {
         //  ItemTypeの設定
@@ -25,6 +27,15 @@ public class IS_Item : InventorySlotBase<BerItemType>
     }
     public override void UpdateUI(int _quantity)
     {
+
+    }
+
+    public override void Droping()
+    {
+        //  指定数捨てる
+        if (!inventory.im.ItemDroping(slotNumber, itemData)) return;
+        //  自身を削除
+        Destroy(gameObject);
 
     }
 
@@ -95,11 +106,11 @@ public class IS_Item : InventorySlotBase<BerItemType>
     {
     }
 
-    public void DataInitialize(Transform trans, Sprite iconImage,int slotNum)
+    public void DataInitialize(Transform trans, ItemData data, int slotNum)
     {
         initParent = trans;
         //  アイコン
-        icon.sprite = iconImage;
+        icon.sprite = data.itemIcon;
 
         SetNumber(slotNum);
     }

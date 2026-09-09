@@ -2,8 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GUIManager : MonoBehaviour
+public class GUIManager : MonoBehaviour, IGuiInitialize
 {
+    //  シングルトン
+    public static GUIManager instance;
+
     public PlayerManager myPlayer;
 
     [SerializeField]
@@ -11,10 +14,23 @@ public class GUIManager : MonoBehaviour
 
     public CanvasGroup canvasGroup { private set; get; }
 
-    public void Initialize(PlayerManager _myPlayer)
+    private void Awake()
     {
-        myPlayer = _myPlayer;
+        //  シングルトン
+        instance = this;
+    }
 
+    /// <summary>
+    /// LocalPlayerの情報をUIに接続
+    /// </summary>
+    /// <param name="player"></param>
+    public void RegisterPlayer(PlayerManager player)
+    {
+        myPlayer = player;
+    }
+
+    public void Initialize()
+    {
         //  各UIの初期化
         foreach (UIBase ui in UIList)
         {
