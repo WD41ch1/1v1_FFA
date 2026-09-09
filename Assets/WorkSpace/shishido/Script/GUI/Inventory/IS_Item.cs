@@ -109,6 +109,9 @@ public class IS_Item : InventorySlotBase<BerItemType>
     public void DataInitialize(Transform trans, ItemData data, int slotNum)
     {
         initParent = trans;
+
+        itemData = data;
+
         //  アイコン
         icon.sprite = data.itemIcon;
 
