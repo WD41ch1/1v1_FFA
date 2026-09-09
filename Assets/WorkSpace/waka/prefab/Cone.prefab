@@ -582,11 +582,13 @@ MonoBehaviour:
   width: 3
   depth: 3
   roofHeight: 1
+  gridRotationY: -45
+  faceCameraOnEdit: 0
   gridMaterial: {fileID: 0}
   patterns:
   - name: "\u968E\u6BB5"
     selectedCells: 0200000003000000
-    resultPrefab: {fileID: 7585568590100317355, guid: bd27c99dc8e805e4b85c06eda82a5c93, type: 3}
+    resultPrefab: {fileID: 2353978540189570138, guid: ae77f1a493e8cdf4bb37191338b8c278, type: 3}
   - name: Shape 0+1
     selectedCells: 0000000001000000
     resultPrefab: {fileID: 0}

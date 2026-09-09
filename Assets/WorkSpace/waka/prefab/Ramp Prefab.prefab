@@ -95,10 +95,49 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8434901163645737139, guid: 6f7fb26017a266244b9cdd84a64b4bd2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4509400417588597349}
   m_SourcePrefab: {fileID: 100100000, guid: 6f7fb26017a266244b9cdd84a64b4bd2, type: 3}
 --- !u!4 &5229390372421070888 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5872174901245915948, guid: 6f7fb26017a266244b9cdd84a64b4bd2, type: 3}
   m_PrefabInstance: {fileID: 1868045120163234564}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &7845948711805475767 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8434901163645737139, guid: 6f7fb26017a266244b9cdd84a64b4bd2, type: 3}
+  m_PrefabInstance: {fileID: 1868045120163234564}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &4509400417588597349
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7845948711805475767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dab7fadfaebd4f940a0048f885393f05, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  localCenter: {x: 0, y: 0, z: 0}
+  width: 1
+  depth: 1
+  rampHeight: 2
+  gridRotationY: 0
+  faceCameraOnEdit: 1
+  preserveResultPrefabSize: 1
+  gridMaterial: {fileID: 0}
+  patterns:
+  - name: Shape 0
+    selectedCells: 00000000
+    resultPrefab: {fileID: 0}
+    resultRotationY: 0
+    resultLocalOffset: {x: 0, y: 0, z: 0}
+  - name: Shape 0+1
+    selectedCells: 0000000001000000
+    resultPrefab: {fileID: 0}
+    resultRotationY: 0
+    resultLocalOffset: {x: 0, y: 0, z: 0}

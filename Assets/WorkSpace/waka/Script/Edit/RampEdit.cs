@@ -3,28 +3,32 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public class EditCone : MonoBehaviour, IBuildingEditTarget
+public class RampEdit : MonoBehaviour, IBuildingEditTarget
 {
     [Serializable]
     public class Pattern
     {
         public string name;
-        [Tooltip("Selected cells: local -Z row 0,1; local +Z row 2,3")]
+        [Tooltip("Selected cells: bottom to top rows 0,1 / 2,3 / 4,5 / 6,7")]
         public int[] selectedCells;
-        [Tooltip("Required shape-only prefab. Bottom-center pivot; same local coordinates as original roof.")]
+        [Tooltip("Required shape-only prefab. Bottom-center pivot; same local coordinates as original ramp.")]
         public GameObject resultPrefab;
+        [Tooltip("元階段に対する編集結果のY回転補正。通常0")]
+        public float resultRotationY;
+        [Tooltip("元階段ルート基準のローカル位置補正。通常0")]
+        public Vector3 resultLocalOffset = Vector3.zero;
     }
 
-    [Header("Local dimensions; Roof local dimensions; pivot at bottom center")]
+    [Header("Local dimensions; Ramp local dimensions; pivot at bottom center")]
     public Vector3 localCenter = Vector3.zero;
     public float width = 1f;
     public float depth = 1f;
-    public float roofHeight = 2f;
-    [Tooltip("編集マスだけのY回転。屋根が45度なら-45で床の向きに合わせる")]
-    public float gridRotationY = -45f;
-    [Tooltip("ON: 編集開始時のカメラに正対する4マス。OFF: 底面の水平パネル")]
+    public float rampHeight = 2f;
+    [Tooltip("水平表示時の編集マスだけのY回転")]
+    public float gridRotationY = 0f;
+    [Tooltip("ON: 編集開始時のカメラに正対する8マス。OFF: 底面の水平パネル")]
     public bool faceCameraOnEdit = true;
-    [Tooltip("ON: 結果Prefabを単独配置した大きさを維持。OFF: 元屋根のScaleを継承")]
+    [Tooltip("ON: 結果Prefabを単独配置した大きさを維持。OFF: 元階段のScaleを継承")]
     public bool preserveResultPrefabSize = true;
     [Header("Materials")]
     public Material gridMaterial;
@@ -43,8 +47,8 @@ public class EditCone : MonoBehaviour, IBuildingEditTarget
     private GameObject result;
     private GameObject grid;
     private Material ownedGridMaterial;
-    private readonly Renderer[] tiles = new Renderer[4];
-    private readonly bool[] visited = new bool[4];
+    private readonly Renderer[] tiles = new Renderer[8];
+    private readonly bool[] visited = new bool[8];
     private int committedMask;
     private int selectionMask;
     private bool strokeRemove;
@@ -67,13 +71,13 @@ public class EditCone : MonoBehaviour, IBuildingEditTarget
 
     public bool BeginEdit(Camera camera)
     {
-        if (editing || width <= 0 || depth <= 0 || roofHeight <= 0) return false;
+        if (editing || width <= 0 || depth <= 0 || rampHeight <= 0) return false;
         Material material = gridMaterial;
         if (material == null)
         {
             Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
             if (shader == null) shader = Shader.Find("Unlit/Color");
-            if (shader == null) { Debug.LogError("EditCone: assign Grid Material", this); return false; }
+            if (shader == null) { Debug.LogError("RampEdit: assign Grid Material", this); return false; }
             ownedGridMaterial = new Material(shader);
             material = ownedGridMaterial;
         }
@@ -81,8 +85,8 @@ public class EditCone : MonoBehaviour, IBuildingEditTarget
         editCamera = camera;
         selectionMask = committedMask;
         faceSign = transform.InverseTransformPoint(camera.transform.position).y >= localCenter.y ? 1f : -1f;
-        // 底面のパネルが屋根の斜面に隠れないよう、見た目だけを隠す。
-        // Colliderは残すので編集中もPlayerは屋根に乗れる。
+        // 底面のパネルが階段の斜面に隠れないよう、見た目だけを隠す。
+        // Colliderは残すので編集中もPlayerは階段に乗れる。
         editingRenderers = result != null
             ? result.GetComponentsInChildren<Renderer>(true)
             : originalRenderers;
@@ -99,21 +103,21 @@ public class EditCone : MonoBehaviour, IBuildingEditTarget
         grid.transform.localRotation = Quaternion.Euler(0f, gridRotationY, 0f);
         if (faceCameraOnEdit)
         {
-            // パネルは屋根中央に置き、開始時のカメラに正対させる。
-            grid.transform.localPosition = localCenter + Vector3.up * (roofHeight / 2f);
+            // パネルは階段中央に置き、開始時のカメラに正対させる。
+            grid.transform.localPosition = localCenter + Vector3.up * (rampHeight / 2f);
             Vector3 normal = -camera.transform.forward;
             Vector3 panelUp = camera.transform.up;
             grid.transform.rotation = Quaternion.LookRotation(panelUp, normal);
             faceSign = 1f;
         }
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < 8; i++)
         {
             GameObject tile = GameObject.CreatePrimitive(PrimitiveType.Cube);
             tile.name = "Cell " + i;
             tile.layer = 2; // Ignore Raycast
             tile.transform.SetParent(grid.transform, false);
             tile.transform.localPosition = CellCenter(i) + Vector3.up * GridOffset;
-            tile.transform.localScale = new Vector3(width / 2f * 0.94f, 0.005f, depth / 2f * 0.94f);
+            tile.transform.localScale = new Vector3(width / 2f * 0.94f, 0.005f, depth / 4f * 0.94f);
             Collider collider = tile.GetComponent<Collider>();
             collider.enabled = false;
             Destroy(collider);
@@ -126,7 +130,7 @@ public class EditCone : MonoBehaviour, IBuildingEditTarget
 
     private Vector3 CellCenter(int index)
     {
-        return new Vector3((index % 2 - 0.5f) * width / 2f, 0f, (index / 2 - 0.5f) * depth / 2f);
+        return new Vector3((index % 2 - 0.5f) * width / 2f, 0f, (index / 2 - 1.5f) * depth / 4f);
     }
 
     public void Paint(Ray ray, bool startStroke)
@@ -141,10 +145,10 @@ public class EditCone : MonoBehaviour, IBuildingEditTarget
         Vector3 point = origin + direction * t;
         if (Mathf.Abs(point.x) >= width / 2f || Mathf.Abs(point.z) >= depth / 2f) return;
         int x = Mathf.Clamp(Mathf.FloorToInt((point.x / width + 0.5f) * 2f), 0, 1);
-        int z = Mathf.Clamp(Mathf.FloorToInt((point.z / depth + 0.5f) * 2f), 0, 1);
+        int z = Mathf.Clamp(Mathf.FloorToInt((point.z / depth + 0.5f) * 4f), 0, 3);
         int cell = z * 2 + x;
         bool anyVisited = false;
-        for (int i = 0; i < 4; i++) anyVisited |= visited[i];
+        for (int i = 0; i < 8; i++) anyVisited |= visited[i];
         if (!anyVisited) strokeRemove = (selectionMask & (1 << cell)) == 0;
         if (visited[cell]) return;
         visited[cell] = true;
@@ -159,10 +163,10 @@ public class EditCone : MonoBehaviour, IBuildingEditTarget
         if (cells == null) return false;
         foreach (int cell in cells)
         {
-            if (cell < 0 || cell > 3) return false;
+            if (cell < 0 || cell > 7) return false;
             mask |= 1 << cell;
         }
-        return mask > 0 && mask <= 15;
+        return mask > 0 && mask <= 255;
     }
 
     public bool ConfirmEdit(Transform player, out string reason)
@@ -196,7 +200,7 @@ public class EditCone : MonoBehaviour, IBuildingEditTarget
         if (OverlapsPlayer(candidateColliders, candidate == null, player))
         {
             if (candidate != null) { candidate.SetActive(false); Destroy(candidate); }
-            reason = "Player overlaps the new roof; move away";
+            reason = "Player overlaps the new ramp; move away";
             return false;
         }
         if (result != null) { result.SetActive(false); Destroy(result); }
@@ -211,7 +215,7 @@ public class EditCone : MonoBehaviour, IBuildingEditTarget
     {
         if (pattern.resultPrefab == null)
         {
-            Debug.LogWarning("EditCone: assign Result Prefab for " + pattern.name, this);
+            Debug.LogWarning("RampEdit: assign Result Prefab for " + pattern.name, this);
             return null;
         }
         foreach (MonoBehaviour script in pattern.resultPrefab.GetComponentsInChildren<MonoBehaviour>(true))
@@ -233,7 +237,7 @@ public class EditCone : MonoBehaviour, IBuildingEditTarget
              Mathf.Abs(parentScale.y) < 0.00001f ||
              Mathf.Abs(parentScale.z) < 0.00001f))
         {
-            Debug.LogError("EditCone: parent scale must not contain zero", this);
+            Debug.LogError("RampEdit: parent scale must not contain zero", this);
             return null;
         }
         GameObject root = Instantiate(pattern.resultPrefab, transform, false);
@@ -247,8 +251,8 @@ public class EditCone : MonoBehaviour, IBuildingEditTarget
                 prefabScale.z / parentScale.z
             );
         }
-        root.transform.localPosition = Vector3.zero;
-        root.transform.localRotation = Quaternion.identity;
+        root.transform.localPosition = pattern.resultLocalOffset;
+        root.transform.localRotation = Quaternion.Euler(0f, pattern.resultRotationY, 0f);
         root.SetActive(true);
         foreach (Transform child in root.GetComponentsInChildren<Transform>(true)) child.gameObject.layer = gameObject.layer;
         bool hasSolidCollider = false;
@@ -300,7 +304,7 @@ public class EditCone : MonoBehaviour, IBuildingEditTarget
 
     private void RefreshGrid()
     {
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < 8; i++)
         {
             Color color = (selectionMask & (1 << i)) != 0 ? new Color(1f, 0.35f, 0.1f) : new Color(0.1f, 0.65f, 1f);
             MaterialPropertyBlock block = new MaterialPropertyBlock();
@@ -335,7 +339,7 @@ public class EditCone : MonoBehaviour, IBuildingEditTarget
     private void OnGUI()
     {
         if (!editing || editCamera == null) return;
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < 8; i++)
         {
             Vector3 point = grid.transform.TransformPoint(CellCenter(i) +
                 Vector3.up * (GridOffset + faceSign * 0.01f));
