@@ -9,7 +9,7 @@ public class RampEdit : MonoBehaviour, IBuildingEditTarget
     public class Pattern
     {
         public string name;
-        [Tooltip("Selected cells: bottom to top rows 0,1 / 2,3 / 4,5 / 6,7")]
+        [Tooltip("Selected cells: bottom to top rows 0,1,2 / 3,4,5 / 6,7,8")]
         public int[] selectedCells;
         [Tooltip("Required shape-only prefab. Bottom-center pivot; same local coordinates as original ramp.")]
         public GameObject resultPrefab;
@@ -22,12 +22,14 @@ public class RampEdit : MonoBehaviour, IBuildingEditTarget
     [Header("Local dimensions; Ramp local dimensions; pivot at bottom center")]
     public Vector3 localCenter = Vector3.zero;
     public float width = 1f;
+    [Header("水平編集パネル（ワールド寸法）")]
+    public Vector2 panelSize = new Vector2(4f, 4f);
     public float depth = 1f;
     public float rampHeight = 2f;
     [Tooltip("水平表示時の編集マスだけのY回転")]
     public float gridRotationY = 0f;
-    [Tooltip("ON: 編集開始時のカメラに正対する8マス。OFF: 底面の水平パネル")]
-    public bool faceCameraOnEdit = true;
+    [Tooltip("ON: 編集開始時のカメラに正対する9マス。OFF: 底面の水平パネル")]
+    public bool faceCameraOnEdit = false;
     [Tooltip("ON: 結果Prefabを単独配置した大きさを維持。OFF: 元階段のScaleを継承")]
     public bool preserveResultPrefabSize = true;
     [Header("Materials")]
@@ -47,8 +49,8 @@ public class RampEdit : MonoBehaviour, IBuildingEditTarget
     private GameObject result;
     private GameObject grid;
     private Material ownedGridMaterial;
-    private readonly Renderer[] tiles = new Renderer[8];
-    private readonly bool[] visited = new bool[8];
+    private readonly Renderer[] tiles = new Renderer[9];
+    private readonly bool[] visited = new bool[9];
     private int committedMask;
     private int selectionMask;
     private bool strokeRemove;
@@ -71,7 +73,7 @@ public class RampEdit : MonoBehaviour, IBuildingEditTarget
 
     public bool BeginEdit(Camera camera)
     {
-        if (editing || width <= 0 || depth <= 0 || rampHeight <= 0) return false;
+        if (editing || panelSize.x <= 0 || panelSize.y <= 0) return false;
         Material material = gridMaterial;
         if (material == null)
         {
@@ -98,31 +100,60 @@ public class RampEdit : MonoBehaviour, IBuildingEditTarget
             editingRenderers[i].enabled = false;
         }
         grid = new GameObject("Edit grid (visual only)");
-        grid.transform.SetParent(transform, false);
-        grid.transform.localPosition = localCenter;
-        grid.transform.localRotation = Quaternion.Euler(0f, gridRotationY, 0f);
-        if (faceCameraOnEdit)
+        // 階段ルートの傾き・非均一Scaleを引き継がない。
+        // Local Centerは既存と同じ底面中央の指定。向きは階段ルートに固定。
+        grid.transform.position = transform.TransformPoint(localCenter);
+        // 階段の向きで固定。カメラの位置・向きは番号配置に使わない。
+        Vector3 forward = transform.forward;
+        forward.y = 0f;
+        if (forward.sqrMagnitude < 0.001f)
         {
-            // パネルは階段中央に置き、開始時のカメラに正対させる。
-            grid.transform.localPosition = localCenter + Vector3.up * (rampHeight / 2f);
-            Vector3 normal = -camera.transform.forward;
-            Vector3 panelUp = camera.transform.up;
-            grid.transform.rotation = Quaternion.LookRotation(panelUp, normal);
-            faceSign = 1f;
+            Vector3 right = transform.right;
+            right.y = 0f;
+            forward = Vector3.Cross(right, Vector3.up);
         }
-        for (int i = 0; i < 8; i++)
+        if (forward.sqrMagnitude < 0.001f) forward = Vector3.forward;
+        float yaw = Mathf.Atan2(forward.x, forward.z) * Mathf.Rad2Deg;
+        grid.transform.rotation = Quaternion.Euler(0f, yaw + gridRotationY, 0f);
+        grid.transform.localScale = Vector3.one;
+        faceSign = camera.transform.position.y >= grid.transform.position.y ? 1f : -1f;
+        for (int i = 0; i < 9; i++)
         {
             GameObject tile = GameObject.CreatePrimitive(PrimitiveType.Cube);
             tile.name = "Cell " + i;
             tile.layer = 2; // Ignore Raycast
             tile.transform.SetParent(grid.transform, false);
             tile.transform.localPosition = CellCenter(i) + Vector3.up * GridOffset;
-            tile.transform.localScale = new Vector3(width / 2f * 0.94f, 0.005f, depth / 4f * 0.94f);
+            tile.transform.localScale = new Vector3(panelSize.x / 3f * 0.94f, 0.005f, panelSize.y / 3f * 0.94f);
             Collider collider = tile.GetComponent<Collider>();
             collider.enabled = false;
             Destroy(collider);
             tiles[i] = tile.GetComponent<Renderer>();
             tiles[i].sharedMaterial = material;
+            tiles[i].shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            tiles[i].receiveShadows = false;
+
+            // A slightly larger white backing gives each tile a visible border.
+            GameObject border = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            border.name = "Cell border " + i;
+            border.layer = 2;
+            border.transform.SetParent(grid.transform, false);
+            border.transform.localPosition = CellCenter(i) +
+                Vector3.up * (GridOffset - faceSign * 0.005f);
+            border.transform.localScale = new Vector3(
+                panelSize.x / 3f * 0.98f, 0.003f, panelSize.y / 3f * 0.98f
+            );
+            Collider borderCollider = border.GetComponent<Collider>();
+            borderCollider.enabled = false;
+            Destroy(borderCollider);
+            Renderer borderRenderer = border.GetComponent<Renderer>();
+            borderRenderer.sharedMaterial = material;
+            borderRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            borderRenderer.receiveShadows = false;
+            MaterialPropertyBlock white = new MaterialPropertyBlock();
+            white.SetColor("_Color", Color.white);
+            white.SetColor("_BaseColor", Color.white);
+            borderRenderer.SetPropertyBlock(white);
         }
         RefreshGrid();
         return true;
@@ -130,7 +161,7 @@ public class RampEdit : MonoBehaviour, IBuildingEditTarget
 
     private Vector3 CellCenter(int index)
     {
-        return new Vector3((index % 2 - 0.5f) * width / 2f, 0f, (index / 2 - 1.5f) * depth / 4f);
+        return new Vector3((index % 3 - 1f) * panelSize.x / 3f, 0f, (index / 3 - 1f) * panelSize.y / 3f);
     }
 
     public void Paint(Ray ray, bool startStroke)
@@ -143,12 +174,12 @@ public class RampEdit : MonoBehaviour, IBuildingEditTarget
         float t = (GridOffset - origin.y) / direction.y;
         if (t < 0) return;
         Vector3 point = origin + direction * t;
-        if (Mathf.Abs(point.x) >= width / 2f || Mathf.Abs(point.z) >= depth / 2f) return;
-        int x = Mathf.Clamp(Mathf.FloorToInt((point.x / width + 0.5f) * 2f), 0, 1);
-        int z = Mathf.Clamp(Mathf.FloorToInt((point.z / depth + 0.5f) * 4f), 0, 3);
-        int cell = z * 2 + x;
+        if (Mathf.Abs(point.x) >= panelSize.x / 2f || Mathf.Abs(point.z) >= panelSize.y / 2f) return;
+        int x = Mathf.Clamp(Mathf.FloorToInt((point.x / panelSize.x + 0.5f) * 3f), 0, 2);
+        int z = Mathf.Clamp(Mathf.FloorToInt((point.z / panelSize.y + 0.5f) * 3f), 0, 2);
+        int cell = z * 3 + x;
         bool anyVisited = false;
-        for (int i = 0; i < 8; i++) anyVisited |= visited[i];
+        for (int i = 0; i < 9; i++) anyVisited |= visited[i];
         if (!anyVisited) strokeRemove = (selectionMask & (1 << cell)) == 0;
         if (visited[cell]) return;
         visited[cell] = true;
@@ -163,10 +194,10 @@ public class RampEdit : MonoBehaviour, IBuildingEditTarget
         if (cells == null) return false;
         foreach (int cell in cells)
         {
-            if (cell < 0 || cell > 7) return false;
+            if (cell < 0 || cell > 8) return false;
             mask |= 1 << cell;
         }
-        return mask > 0 && mask <= 255;
+        return mask > 0 && mask <= 511;
     }
 
     public bool ConfirmEdit(Transform player, out string reason)
@@ -304,9 +335,9 @@ public class RampEdit : MonoBehaviour, IBuildingEditTarget
 
     private void RefreshGrid()
     {
-        for (int i = 0; i < 8; i++)
+        for (int i = 0; i < 9; i++)
         {
-            Color color = (selectionMask & (1 << i)) != 0 ? new Color(1f, 0.35f, 0.1f) : new Color(0.1f, 0.65f, 1f);
+            Color color = (selectionMask & (1 << i)) != 0 ? new Color(1f, 0.35f, 0.1f) : new Color(0.05f, 0.8f, 0.95f);
             MaterialPropertyBlock block = new MaterialPropertyBlock();
             block.SetColor("_Color", color);
             block.SetColor("_BaseColor", color);
@@ -339,7 +370,7 @@ public class RampEdit : MonoBehaviour, IBuildingEditTarget
     private void OnGUI()
     {
         if (!editing || editCamera == null) return;
-        for (int i = 0; i < 8; i++)
+        for (int i = 0; i < 9; i++)
         {
             Vector3 point = grid.transform.TransformPoint(CellCenter(i) +
                 Vector3.up * (GridOffset + faceSign * 0.01f));
