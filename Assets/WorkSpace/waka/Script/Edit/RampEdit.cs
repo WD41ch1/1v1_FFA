@@ -11,10 +11,18 @@ public class RampEdit : MonoBehaviour, IBuildingEditTarget
         public string name;
         [Tooltip("Selected cells: bottom to top rows 0,1,2 / 3,4,5 / 6,7,8")]
         public int[] selectedCells;
+        [Tooltip("Require the same selection order as Selected Cells")]
+        public bool matchSelectionOrder;
         [Tooltip("Required shape-only prefab. Bottom-center pivot; same local coordinates as original ramp.")]
         public GameObject resultPrefab;
         [Tooltip("元階段に対する編集結果のY回転補正。通常0")]
         public float resultRotationY;
+        [Tooltip("ON: 指定した子の形状のローカルX回転を変更。Positionは変えない")]
+        public bool useResultRotationX;
+        [Tooltip("傾斜を付けている子のパス。例: Ramp_Cone、Visual/Ramp。ルート指定は不可")]
+        public string resultRotationTargetPath = "";
+        [Tooltip("対象の子のローカルX回転。元が-45なら45で上り方向を反転")]
+        public float resultRotationX = 45f;
         [Tooltip("元階段ルート基準のローカル位置補正。通常0")]
         public Vector3 resultLocalOffset = Vector3.zero;
     }
@@ -32,6 +40,12 @@ public class RampEdit : MonoBehaviour, IBuildingEditTarget
     public bool faceCameraOnEdit = false;
     [Tooltip("ON: 結果Prefabを単独配置した大きさを維持。OFF: 元階段のScaleを継承")]
     public bool preserveResultPrefabSize = true;
+    [Header("リセット時の上り方向")]
+    public bool keepDirectionOnReset = true;
+    [Tooltip("通常階段Prefab内の、X回転で傾斜を付けた子。形状とColliderを一緒に回せるTransform")]
+    public Transform resetSlopeTarget;
+    private bool hasEditedSlopeX;
+    private float editedSlopeX;
     [Header("Materials")]
     public Material gridMaterial;
     [Header("Patterns; Result Prefab is required")]
@@ -43,6 +57,7 @@ public class RampEdit : MonoBehaviour, IBuildingEditTarget
 
     public Transform EditTransform { get { return this != null && isActiveAndEnabled ? transform : null; } }
     private Renderer[] originalRenderers;
+    private MeshFilter[] originalMeshes;
     private Collider[] originalColliders;
     private bool[] rendererStates;
     private bool[] colliderStates;
@@ -53,6 +68,9 @@ public class RampEdit : MonoBehaviour, IBuildingEditTarget
     private readonly bool[] visited = new bool[9];
     private int committedMask;
     private int selectionMask;
+    private readonly List<int> selectionOrder = new List<int>();
+    private readonly List<int> committedOrder = new List<int>();
+    private bool replaceOnFirstCell;
     private bool strokeRemove;
     private bool editing;
     private float faceSign;
@@ -64,6 +82,7 @@ public class RampEdit : MonoBehaviour, IBuildingEditTarget
     private void Awake()
     {
         originalRenderers = GetComponentsInChildren<Renderer>(true);
+        originalMeshes = GetComponentsInChildren<MeshFilter>();
         originalColliders = GetComponentsInChildren<Collider>(true);
         rendererStates = new bool[originalRenderers.Length];
         colliderStates = new bool[originalColliders.Length];
@@ -86,6 +105,11 @@ public class RampEdit : MonoBehaviour, IBuildingEditTarget
         editing = true;
         editCamera = camera;
         selectionMask = committedMask;
+        selectionOrder.Clear();
+        selectionOrder.AddRange(committedOrder);
+        replaceOnFirstCell = false;
+        foreach (Pattern item in patterns)
+            if (item != null && item.matchSelectionOrder) replaceOnFirstCell = true;
         faceSign = transform.InverseTransformPoint(camera.transform.position).y >= localCenter.y ? 1f : -1f;
         // 底面のパネルが階段の斜面に隠れないよう、見た目だけを隠す。
         // Colliderは残すので編集中もPlayerは階段に乗れる。
@@ -102,7 +126,9 @@ public class RampEdit : MonoBehaviour, IBuildingEditTarget
         grid = new GameObject("Edit grid (visual only)");
         // 階段ルートの傾き・非均一Scaleを引き継がない。
         // Local Centerは既存と同じ底面中央の指定。向きは階段ルートに固定。
-        grid.transform.position = transform.TransformPoint(localCenter);
+        Vector3 panelPosition = transform.TransformPoint(localCenter);
+        panelPosition.y = GetBottomWorldY(panelPosition.y);
+        grid.transform.position = panelPosition;
         // 階段の向きで固定。カメラの位置・向きは番号配置に使わない。
         Vector3 forward = transform.forward;
         forward.y = 0f;
@@ -159,6 +185,39 @@ public class RampEdit : MonoBehaviour, IBuildingEditTarget
         return true;
     }
 
+    // 元階段の形状からワールド下端を取得。編集後も同じ建築階層を維持。
+    private float GetBottomWorldY(float fallback)
+    {
+        float bottom = float.PositiveInfinity;
+        foreach (MeshFilter source in originalMeshes)
+        {
+            if (source == null || source.sharedMesh == null) continue;
+            Renderer renderer = source.GetComponent<Renderer>();
+            int index = Array.IndexOf(originalRenderers, renderer);
+            if (index < 0 || !rendererStates[index]) continue;
+            Mesh mesh = source.sharedMesh;
+            if (mesh.isReadable)
+            {
+                foreach (Vector3 vertex in mesh.vertices)
+                    bottom = Mathf.Min(bottom, source.transform.TransformPoint(vertex).y);
+            }
+            else
+            {
+                // 読み取り不可メッシュはローカルBoundsの8頂点で近似。
+                Bounds bounds = mesh.bounds;
+                for (int i = 0; i < 8; i++)
+                {
+                    Vector3 corner = new Vector3(
+                        (i & 1) == 0 ? bounds.min.x : bounds.max.x,
+                        (i & 2) == 0 ? bounds.min.y : bounds.max.y,
+                        (i & 4) == 0 ? bounds.min.z : bounds.max.z
+                    );
+                    bottom = Mathf.Min(bottom, source.transform.TransformPoint(corner).y);
+                }
+            }
+        }
+        return float.IsPositiveInfinity(bottom) ? fallback : bottom;
+    }
     private Vector3 CellCenter(int index)
     {
         return new Vector3((index % 3 - 1f) * panelSize.x / 3f, 0f, (index / 3 - 1f) * panelSize.y / 3f);
@@ -178,14 +237,37 @@ public class RampEdit : MonoBehaviour, IBuildingEditTarget
         int x = Mathf.Clamp(Mathf.FloorToInt((point.x / panelSize.x + 0.5f) * 3f), 0, 2);
         int z = Mathf.Clamp(Mathf.FloorToInt((point.z / panelSize.y + 0.5f) * 3f), 0, 2);
         int cell = z * 3 + x;
+        // On re-edit, the first valid cell starts a fresh ordered selection.
+        if (replaceOnFirstCell)
+        {
+            selectionMask = 0;
+            selectionOrder.Clear();
+            Array.Clear(visited, 0, visited.Length);
+            replaceOnFirstCell = false;
+        }
         bool anyVisited = false;
         for (int i = 0; i < 9; i++) anyVisited |= visited[i];
         if (!anyVisited) strokeRemove = (selectionMask & (1 << cell)) == 0;
         if (visited[cell]) return;
         visited[cell] = true;
-        if (strokeRemove) selectionMask |= 1 << cell;
-        else selectionMask &= ~(1 << cell);
+        if (strokeRemove)
+        {
+            selectionMask |= 1 << cell;
+            if (!selectionOrder.Contains(cell)) selectionOrder.Add(cell);
+        }
+        else
+        {
+            selectionMask &= ~(1 << cell);
+            selectionOrder.Remove(cell);
+        }
         RefreshGrid();
+    }
+
+    public static bool SameOrder(IList<int> a, IList<int> b)
+    {
+        if (a == null || b == null || a.Count != b.Count) return false;
+        for (int i = 0; i < a.Count; i++) if (a[i] != b[i]) return false;
+        return true;
     }
 
     public static bool TryGetMask(int[] cells, out int mask)
@@ -204,8 +286,10 @@ public class RampEdit : MonoBehaviour, IBuildingEditTarget
     {
         reason = "";
         if (!editing) { reason = "Not editing"; return false; }
-        if (selectionMask == committedMask) { Finish(); return true; }
+        if (selectionMask == committedMask && SameOrder(selectionOrder, committedOrder)) { Finish(); return true; }
         Pattern pattern = null;
+        int bestPriority = -1;
+        int matches = 0;
         if (selectionMask != 0)
         {
             foreach (Pattern item in patterns)
@@ -213,11 +297,19 @@ public class RampEdit : MonoBehaviour, IBuildingEditTarget
                 int mask;
                 if (item != null && TryGetMask(item.selectedCells, out mask) && mask == selectionMask)
                 {
-                    if (pattern != null) { reason = "Duplicate pattern registration"; return false; }
-                    pattern = item;
+                    if (item.matchSelectionOrder && !SameOrder(selectionOrder, item.selectedCells)) continue;
+                    int priority = item.matchSelectionOrder ? 1 : 0;
+                    if (priority > bestPriority)
+                    {
+                        bestPriority = priority;
+                        pattern = item;
+                        matches = 1;
+                    }
+                    else if (priority == bestPriority) matches++;
                 }
             }
-            if (pattern == null) { reason = "No pattern registered for this selection"; return false; }
+            if (pattern == null) { reason = "No pattern registered for this selection/order"; return false; }
+            if (matches > 1) { reason = "Duplicate pattern registration"; return false; }
         }
 
         GameObject candidate = null;
@@ -226,11 +318,33 @@ public class RampEdit : MonoBehaviour, IBuildingEditTarget
             candidate = CreateResult(pattern);
             if (candidate == null) { reason = "Invalid result prefab"; return false; }
         }
+        Quaternion beforeResetRotation = Quaternion.identity;
+        bool changedResetRotation = false;
+        if (selectionMask == 0 && keepDirectionOnReset && hasEditedSlopeX)
+        {
+            if (resetSlopeTarget == null || resetSlopeTarget == transform ||
+                !resetSlopeTarget.IsChildOf(transform) ||
+                (result != null && resetSlopeTarget.IsChildOf(result.transform)))
+            {
+                reason = "Assign Reset Slope Target to the original ramp slope child";
+                return false;
+            }
+            beforeResetRotation = resetSlopeTarget.localRotation;
+            Vector3 angles = resetSlopeTarget.localEulerAngles;
+            angles.x = editedSlopeX;
+            resetSlopeTarget.localRotation = Quaternion.Euler(angles);
+            changedResetRotation = true;
+        }
         Physics.SyncTransforms();
         Collider[] candidateColliders = candidate != null ? candidate.GetComponentsInChildren<Collider>() : originalColliders;
         if (OverlapsPlayer(candidateColliders, candidate == null, player))
         {
             if (candidate != null) { candidate.SetActive(false); Destroy(candidate); }
+            if (changedResetRotation)
+            {
+                resetSlopeTarget.localRotation = beforeResetRotation;
+                Physics.SyncTransforms();
+            }
             reason = "Player overlaps the new ramp; move away";
             return false;
         }
@@ -238,6 +352,13 @@ public class RampEdit : MonoBehaviour, IBuildingEditTarget
         result = candidate;
         SetOriginal(selectionMask == 0);
         committedMask = selectionMask;
+        if (pattern != null)
+        {
+            hasEditedSlopeX = pattern.useResultRotationX;
+            editedSlopeX = pattern.resultRotationX;
+        }
+        committedOrder.Clear();
+        committedOrder.AddRange(selectionOrder);
         Finish();
         return true;
     }
@@ -284,6 +405,21 @@ public class RampEdit : MonoBehaviour, IBuildingEditTarget
         }
         root.transform.localPosition = pattern.resultLocalOffset;
         root.transform.localRotation = Quaternion.Euler(0f, pattern.resultRotationY, 0f);
+        if (pattern.useResultRotationX)
+        {
+            Transform slope = string.IsNullOrWhiteSpace(pattern.resultRotationTargetPath)
+                ? null : root.transform.Find(pattern.resultRotationTargetPath);
+            if (slope == null)
+            {
+                Debug.LogError("RampEdit: Result Rotation Target Path must identify the slope child", this);
+                root.SetActive(false);
+                Destroy(root);
+                return null;
+            }
+            Vector3 angles = slope.localEulerAngles;
+            angles.x = pattern.resultRotationX;
+            slope.localRotation = Quaternion.Euler(angles);
+        }
         root.SetActive(true);
         foreach (Transform child in root.GetComponentsInChildren<Transform>(true)) child.gameObject.layer = gameObject.layer;
         bool hasSolidCollider = false;
@@ -345,8 +481,8 @@ public class RampEdit : MonoBehaviour, IBuildingEditTarget
         }
     }
 
-    public void ResetSelection() { selectionMask = 0; if (editing) RefreshGrid(); }
-    public void CancelEdit() { selectionMask = committedMask; Finish(); }
+    public void ResetSelection() { selectionMask = 0; selectionOrder.Clear(); replaceOnFirstCell = false; if (editing) RefreshGrid(); }
+    public void CancelEdit() { selectionMask = committedMask; selectionOrder.Clear(); selectionOrder.AddRange(committedOrder); Finish(); }
     private void Finish()
     {
         editing = false;
@@ -370,6 +506,7 @@ public class RampEdit : MonoBehaviour, IBuildingEditTarget
     private void OnGUI()
     {
         if (!editing || editCamera == null) return;
+        GUI.Label(new Rect(10, 80, 600, 25), "Order: " + string.Join(" > ", selectionOrder));
         for (int i = 0; i < 9; i++)
         {
             Vector3 point = grid.transform.TransformPoint(CellCenter(i) +

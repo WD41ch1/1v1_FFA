@@ -124,6 +124,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   localCenter: {x: 0, y: 0, z: 0}
   width: 1
+  panelSize: {x: 4, y: 4}
   depth: 1
   rampHeight: 2
   gridRotationY: 0
@@ -131,13 +132,21 @@ MonoBehaviour:
   preserveResultPrefabSize: 1
   gridMaterial: {fileID: 0}
   patterns:
-  - name: Shape 0
-    selectedCells: 00000000
-    resultPrefab: {fileID: 0}
+  - name: "\u5DE6\u624B\u524D\u304B\u3089\u306E\u968E\u6BB5"
+    selectedCells: 060000000300000000000000
+    matchSelectionOrder: 1
+    resultPrefab: {fileID: 7585568590100317355, guid: fa19cac096f3ffa41bb61b55182b9e50, type: 3}
     resultRotationY: 0
+    useResultRotationX: 1
+    resultRotationTargetPath: HalfRamp
+    resultRotationX: -90
     resultLocalOffset: {x: 0, y: 0, z: 0}
-  - name: Shape 0+1
-    selectedCells: 0000000001000000
-    resultPrefab: {fileID: 0}
+  - name: "\u5DE6\u5965\u304B\u3089\u306E\u968E\u6BB5"
+    selectedCells: 000000000300000006000000
+    matchSelectionOrder: 1
+    resultPrefab: {fileID: 7585568590100317355, guid: fa19cac096f3ffa41bb61b55182b9e50, type: 3}
     resultRotationY: 0
+    useResultRotationX: 1
+    resultRotationTargetPath: HalfRamp
+    resultRotationX: 0
     resultLocalOffset: {x: 0, y: 0, z: 0}
