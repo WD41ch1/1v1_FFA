@@ -1,6 +1,11 @@
 
 public class GameConst 
 {
+    //  Player
+    public static readonly float PLAYER_MAXHEALTH = 100;
+    public static readonly float PLAYER_MAXSHIELDE = 100;
+    public static readonly float DEFAULTPLAYER_FOV = 60;
+
     //  インベントリ：ホットバー
     public static readonly int PICKEL_SLOT = 100;
     public static readonly int ITEM_SLOT_MAX = 5;

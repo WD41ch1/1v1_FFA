@@ -8,11 +8,11 @@ public class PlayerHealth : MonoBehaviour
 {
     //  HP
     public float currentHealth { get; private set; }
-    public float MaxHealth { get; private set; } = 100;
+    public float MaxHealth { get; private set; }
 
     //  Shield
     public float currentShield { get; private set; }
-    public float MaxShield { get; private set; } = 100;
+    public float MaxShield { get; private set; }
 
     public bool IsDead => currentHealth <= 0;
 
@@ -38,16 +38,32 @@ public class PlayerHealth : MonoBehaviour
     /// <summary>
     /// 初期化処理
     /// </summary>
-    /// <param name="health"></param>
-    /// <param name="shield"></param>
-    public void Initialize(float health, float shield)
+    /// <param name="maxHealth">最大体力</param>
+    /// <param name="maxShield">最大シールド</param>
+    /// <param name="health">開始時の体力</param>
+    /// <param name="shield">開始時のシールド</param>
+    public void Initialize(
+        float maxHealth, float maxShield,
+        float health, float shield)
     {
+        //  最大値の設定
+        MaxHealth = maxHealth;
+        MaxShield = maxShield;
+
+        //  開始時の設定
         currentHealth = Mathf.Clamp(health, 0, MaxHealth);
         currentShield = Mathf.Clamp(shield, 0, MaxShield);
 
         //  UIの更新
-        OnShieldChanged.Invoke(currentShield, 0);
-        OnHealthChanged.Invoke(currentHealth, 0);
+    }
+
+    /// <summary>
+    /// UIの更新
+    /// </summary>
+    public void UIUpdateRequest()
+    {
+        OnHealthChanged.Invoke(MaxHealth, currentHealth);
+        OnShieldChanged.Invoke(MaxShield, currentShield);
     }
 
     /// <summary>
@@ -74,7 +90,7 @@ public class PlayerHealth : MonoBehaviour
             result.ShieldDamage = shieldDamage;
 
             //  UI通知
-            OnShieldChanged.Invoke(currentShield, 0);
+            OnShieldChanged.Invoke(MaxShield, currentShield);
         }
 
 
@@ -89,7 +105,7 @@ public class PlayerHealth : MonoBehaviour
             result.HealthDamage = healthDamage;
 
             //  UI通知
-            OnHealthChanged.Invoke(currentHealth, 0);
+            OnHealthChanged.Invoke(MaxHealth, currentHealth);
         }
 
 
@@ -137,5 +153,6 @@ public class PlayerHealth : MonoBehaviour
     private void Die()
     {
         Debug.Log($"{lastAttacker?.name}に倒された");
+        Destroy(this.gameObject);
     }
 }

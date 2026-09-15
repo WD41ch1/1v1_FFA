@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem.XInput;
+using static GameConst;
 
 /// <summary>
 /// Playerについているclassを管理するクラス
@@ -48,7 +49,7 @@ public class PlayerManager : MonoBehaviour
     {
         inputController = GetComponent<PlayerInputController>();
         controller = GetComponent<CharacterController>();
-        cameraController = GetComponent<CameraController>();
+        cameraController = Camera.main.gameObject.GetComponent<CameraController>();
         playerHealth = GetComponent<PlayerHealth>();
         equipmentManager = GetComponent<EquipmentManager>();
         inventoryManager = GetComponent<InventoryManager>();
@@ -77,15 +78,39 @@ public class PlayerManager : MonoBehaviour
     /// </summary>
     private void Initialize()
     {
+        // Player・Bot初期化
+        switch (playerType)
+        {
+            case PlayerType.Player:
+                //  statusの初期化
+                playerHealth?.Initialize(
+                    PLAYER_MAXHEALTH,
+                    PLAYER_MAXSHIELDE,
+                    100,
+                    100
+                    );
+
+                //  カメラに自身の登録
+                cameraController.RegisterPlayer(this);
+
+                break;
+            case PlayerType.Bot:
+                playerHealth?.Initialize(
+                    100,
+                    PLAYER_MAXSHIELDE,
+                    1,
+                    1
+                    );
+
+                break;
+        }
+
         // UIを初期化
         guiManager?.RegisterPlayer(this);
         guiManager?.Initialize();
 
-        // Player・Bot共通の初期化
-        playerHealth?.Initialize(
-            100,
-            100
-        );
+        //  status管理側からのUI更新要求
+        playerHealth?.UIUpdateRequest();
     }
 
     #endregion

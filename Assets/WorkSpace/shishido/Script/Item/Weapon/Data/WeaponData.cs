@@ -34,6 +34,14 @@ public class WeaponData : ItemData
     public float recoilValue;
 
     //==============================================
+    //      ADS系
+    //==============================================
+    [Header("覗く速度")]
+    public float adsSpeed;
+    [Header("ADS倍率")]
+    public float adsMultiplier;
+
+    //==============================================
     //      ダメージ変化系
     //==============================================
     [Header("距離減衰")] 

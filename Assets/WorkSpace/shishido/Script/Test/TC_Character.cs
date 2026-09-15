@@ -99,17 +99,17 @@ public class TC_Character : MonoBehaviour
 
     public void TestPlayer()
     {
-        //  左クリック処理
-        if (Input.GetMouseButtonDown(0))
-        {
-            equipmentManager.GetcurrentItem()?.UsePrimary();
-        }
+        ////  左クリック処理
+        //if (Input.GetMouseButtonDown(0))
+        //{
+        //    equipmentManager.GetcurrentItem()?.UsePrimary();
+        //}
 
         //  右クリック処理
-        if (Input.GetMouseButtonDown(1))
-        {
-            equipmentManager.GetcurrentItem()?.UseSecondary();
-        }
+        //if (Input.GetMouseButtonDown(1))
+        //{
+        //    equipmentManager.GetcurrentItem()?.UseSecondary();
+        //}
 
         //  リロード
         if (Input.GetKeyDown(KeyCode.R))

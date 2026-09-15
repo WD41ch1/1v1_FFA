@@ -20,7 +20,7 @@ public class AssaultRifle : WeaponBase
         currentAmmo = weaponData.maxAmmo;
     }
 
-    public override void Fire()
+    public override void Fire(Vector3 _targetPosition)
     {
         //  リロード中
         if (isReloading)
@@ -37,7 +37,7 @@ public class AssaultRifle : WeaponBase
         Debug.Log(weaponData.weaponDamage);
 
         //  弾の生成(現状可視化するためのデバッグ用)
-        BulletCreate(weaponView);
+        BulletShoot(weaponView, _targetPosition);
 
         //  弾数消費
         currentAmmo--;
@@ -72,8 +72,4 @@ public class AssaultRifle : WeaponBase
 
     }
 
-    public override void ADS()
-    {
-        Debug.Log("ADS");
-    }
 }

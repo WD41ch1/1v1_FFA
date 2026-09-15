@@ -31,9 +31,19 @@ public class BOTHealthBer : MonoBehaviour, IGuiInitialize
 
     public void Initialize()
     {
+        PlayerHealth health = owner.playerHealth;
+        //  スライダーの初期化
+        SliderInitialize(health.MaxHealth, health.MaxShield);
+
         //  アクション登録
-        owner.playerHealth.OnHealthChanged += HealthUpdate;
-        owner.playerHealth.OnShieldChanged += ShieldUpdate;
+        health.OnHealthChanged += HealthUpdate;
+        health.OnShieldChanged += ShieldUpdate;
+    }
+
+    private void SliderInitialize(float _maxHealth, float _maxShield)
+    {
+        healthBer.maxValue = _maxHealth;
+        shieldBer.maxValue = _maxShield;
     }
 
 
@@ -46,18 +56,15 @@ public class BOTHealthBer : MonoBehaviour, IGuiInitialize
         );
     }
 
-    private void HealthUpdate(float a, float b)
+    private void HealthUpdate(float _maxHealth, float _currentHealth)
     {
-
-        healthBer.value = a;
-        healthCounter.text = a.ToString();
+        healthBer.value = _currentHealth;
+        healthCounter.text = _currentHealth.ToString();
     }
-    private void ShieldUpdate(float a, float b)
+    private void ShieldUpdate(float _maxShield, float _currentShield)
     {
-
-        shieldBer.value = a;
-        shieldCounter.text = a.ToString();
-
+        shieldBer.value = _currentShield;
+        shieldCounter.text = _currentShield.ToString();
     }
 
 }

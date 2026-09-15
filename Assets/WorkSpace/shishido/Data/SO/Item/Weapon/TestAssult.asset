@@ -15,6 +15,7 @@ MonoBehaviour:
   itemIcon: {fileID: 21300000, guid: a1fb763fd8f998c45ba5cb432cb11280, type: 3}
   rarityBackGroundIcon: {fileID: 0}
   ItemName: TestAR
+  itemType: 0
   itemPrefab: {fileID: 6648396557018715953, guid: aa48a5f6b4dae674ea4fb973ed1c9444, type: 3}
   maxStack: 1
   weaponDamage: 33
@@ -25,6 +26,8 @@ MonoBehaviour:
   ammoSpeed: 10
   fireAccuracy: 0
   recoilValue: 0
+  adsSpeed: 1
+  adsMultiplier: 2
   distanceAttenuation: 0
   headMultiplier: 2
   bodyMultiplier: 1

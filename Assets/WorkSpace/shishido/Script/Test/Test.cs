@@ -1,7 +1,9 @@
 using FishNet.Demo.AdditiveScenes;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using static GameConst;
+using static UnityEditor.Timeline.TimelinePlaybackControls;
 
 public class Test : MonoBehaviour
 {
@@ -133,19 +135,30 @@ public class Test : MonoBehaviour
         }
     }
 
+    private InputAction.CallbackContext cantext;
+
     public void TestPlayer()
     {
 
         //  左クリック処理
         if (Input.GetMouseButtonDown(0))
         {
-            em.GetcurrentItem()?.UsePrimary();
+            //em.GetcurrentItem()?.UsePrimary(cantext);
+            em.GetcurrentItem()?.
+        }
+        if (Input.GetMouseButtonUp(0))
+        {
+            //em.GetcurrentItem()?.UsePrimary(cantext);
         }
 
         //  右クリック処理
         if (Input.GetMouseButtonDown(1))
         {
-            em.GetcurrentItem()?.UseSecondary();
+            em.GetcurrentItem()?.UseSecondary(true);
+        }
+        if (Input.GetMouseButtonUp(1))
+        {
+            em.GetcurrentItem()?.UseSecondary(false);
         }
 
         //  リロード

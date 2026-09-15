@@ -1,7 +1,14 @@
 using UnityEngine;
+using static GameConst;
 
 public class CameraController : MonoBehaviour
 {
+    [SerializeField]
+    private Camera playerCamera;
+    public Camera PlayerCamera => playerCamera;
+    
+    public PlayerManager owner;
+
     [Header("追従対象")]
     public Transform target;
 
@@ -42,6 +49,9 @@ public class CameraController : MonoBehaviour
         {
             yaw = target.eulerAngles.y;
         }
+
+        if (playerCamera != null)
+            playerCamera.fieldOfView = DEFAULTPLAYER_FOV;
     }
 
     private void LateUpdate()
@@ -106,4 +116,36 @@ public class CameraController : MonoBehaviour
         // プレイヤーの胸〜顔を見る
         transform.rotation = rotation;
     }
+
+    /// <summary>
+    /// PlayerManagerの登録
+    /// </summary>
+    /// <param name="_owner"></param>
+    public void RegisterPlayer(PlayerManager _owner)
+    {
+        owner = _owner;
+    }
+
+    /// <summary>
+    /// 画面中央(クロスヘア)からRayを飛ばす
+    /// </summary>
+    /// <returns></returns>
+    public Ray GetCrosshairRay()
+    {
+        return playerCamera.ViewportPointToRay( new Vector3(0.5f, 0.5f, 0f));
+    }
+
+    /// <summary>
+    /// クロスヘアで何を狙ってるかを取得
+    /// </summary>
+    /// <param name="hit"></param>
+    /// <returns></returns>
+    public bool GetCrosshairTarget(out RaycastHit hit)
+    {
+        //  画面の中央からレイを飛ばす
+        Ray ray = GetCrosshairRay();
+
+        return Physics.Raycast(ray, out hit);
+    }
+
 }

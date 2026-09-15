@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.TextCore.Text;
 
 public abstract class ItemBase : MonoBehaviour
@@ -13,8 +14,8 @@ public abstract class ItemBase : MonoBehaviour
     /// </summary>
     public virtual void Initialize(PlayerManager _owner,ItemData ItemData) { }
 
-    public virtual void UsePrimary() { }
-    public virtual void UseSecondary() { }
+    public virtual void UsePrimary(InputAction.CallbackContext context) { }
+    public virtual void UseSecondary(bool flag) { }
     public virtual void UseReload() { }
 
 }
