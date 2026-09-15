@@ -144,7 +144,6 @@ public class Test : MonoBehaviour
         if (Input.GetMouseButtonDown(0))
         {
             //em.GetcurrentItem()?.UsePrimary(cantext);
-            em.GetcurrentItem()?.
         }
         if (Input.GetMouseButtonUp(0))
         {
