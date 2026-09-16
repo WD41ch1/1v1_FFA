@@ -24,6 +24,8 @@ public class EditCone : MonoBehaviour, IBuildingEditTarget
     public float gridRotationY = -45f;
     [Tooltip("ON: 編集開始時のカメラに正対する4マス。OFF: 底面の水平パネル")]
     public bool faceCameraOnEdit = true;
+    [Tooltip("ON: 結果Prefabを単独配置した大きさを維持。OFF: 元屋根のScaleを継承")]
+    public bool preserveResultPrefabSize = true;
     [Header("Materials")]
     public Material gridMaterial;
     [Header("Patterns; Result Prefab is required")]
@@ -225,7 +227,26 @@ public class EditCone : MonoBehaviour, IBuildingEditTarget
             Debug.LogError("Result Prefab must not contain a Rigidbody", this);
             return null;
         }
+        Vector3 parentScale = transform.lossyScale;
+        if (preserveResultPrefabSize &&
+            (Mathf.Abs(parentScale.x) < 0.00001f ||
+             Mathf.Abs(parentScale.y) < 0.00001f ||
+             Mathf.Abs(parentScale.z) < 0.00001f))
+        {
+            Debug.LogError("EditCone: parent scale must not contain zero", this);
+            return null;
+        }
         GameObject root = Instantiate(pattern.resultPrefab, transform, false);
+        if (preserveResultPrefabSize)
+        {
+            // Prefab単独配置時のScaleを維持する。位置・回転は従来どおり。
+            Vector3 prefabScale = pattern.resultPrefab.transform.localScale;
+            root.transform.localScale = new Vector3(
+                prefabScale.x / parentScale.x,
+                prefabScale.y / parentScale.y,
+                prefabScale.z / parentScale.z
+            );
+        }
         root.transform.localPosition = Vector3.zero;
         root.transform.localRotation = Quaternion.identity;
         root.SetActive(true);
