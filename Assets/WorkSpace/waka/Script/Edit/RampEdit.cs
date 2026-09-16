@@ -44,8 +44,6 @@ public class RampEdit : MonoBehaviour, IBuildingEditTarget
     public bool keepDirectionOnReset = true;
     [Tooltip("通常階段Prefab内の、X回転で傾斜を付けた子。形状とColliderを一緒に回せるTransform")]
     public Transform resetSlopeTarget;
-    private bool hasEditedSlopeX;
-    private float editedSlopeX;
     [Header("Materials")]
     public Material gridMaterial;
     [Header("Patterns; Result Prefab is required")]
@@ -320,19 +318,29 @@ public class RampEdit : MonoBehaviour, IBuildingEditTarget
         }
         Quaternion beforeResetRotation = Quaternion.identity;
         bool changedResetRotation = false;
-        if (selectionMask == 0 && keepDirectionOnReset && hasEditedSlopeX)
+        Vector3 beforeResetPosition = Vector3.zero;
+        if (selectionMask == 0 && keepDirectionOnReset && result != null)
         {
-            if (resetSlopeTarget == null || resetSlopeTarget == transform ||
-                !resetSlopeTarget.IsChildOf(transform) ||
-                (result != null && resetSlopeTarget.IsChildOf(result.transform)))
+            Transform target = ResolveResetSlopeTarget();
+            Vector3 originalUp, editedUp;
+            if (target == null)
             {
-                reason = "Assign Reset Slope Target to the original ramp slope child";
+                reason = "Reset blocked: assign Reset Slope Target to the original slope";
                 return false;
             }
-            beforeResetRotation = resetSlopeTarget.localRotation;
-            Vector3 angles = resetSlopeTarget.localEulerAngles;
-            angles.x = editedSlopeX;
-            resetSlopeTarget.localRotation = Quaternion.Euler(angles);
+            if (!TryGetUphill(originalMeshes, out originalUp) ||
+                !TryGetUphill(result.GetComponentsInChildren<MeshFilter>(), out editedUp))
+            {
+                reason = "Reset blocked: cannot read slope direction; enable Read/Write on the ramp mesh";
+                return false;
+            }
+            resetSlopeTarget = target;
+            beforeResetRotation = target.localRotation;
+            beforeResetPosition = target.localPosition;
+            Vector3 center = GetOriginalCenter(target);
+            float yaw = Vector3.SignedAngle(originalUp, editedUp, Vector3.up);
+            // Match the actual uphill direction. Preserve pitch, size and footprint center.
+            target.RotateAround(center, Vector3.up, yaw);
             changedResetRotation = true;
         }
         Physics.SyncTransforms();
@@ -343,6 +351,7 @@ public class RampEdit : MonoBehaviour, IBuildingEditTarget
             if (changedResetRotation)
             {
                 resetSlopeTarget.localRotation = beforeResetRotation;
+                resetSlopeTarget.localPosition = beforeResetPosition;
                 Physics.SyncTransforms();
             }
             reason = "Player overlaps the new ramp; move away";
@@ -352,15 +361,94 @@ public class RampEdit : MonoBehaviour, IBuildingEditTarget
         result = candidate;
         SetOriginal(selectionMask == 0);
         committedMask = selectionMask;
-        if (pattern != null)
-        {
-            hasEditedSlopeX = pattern.useResultRotationX;
-            editedSlopeX = pattern.resultRotationX;
-        }
         committedOrder.Clear();
         committedOrder.AddRange(selectionOrder);
         Finish();
         return true;
+    }
+
+    // Use the largest sloping triangle in world space. For a thin Cube ramp,
+    // the broad face is larger than its edge faces. Orient its normal upwards.
+    private static bool TryGetUphill(MeshFilter[] meshes, out Vector3 uphill)
+    {
+        uphill = Vector3.zero;
+        float largestArea = 0f;
+        foreach (MeshFilter source in meshes)
+        {
+            if (source == null || !source.gameObject.activeInHierarchy) continue;
+            Mesh mesh = source.sharedMesh;
+            if (mesh == null || !mesh.isReadable) continue;
+            Vector3[] vertices = mesh.vertices;
+            int[] triangles = mesh.triangles;
+            for (int i = 0; i + 2 < triangles.Length; i += 3)
+            {
+                Vector3 a = source.transform.TransformPoint(vertices[triangles[i]]);
+                Vector3 b = source.transform.TransformPoint(vertices[triangles[i + 1]]);
+                Vector3 c = source.transform.TransformPoint(vertices[triangles[i + 2]]);
+                Vector3 cross = Vector3.Cross(b - a, c - a);
+                float area = cross.magnitude;
+                if (area <= largestArea || area < 0.000001f) continue;
+                Vector3 normal = cross / area;
+                if (normal.y < 0f) normal = -normal;
+                if (normal.y < 0.1f || normal.y > 0.995f) continue;
+                uphill = new Vector3(-normal.x, 0f, -normal.z).normalized;
+                largestArea = area;
+            }
+        }
+        return largestArea > 0f;
+    }
+
+    private Vector3 GetOriginalCenter(Transform target)
+    {
+        bool found = false;
+        Bounds world = new Bounds();
+        foreach (MeshFilter source in originalMeshes)
+        {
+            if (source == null || source.sharedMesh == null) continue;
+            if (source.transform != target && !source.transform.IsChildOf(target)) continue;
+            Bounds bounds = source.sharedMesh.bounds;
+            for (int i = 0; i < 8; i++)
+            {
+                Vector3 point = source.transform.TransformPoint(new Vector3(
+                    (i & 1) == 0 ? bounds.min.x : bounds.max.x,
+                    (i & 2) == 0 ? bounds.min.y : bounds.max.y,
+                    (i & 4) == 0 ? bounds.min.z : bounds.max.z));
+                if (!found) { world = new Bounds(point, Vector3.zero); found = true; }
+                else world.Encapsulate(point);
+            }
+        }
+        return found ? world.center : target.position;
+    }
+
+    private Transform ResolveResetSlopeTarget()
+    {
+        if (resetSlopeTarget != null)
+        {
+            if ((resetSlopeTarget == transform || resetSlopeTarget.IsChildOf(transform)) &&
+                (result == null || !resetSlopeTarget.IsChildOf(result.transform)))
+                return resetSlopeTarget;
+            return null; // Do not silently replace an explicitly incorrect reference.
+        }
+
+        // Only infer when the original shape has one unambiguous mesh/Collider target.
+        Transform candidate = null;
+        foreach (MeshFilter mesh in originalMeshes)
+        {
+            if (mesh == null || mesh.sharedMesh == null) continue;
+            Renderer renderer = mesh.GetComponent<Renderer>();
+            int index = Array.IndexOf(originalRenderers, renderer);
+            if (index < 0 || !rendererStates[index]) continue;
+            if (candidate != null && candidate != mesh.transform) return null;
+            candidate = mesh.transform;
+        }
+        if (candidate == null) return null;
+        for (int i = 0; i < originalColliders.Length; i++)
+        {
+            Collider col = originalColliders[i];
+            if (col == null || !colliderStates[i] || col.isTrigger) continue;
+            if (col.transform != candidate && !col.transform.IsChildOf(candidate)) return null;
+        }
+        return candidate;
     }
 
     private GameObject CreateResult(Pattern pattern)
@@ -497,7 +585,6 @@ public class RampEdit : MonoBehaviour, IBuildingEditTarget
         // 確定時は新しい状態、キャンセル時は編集前の状態に戻す。
         if (originalRenderers != null) SetOriginal(committedMask == 0);
         if (grid != null) { grid.SetActive(false); Destroy(grid); }
-        grid = null;
         if (ownedGridMaterial != null) Destroy(ownedGridMaterial);
         ownedGridMaterial = null;
     }

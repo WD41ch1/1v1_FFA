@@ -9,9 +9,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 27861426770473946}
-  - component: {fileID: 6765450923207708281}
   m_Layer: 8
-  m_Name: Ramp Prefab
+  m_Name: change Ramp
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -33,20 +32,6 @@ Transform:
   - {fileID: 5229390372421070888}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &6765450923207708281
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7585568590100317355}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0d3205246767a1a40b3f39ab0b095dfd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  maxHP: 100
-  currentHP: 100
 --- !u!1001 &1868045120163234564
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -65,7 +50,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5872174901245915948, guid: 6f7fb26017a266244b9cdd84a64b4bd2, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 2
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5872174901245915948, guid: 6f7fb26017a266244b9cdd84a64b4bd2, type: 3}
       propertyPath: m_LocalPosition.z
@@ -101,7 +86,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8434901163645737139, guid: 6f7fb26017a266244b9cdd84a64b4bd2, type: 3}
       propertyPath: m_Name
-      value: ramp
+      value: Change ramp
       objectReference: {fileID: 0}
     - target: {fileID: 8434901163645737139, guid: 6f7fb26017a266244b9cdd84a64b4bd2, type: 3}
       propertyPath: m_Layer
@@ -110,78 +95,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 8434901163645737139, guid: 6f7fb26017a266244b9cdd84a64b4bd2, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 4509400417588597349}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 6f7fb26017a266244b9cdd84a64b4bd2, type: 3}
 --- !u!4 &5229390372421070888 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5872174901245915948, guid: 6f7fb26017a266244b9cdd84a64b4bd2, type: 3}
   m_PrefabInstance: {fileID: 1868045120163234564}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &7845948711805475767 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 8434901163645737139, guid: 6f7fb26017a266244b9cdd84a64b4bd2, type: 3}
-  m_PrefabInstance: {fileID: 1868045120163234564}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &4509400417588597349
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7845948711805475767}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dab7fadfaebd4f940a0048f885393f05, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  localCenter: {x: 0, y: 0, z: 0}
-  width: 1
-  panelSize: {x: 4, y: 4}
-  depth: 1
-  rampHeight: 2
-  gridRotationY: 0
-  faceCameraOnEdit: 1
-  preserveResultPrefabSize: 1
-  keepDirectionOnReset: 1
-  resetSlopeTarget: {fileID: 0}
-  gridMaterial: {fileID: 0}
-  patterns:
-  - name: "\u5DE6\u624B\u524D\u304B\u3089\u306E\u968E\u6BB5"
-    selectedCells: 060000000300000000000000
-    matchSelectionOrder: 1
-    resultPrefab: {fileID: 7585568590100317355, guid: fa19cac096f3ffa41bb61b55182b9e50, type: 3}
-    resultRotationY: 0
-    useResultRotationX: 1
-    resultRotationTargetPath: HalfRamp
-    resultRotationX: -90
-    resultLocalOffset: {x: 0, y: 0, z: 0}
-  - name: "\u5DE6\u5965\u304B\u3089\u306E\u968E\u6BB5"
-    selectedCells: 000000000300000006000000
-    matchSelectionOrder: 1
-    resultPrefab: {fileID: 7585568590100317355, guid: fa19cac096f3ffa41bb61b55182b9e50, type: 3}
-    resultRotationY: 0
-    useResultRotationX: 1
-    resultRotationTargetPath: HalfRamp
-    resultRotationX: 0
-    resultLocalOffset: {x: 0, y: 0, z: 0}
-  - name: "\u968E\u6BB5\u53CD\u8EE2"
-    selectedCells: 010000000400000007000000
-    matchSelectionOrder: 1
-    resultPrefab: {fileID: 7585568590100317355, guid: 1eda967fe8c65854cb2fad46e4192492, type: 3}
-    resultRotationY: 0
-    useResultRotationX: 1
-    resultRotationTargetPath: Change ramp
-    resultRotationX: 0
-    resultLocalOffset: {x: 0, y: 0, z: 0}
-  - name: "\u968E\u6BB5\u53CD\u8EE2"
-    selectedCells: 070000000400000001000000
-    matchSelectionOrder: 1
-    resultPrefab: {fileID: 7585568590100317355, guid: 1eda967fe8c65854cb2fad46e4192492, type: 3}
-    resultRotationY: 0
-    useResultRotationX: 1
-    resultRotationTargetPath: Change ramp
-    resultRotationX: -90
-    resultLocalOffset: {x: 0, y: 0, z: 0}

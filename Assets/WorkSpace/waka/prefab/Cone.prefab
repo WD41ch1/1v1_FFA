@@ -297,6 +297,7 @@ GameObject:
   - component: {fileID: 4116449411499731770}
   - component: {fileID: 7025127220663538584}
   - component: {fileID: 7257212313344032538}
+  - component: {fileID: 6142442148653457008}
   m_Layer: 12
   m_Name: Cone
   m_TagString: Untagged
@@ -584,6 +585,7 @@ MonoBehaviour:
   roofHeight: 1
   gridRotationY: -45
   faceCameraOnEdit: 0
+  preserveResultPrefabSize: 1
   gridMaterial: {fileID: 0}
   patterns:
   - name: "\u968E\u6BB5"
@@ -592,3 +594,17 @@ MonoBehaviour:
   - name: Shape 0+1
     selectedCells: 0000000001000000
     resultPrefab: {fileID: 0}
+--- !u!114 &6142442148653457008
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6232721762845926028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d3205246767a1a40b3f39ab0b095dfd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHP: 100
+  currentHP: 100
