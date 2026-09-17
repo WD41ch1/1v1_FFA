@@ -981,6 +981,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerCamera: {fileID: 877880251}
   player: {fileID: 1666229339}
+  playerManager: {fileID: 1666229353}
+  materialType: 0
+  materialCost: 10
   wallPrefab: {fileID: 21281137193718817, guid: 329ba115949f3734e9ab77e33aea0622, type: 3}
   wallPreviewPrefab: {fileID: 2042916248963457750, guid: 0c1f4ef8668c9264fbcd66c7c85ab18b, type: 3}
   canBuildMaterial: {fileID: 2100000, guid: 5d392703f89e96c42803b4c11d65cb6c, type: 2}
@@ -1125,6 +1128,26 @@ MonoBehaviour:
   playerRoot: {fileID: 1666229339}
   attackDistance: 6
   damage: 25
+--- !u!114 &1666229353
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1043135870}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87b9907f856616c48894d7fc83822a5b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerType: 0
+  isLocalPlayer: 0
+  inputController: {fileID: 3707898}
+  controller: {fileID: 0}
+  cameraController: {fileID: 877880253}
+  playerHealth: {fileID: 0}
+  equipmentManager: {fileID: 0}
+  inventoryManager: {fileID: 0}
 --- !u!1 &1983348251
 GameObject:
   m_ObjectHideFlags: 0
@@ -1458,6 +1481,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7767811910394218741, guid: 9a7d8593727d7814d9f62bf63edf4244, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1666229346}
+    - targetCorrespondingSourceObject: {fileID: 7767811910394218741, guid: 9a7d8593727d7814d9f62bf63edf4244, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1666229353}
   m_SourcePrefab: {fileID: 100100000, guid: 9a7d8593727d7814d9f62bf63edf4244, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
