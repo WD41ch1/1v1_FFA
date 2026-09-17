@@ -64,8 +64,6 @@ public class PlayerManager : MonoBehaviour
                 if (IsLocalPlayer)
                 {
                     guiManager = GUIManager.instance;
-                    //if(guiManager is GUIManager manager)
-                    //    manager.RegisterPlayer(this);
                 }
                 break;
             case PlayerType.Bot:
