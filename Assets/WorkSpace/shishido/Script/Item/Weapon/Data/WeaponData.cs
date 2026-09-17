@@ -10,6 +10,8 @@ public class WeaponData : ItemData
     //==============================================
     [Header("武器のダメージ")]    
     public float weaponDamage;
+    [Header("武器の射撃モード")]
+    public FireMode fireMode;
     [Header("連射速度")]
     public float fireRate;
     [Header("リロード時間")]

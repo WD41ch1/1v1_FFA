@@ -55,11 +55,14 @@ public abstract class WeaponBase : ItemBase
         Fire();
 
         //  連射処理(フルオート)
-        InvokeRepeating(
-            nameof(Fire),
-            weaponData.fireRate,
-            weaponData.fireRate
-        );
+        if (weaponData.fireMode == FireMode.FullAuto)
+        {
+            InvokeRepeating(
+                nameof(Fire),
+                weaponData.fireRate,
+                weaponData.fireRate
+                );
+        }
     }
 
     //  連射終了処理
@@ -124,7 +127,7 @@ public abstract class WeaponBase : ItemBase
         Camera camera = owner.cameraController.PlayerCamera;
         if (camera == null) return;
 
-        camera.DOFieldOfView(weaponData.adsMultiplier,weaponData.adsSpeed);
+        camera.DOFieldOfView(weaponData.adsMultiplier, weaponData.adsSpeed);
 
         //camera.transform.DOMove(weaponView.adsPoint.position, 0.2f);
         //camera.transform.DORotate(weaponView.adsPoint.eulerAngles, 0.2f);

@@ -15,9 +15,11 @@ MonoBehaviour:
   itemIcon: {fileID: 21300000, guid: 7e41f0dbe77e4a041ad855d7803e0934, type: 3}
   rarityBackGroundIcon: {fileID: 0}
   ItemName: TestPistol
+  itemType: 0
   itemPrefab: {fileID: 3763604498974455608, guid: 2af581842b170e84d9538062242679a8, type: 3}
   maxStack: 0
   weaponDamage: 16
+  fireMode: 2
   fireRate: 0
   reloadTime: 1.5
   ammoType: 0
@@ -25,6 +27,8 @@ MonoBehaviour:
   ammoSpeed: 10
   fireAccuracy: 0
   recoilValue: 0
+  adsSpeed: 0
+  adsMultiplier: 0
   distanceAttenuation: 0
   headMultiplier: 2
   bodyMultiplier: 1

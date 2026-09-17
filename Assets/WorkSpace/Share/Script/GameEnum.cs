@@ -37,6 +37,16 @@ public enum BerItemType
 }
 
 /// <summary>
+/// 武器の射撃モード
+/// </summary>
+public enum FireMode
+{
+    FullAuto,   // フルオート
+    Burst,      // バースト
+    SemiAuto    // 単発
+}
+
+/// <summary>
 /// 弾の種類
 /// </summary>
 public enum AmmoType

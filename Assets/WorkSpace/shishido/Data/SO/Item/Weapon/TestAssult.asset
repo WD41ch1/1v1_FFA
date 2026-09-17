@@ -23,7 +23,7 @@ MonoBehaviour:
   reloadTime: 3
   ammoType: 1
   maxAmmo: 30
-  ammoSpeed: 10
+  ammoSpeed: 50
   fireAccuracy: 0
   recoilValue: 0
   adsSpeed: 0.2
