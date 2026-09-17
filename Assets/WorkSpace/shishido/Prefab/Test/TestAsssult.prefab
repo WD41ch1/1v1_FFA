@@ -1,5 +1,36 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3631899977913479451
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6963688038588801417}
+  m_Layer: 0
+  m_Name: ADSpoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6963688038588801417
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3631899977913479451}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
+  m_LocalPosition: {x: 0, y: 0.3422, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 736034828715390337}
+  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
 --- !u!1 &6648396557018715953
 GameObject:
   m_ObjectHideFlags: 0
@@ -49,7 +80,7 @@ MonoBehaviour:
   animator: {fileID: 0}
   muzzlePoint: {fileID: 763606483536257226}
   shellPoint: {fileID: 5675259757439324171}
-  adsPoint: {fileID: 7305038153009359896}
+  adsPoint: {fileID: 6963688038588801417}
   muzzleFlashPrefab: {fileID: 0}
   hitEffectPrefab: {fileID: 0}
   projectilePrefab: {fileID: 5111063274538450963, guid: d6af723573a39994b9011fa5c0f4db63, type: 3}
@@ -123,7 +154,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 58566b89388137941a5875a7e21f415e, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6963688038588801417}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 58566b89388137941a5875a7e21f415e, type: 3}
 --- !u!4 &736034828715390337 stripped
@@ -139,10 +173,5 @@ Transform:
 --- !u!4 &5675259757439324171 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -4359836189878549919, guid: 58566b89388137941a5875a7e21f415e, type: 3}
-  m_PrefabInstance: {fileID: 989756983732605546}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &7305038153009359896 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -1667202930860327310, guid: 58566b89388137941a5875a7e21f415e, type: 3}
   m_PrefabInstance: {fileID: 989756983732605546}
   m_PrefabAsset: {fileID: 0}

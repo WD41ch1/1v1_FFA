@@ -6,7 +6,7 @@ public class CameraController : MonoBehaviour
     [SerializeField]
     private Camera playerCamera;
     public Camera PlayerCamera => playerCamera;
-    
+
     public PlayerManager owner;
 
     [Header("追従対象")]
@@ -132,7 +132,7 @@ public class CameraController : MonoBehaviour
     /// <returns></returns>
     public Ray GetCrosshairRay()
     {
-        return playerCamera.ViewportPointToRay( new Vector3(0.5f, 0.5f, 0f));
+        return playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
     }
 
     /// <summary>

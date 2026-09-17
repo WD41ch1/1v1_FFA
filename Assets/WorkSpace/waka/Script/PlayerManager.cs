@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem.XInput;
+using UnityEngine.InputSystem.XR;
 using static GameConst;
 
 /// <summary>
@@ -29,7 +30,7 @@ public class PlayerManager : MonoBehaviour
 
     [Header("Player Components")]
     public PlayerInputController inputController;
-    public CharacterController controller;
+    public PlayerMovement controller;
     public CameraController cameraController;
     public PlayerHealth playerHealth;
     public EquipmentManager equipmentManager;
@@ -48,7 +49,7 @@ public class PlayerManager : MonoBehaviour
     private void GetPlayerClass()
     {
         inputController = GetComponent<PlayerInputController>();
-        controller = GetComponent<CharacterController>();
+        controller = GetComponent<PlayerMovement>();
         cameraController = Camera.main.gameObject.GetComponent<CameraController>();
         playerHealth = GetComponent<PlayerHealth>();
         equipmentManager = GetComponent<EquipmentManager>();
@@ -90,7 +91,10 @@ public class PlayerManager : MonoBehaviour
                     100
                     );
 
-                //  カメラに自身の登録
+                //  自身の登録
+                equipmentManager.RegisterPlayer(this);
+                controller.RegisterPlayer(this);
+                inputController.RegisterPlayer(this);
                 cameraController.RegisterPlayer(this);
 
                 break;

@@ -37,6 +37,11 @@ public class InventoryManager : MonoBehaviour
 
     //=======================================================
 
+    //  武器の状態を保存しておくリスト
+    public List<WeaponState> weaponStates = new();
+
+    //=======================================================
+
     //  ホットバーUI側装備通知処理
     public event Action<int> OnRemoveItem;
 
@@ -53,6 +58,7 @@ public class InventoryManager : MonoBehaviour
         for (int i = 0; i < ITEM_SLOT_MAX; i++)
         {
             slots.Add(null);
+            weaponStates.Add(null);
         }
     }
 
@@ -61,7 +67,7 @@ public class InventoryManager : MonoBehaviour
     /// アイテムを拾う（追加)
     /// </summary>
     /// <param name="item"></param>
-    public void AddItem(ItemData item)
+    public void AddItem(ItemData item, WeaponState state = null)
     {
         for (int i = 0; i < slots.Count; i++)
         {
@@ -70,6 +76,8 @@ public class InventoryManager : MonoBehaviour
             {
                 //  スロット内にアイテムを装備(アイテムを取る)
                 slots[i] = item;
+                SetWeaponState(i, item, state);
+
                 //  UI関係の呼び出し
                 OnChangeInventoryItem?.Invoke(i, slots[i], ResourceChangeType.AddedNew);
                 OnAddHotbarItem?.Invoke(i);
@@ -79,11 +87,44 @@ public class InventoryManager : MonoBehaviour
     }
 
     /// <summary>
+    /// WeaponStateの生成
+    /// </summary>
+    /// <param name="listNum"></param>
+    /// <param name="item"></param>
+    /// <param name="state"></param>
+    private void SetWeaponState(
+        int listNum,
+        ItemData item,
+        WeaponState state = null)
+    {
+        //  アイテムが武器関連なら
+        if (item is WeaponData weaponData)
+        {
+            if (state != null)
+                weaponStates[listNum] = state;
+            else
+                weaponStates[listNum] = new WeaponState(weaponData.maxAmmo);
+
+        }
+    }
+
+    /// <summary>
+    /// List内のWeaponState取得関数
+    /// </summary>
+    /// <param name="listNum"></param>
+    /// <returns></returns>
+    public WeaponState GetWeaponState(int listNum)
+    {
+        return weaponStates[listNum];
+    }
+
+    /// <summary>
     /// アイテムを捨てる
     /// </summary>
     public void RemoveItem(int number)
     {
         slots[number] = null;
+        weaponStates[number] = null;
         OnRemoveItem.Invoke(number);
     }
 
@@ -95,10 +136,16 @@ public class InventoryManager : MonoBehaviour
     public bool SwapItem(int indexA, int indexB)
     {
         //  変更予定の場所に入っているデータを格納
-        ItemData temp = slots[indexB];
+        ItemData temp1 = slots[indexB];
+        WeaponState temp2 = weaponStates[indexB];
+
         //  データを移動
+        //  ItemData
         slots[indexB] = slots[indexA];
-        slots[indexA] = temp;
+        slots[indexA] = temp1;
+        // WeaponState 
+        weaponStates[indexB] = weaponStates[indexA];
+        weaponStates[indexA] = temp2;
 
         //  ホットバーへ変更の通知
         OnSwapHotbarItem?.Invoke(indexA, indexB);
@@ -114,6 +161,7 @@ public class InventoryManager : MonoBehaviour
     {
         GameObject obj;
 
+        WeaponState state = GetWeaponState(number);
         RemoveItem(number);
 
         //  ドロップオブジェクトを生成
@@ -124,7 +172,7 @@ public class InventoryManager : MonoBehaviour
 
         //  ドロップアイテム(オブジェクト)の初期化
         ItemPickup item = obj.GetComponent<ItemPickup>();
-        item.Initialize(dropData);
+        item.Initialize(dropData, state);
 
         //  通知
         OnChangeInventoryItem?.Invoke(

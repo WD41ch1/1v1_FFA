@@ -1,8 +1,7 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.TextCore.Text;
+using static GameConst;
+
 
 public abstract class ItemBase : MonoBehaviour
 {
@@ -12,7 +11,7 @@ public abstract class ItemBase : MonoBehaviour
     /// <summary>
     /// 初期化
     /// </summary>
-    public virtual void Initialize(PlayerManager _owner,ItemData ItemData) { }
+    public virtual void Initialize(PlayerManager _owner,ItemData ItemData, WeaponState state = null) { }
 
     public virtual void UsePrimary(InputAction.CallbackContext context) { }
     public virtual void UseSecondary(bool flag) { }
