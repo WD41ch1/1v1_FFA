@@ -1,11 +1,11 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using static UnityEngine.UI.GridLayoutGroup;
 
 public class AssaultRifle : WeaponBase
 {
-    public override void Initialize(PlayerManager _owner, ItemData itemData)
+    public override void Initialize(
+        PlayerManager _owner,
+        ItemData itemData,
+        WeaponState state = null)
     {
         if (itemData is WeaponData)
         {
@@ -17,17 +17,19 @@ public class AssaultRifle : WeaponBase
 
         weaponView = GetComponent<WeaponView>();
 
-        currentAmmo = weaponData.maxAmmo;
+        weaponState = state;
+        //weaponState.currentAmmo = weaponData.maxAmmo;
+
     }
 
-    public override void Fire(Vector3 _targetPosition)
+    public override void Fire()
     {
         //  リロード中
         if (isReloading)
             return;
 
         //  残弾無し
-        if (currentAmmo == 0)
+        if (weaponState.currentAmmo == 0)
         {
             Reload();
             return;
@@ -37,10 +39,10 @@ public class AssaultRifle : WeaponBase
         Debug.Log(weaponData.weaponDamage);
 
         //  弾の生成(現状可視化するためのデバッグ用)
-        BulletShoot(weaponView, _targetPosition);
+        BulletShoot(weaponView, GetTarget());
 
         //  弾数消費
-        currentAmmo--;
+        weaponState.currentAmmo--;
     }
 
     public override void Reload()
@@ -49,7 +51,7 @@ public class AssaultRifle : WeaponBase
         if (isReloading) return;
 
         //  補充必要数取得
-        int requestValue = weaponData.maxAmmo - currentAmmo;
+        int requestValue = weaponData.maxAmmo - weaponState.currentAmmo;
         //  承認
         int approvalValue = 0;
         //  inventory内弾数消費要求
@@ -62,12 +64,12 @@ public class AssaultRifle : WeaponBase
             StartCoroutine(ReloadAnimation(weaponData.reloadTime));
 
             //  弾補充     
-            currentAmmo += approvalValue;
+            weaponState.currentAmmo += approvalValue;
             //  TODO:現状武器を切り替え、落としてすぐに拾うなどをするとリロードしていないにもかかわらず弾が装填される
 
             //  万が一マガジン数が上限より上を行った場合
-            if (weaponData.maxAmmo <= currentAmmo)
-                currentAmmo = weaponData.maxAmmo;
+            if (weaponData.maxAmmo <= weaponState.currentAmmo)
+                weaponState.currentAmmo = weaponData.maxAmmo;
         }
 
     }

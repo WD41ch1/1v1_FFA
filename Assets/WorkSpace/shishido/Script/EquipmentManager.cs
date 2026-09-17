@@ -12,6 +12,8 @@ using static UnityEngine.UI.GridLayoutGroup;
  */
 public class EquipmentManager : MonoBehaviour
 {
+    private PlayerManager owner;
+
     [SerializeField, Header("アイテム生成場所")]
     private Transform itemSocket;
     //  現在装備スロット番号
@@ -40,15 +42,21 @@ public class EquipmentManager : MonoBehaviour
 
         if (data == null) return;
 
+        //  指定しているスロット
         currentSlot = slotNum;
+        //  対応スロットのWeaponState取得(武器関連以外はNULLになる)
+        WeaponState state 
+            = owner.inventoryManager.GetWeaponState(currentSlot);
+        //  UIに通知
         OnEquipChanged.Invoke(currentSlot);
-        CreateEquipItem(owner, data);
+        //  見た目アイテムの生成
+        CreateEquipItem(owner, data, state);
     }
 
     /// <summary>
     /// 装備アイテムの生成
     /// </summary>
-    private void CreateEquipItem(PlayerManager owner, ItemData data)
+    private void CreateEquipItem(PlayerManager owner, ItemData data, WeaponState state)
     {
         //  生成場所があるか
         if (itemSocket == null || data == null)
@@ -63,7 +71,7 @@ public class EquipmentManager : MonoBehaviour
         //  生成したアイテムのItemBaseを取得
         currentItem = createItem.GetComponent<ItemBase>();
         //  装備アイテムの初期化
-        currentItem.Initialize(owner, data);
+        currentItem.Initialize(owner, data, state);
     }
 
     /// <summary>
@@ -80,6 +88,14 @@ public class EquipmentManager : MonoBehaviour
     public ItemBase GetcurrentItem()
     {
         return currentItem;
+    }
+
+    public WeaponBase GetcurrentWeapon()
+    {
+        if(currentItem is WeaponBase weapon)
+            return weapon;
+        else
+            return null;
     }
 
     /// <summary>
@@ -121,5 +137,16 @@ public class EquipmentManager : MonoBehaviour
             }
         }
     }
+
+
+    /// <summary>
+    /// PlayerManagerの登録
+    /// </summary>
+    /// <param name="_owner"></param>
+    public void RegisterPlayer(PlayerManager _owner)
+    {
+        owner = _owner;
+    }
+
 
 }

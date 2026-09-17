@@ -1,8 +1,10 @@
 using UnityEngine;
+using static UnityEngine.UI.GridLayoutGroup;
 
 public class PlayerMovement : MonoBehaviour
 {
     [Header("参照")]
+    private PlayerManager owner;
     public PlayerInputController input;
     public Transform cameraTransform;
     public Transform groundCheck;
@@ -119,8 +121,12 @@ public class PlayerMovement : MonoBehaviour
         if (absAngle < idleRotateStartAngle)
             return;
 
-        // 45度以上ズレたらカメラ方向へ回す
-        Quaternion targetRotation =
+        //  ADS中なら回さない
+        if (owner.inputController.isADS)
+            return;
+
+            // 45度以上ズレたらカメラ方向へ回す
+            Quaternion targetRotation =
             Quaternion.LookRotation(cameraForward, Vector3.up);
 
         rb.MoveRotation(
@@ -164,4 +170,14 @@ public class PlayerMovement : MonoBehaviour
             );
         }
     }
+
+    /// <summary>
+    /// PlayerManagerの登録
+    /// </summary>
+    /// <param name="_owner"></param>
+    public void RegisterPlayer(PlayerManager _owner)
+    {
+        owner = _owner;
+    }
+
 }

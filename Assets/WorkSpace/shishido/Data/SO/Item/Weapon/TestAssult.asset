@@ -19,15 +19,15 @@ MonoBehaviour:
   itemPrefab: {fileID: 6648396557018715953, guid: aa48a5f6b4dae674ea4fb973ed1c9444, type: 3}
   maxStack: 1
   weaponDamage: 33
-  fireRate: 0
+  fireRate: 0.5
   reloadTime: 3
   ammoType: 1
   maxAmmo: 30
   ammoSpeed: 10
   fireAccuracy: 0
   recoilValue: 0
-  adsSpeed: 1
-  adsMultiplier: 2
+  adsSpeed: 0.2
+  adsMultiplier: 30
   distanceAttenuation: 0
   headMultiplier: 2
   bodyMultiplier: 1

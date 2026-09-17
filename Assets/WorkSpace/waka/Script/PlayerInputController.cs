@@ -1,8 +1,12 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using static UnityEditor.Timeline.TimelinePlaybackControls;
+using static UnityEngine.UI.GridLayoutGroup;
 
 public class PlayerInputController : MonoBehaviour
 {
+    public PlayerManager owner;
+
     // WASDの入力値
     public Vector2 MoveInput { get; private set; }
 
@@ -15,11 +19,13 @@ public class PlayerInputController : MonoBehaviour
     // 壁建築ボタンが押されたか
     public bool BuildWallPressed { get; private set; }
     //階段ボタンが押されたか
-    public bool BuildRampPressed {  get; private set; }
+    public bool BuildRampPressed { get; private set; }
 
-    public bool BuildFloorPressed {  get; private set; }
+    public bool BuildFloorPressed { get; private set; }
 
     public bool BuildConePressed { get; private set; }
+    //  ADS中かどうかのフラグ
+    public bool isADS { get; private set; }
 
     // Moveイベントから呼ばれる
     public void OnMove(InputAction.CallbackContext context)
@@ -62,7 +68,7 @@ public class PlayerInputController : MonoBehaviour
     {
         if (context.performed)
         {
-            BuildRampPressed= true;
+            BuildRampPressed = true;
             Debug.Log("Build Ramp");
         }
     }
@@ -103,13 +109,50 @@ public class PlayerInputController : MonoBehaviour
         BuildRampPressed = false;
     }
 
-    public void ResetBuildFloor() 
+    public void ResetBuildFloor()
     {
-        BuildFloorPressed = false; 
+        BuildFloorPressed = false;
     }
 
     public void ResetBuildCone()
     {
         BuildConePressed = false;
     }
+
+    //  ============================================================
+    //                      Combat系
+    //  ============================================================
+    public void OnUsePrimary(InputAction.CallbackContext context)
+    {
+        owner.equipmentManager.GetcurrentItem()?.UsePrimary(context);
+    }
+
+    public void OnUseSecondary(InputAction.CallbackContext context)
+    {
+        if (context.started)
+            isADS = true;
+        else if(context.canceled)
+            isADS = false;
+
+        owner.equipmentManager.GetcurrentItem()?.UseSecondary(isADS);
+    }
+
+    public void OnUseReload()
+    {
+        owner.equipmentManager.GetcurrentItem()?.UseReload();
+    }
+
+    //  ============================================================
+    //                      その他
+    //  ============================================================
+
+    /// <summary>
+    /// PlayerManagerの登録
+    /// </summary>
+    /// <param name="_owner"></param>
+    public void RegisterPlayer(PlayerManager _owner)
+    {
+        owner = _owner;
+    }
+
 }

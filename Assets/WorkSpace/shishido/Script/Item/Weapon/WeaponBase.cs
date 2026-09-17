@@ -3,6 +3,7 @@ using FishNet.Example.ColliderRollbacks;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using static GameConst;
 
 public abstract class WeaponBase : ItemBase
 {
@@ -10,10 +11,12 @@ public abstract class WeaponBase : ItemBase
 
     protected WeaponView weaponView;
 
+    protected WeaponState weaponState;
+
     //  リロード中かいなか
     protected bool isReloading;
     //  現在の弾数
-    protected int currentAmmo;
+    //protected int currentAmmo;
 
     //  ADSができるかどうかのフラグ(例えば空中にいるときはADSできない など)
     protected bool canADS;
@@ -39,7 +42,7 @@ public abstract class WeaponBase : ItemBase
     /// <summary>
     /// 射撃処理
     /// </summary>
-    public abstract void Fire(Vector3 _targetPosition);
+    public abstract void Fire();
 
     /// <summary>
     /// リロード処理
@@ -49,8 +52,9 @@ public abstract class WeaponBase : ItemBase
     public void StartFire()
     {
         //  射撃
-        Fire(GetTarget());
+        Fire();
 
+        //  連射処理(フルオート)
         InvokeRepeating(
             nameof(Fire),
             weaponData.fireRate,
@@ -58,6 +62,7 @@ public abstract class WeaponBase : ItemBase
         );
     }
 
+    //  連射終了処理
     public void StopFire()
     {
         CancelInvoke(nameof(Fire));
@@ -119,11 +124,10 @@ public abstract class WeaponBase : ItemBase
         Camera camera = owner.cameraController.PlayerCamera;
         if (camera == null) return;
 
-        camera.DOFieldOfView(65f, 0.2f);
+        camera.DOFieldOfView(weaponData.adsMultiplier,weaponData.adsSpeed);
 
-        camera.transform.DOMove(weaponView.adsPoint.position, 0.2f);
-
-        camera.transform.DORotate(weaponView.adsPoint.eulerAngles, 0.2f);
+        //camera.transform.DOMove(weaponView.adsPoint.position, 0.2f);
+        //camera.transform.DORotate(weaponView.adsPoint.eulerAngles, 0.2f);
     }
 
     public virtual void EndADS()
@@ -131,10 +135,9 @@ public abstract class WeaponBase : ItemBase
         Camera camera = owner.cameraController.PlayerCamera;
         if (camera == null) return;
 
-        camera.DOFieldOfView(90f, 0.2f);
+        camera.DOFieldOfView(DEFAULTPLAYER_FOV, 0.2f);
 
         //camera.transform.DOMove(normalPosition, 0.2f);
-
         //camera.transform.DORotate(normalRotation, 0.2f);
     }
 
@@ -175,8 +178,13 @@ public abstract class WeaponBase : ItemBase
         return weaponData;
     }
 
+    public WeaponView GetWeaponView()
+    {
+        return weaponView;
+    }
+
     public int GetcurrentAmmo()
     {
-        return currentAmmo;
+        return weaponState.currentAmmo;
     }
 }

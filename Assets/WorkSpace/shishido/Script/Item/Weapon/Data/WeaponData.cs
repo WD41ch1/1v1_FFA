@@ -39,7 +39,7 @@ public class WeaponData : ItemData
     [Header("覗く速度")]
     public float adsSpeed;
     [Header("ADS倍率")]
-    public float adsMultiplier;
+    public float adsMultiplier;     //  現状はFOVの数値
 
     //==============================================
     //      ダメージ変化系
