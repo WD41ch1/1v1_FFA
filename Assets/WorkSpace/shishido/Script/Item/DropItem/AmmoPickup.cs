@@ -32,6 +32,6 @@ public class AmmoPickup : MonoBehaviour, IPickupable
             return;
 
         character.inventoryManager.AddAmmo(ammoType, amount);
-        Destroy(gameObject);
+        //Destroy(gameObject);
     }
 }

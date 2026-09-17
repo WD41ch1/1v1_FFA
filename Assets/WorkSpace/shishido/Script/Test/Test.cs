@@ -190,6 +190,7 @@ public class Test : MonoBehaviour
         if (other.TryGetComponent<IPickupable>(out var pickup))
         {
             pickup?.Pickup(pm);
+            Destroy(other?.gameObject);
         }
     }
 }

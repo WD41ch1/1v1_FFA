@@ -77,6 +77,12 @@ public class PlayerManager : MonoBehaviour
     /// </summary>
     private void Initialize()
     {
+        /*
+            [RegisterPlayer]　初期化を別(Start・Awake)で行ってるClassで自身の登録だけを行う
+        　　[Initialize]　　　自身の登録と初期化を同時に行うClass
+            (※guiManagerは特殊のため例外(修正する可能性あり))
+         */
+
         // Player・Bot初期化
         switch (playerType)
         {
@@ -90,10 +96,12 @@ public class PlayerManager : MonoBehaviour
                     );
 
                 //  自身の登録
-                equipmentManager.RegisterPlayer(this);
                 controller.RegisterPlayer(this);
                 inputController.RegisterPlayer(this);
                 cameraController.RegisterPlayer(this);
+
+                //  初期化処理
+                equipmentManager.Initialize(this);
 
                 break;
             case PlayerType.Bot:

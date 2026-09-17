@@ -2,6 +2,7 @@ using NaughtyAttributes;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using static GameConst;
@@ -41,6 +42,8 @@ public class InventoryManager : MonoBehaviour
     public List<WeaponState> weaponStates = new();
 
     //=======================================================
+    //EquipmentManager側装備通知処理
+    public event Action OnDeletingSetItems;
 
     //  ホットバーUI側装備通知処理
     public event Action<int> OnRemoveItem;
@@ -123,8 +126,13 @@ public class InventoryManager : MonoBehaviour
     /// </summary>
     public void RemoveItem(int number)
     {
+        //  対応スロットのデータ削除
         slots[number] = null;
         weaponStates[number] = null;
+
+        //  見た目の削除要求
+        OnDeletingSetItems.Invoke();
+        //  UIの更新要求
         OnRemoveItem.Invoke(number);
     }
 

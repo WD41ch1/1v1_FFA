@@ -25,6 +25,6 @@ public class ItemPickup : MonoBehaviour, IPickupable
     public void Pickup(PlayerManager character)
     {
         character.inventoryManager.AddItem(itemData, weaponState);
-        Destroy(gameObject);
+        //Destroy(gameObject);
     }
 }

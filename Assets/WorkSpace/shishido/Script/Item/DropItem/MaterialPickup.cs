@@ -28,6 +28,6 @@ public class MaterialPickup : MonoBehaviour, IPickupable
             return;
 
         character.inventoryManager.AddBildMat(bildingMatType, amount);
-        Destroy(gameObject);
+        //Destroy(gameObject);
     }
 }

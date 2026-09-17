@@ -26,6 +26,19 @@ public class EquipmentManager : MonoBehaviour
     //  装備通知処理
     public event Action<int> OnEquipChanged;
 
+    #region 初期化
+
+
+    public void Initialize(PlayerManager _owner)
+    {
+        owner = _owner;
+
+        owner.inventoryManager.OnDeletingSetItems += DeletingSetItems;
+    }
+
+    #endregion
+
+
     /// <summary>
     /// アイテムの装備
     /// </summary>
@@ -85,6 +98,15 @@ public class EquipmentManager : MonoBehaviour
         createItem = null;
         currentItem = null;
     }
+
+    /// <summary>
+    /// inventoryManager用装備アイテム破棄関数
+    /// </summary>
+    public void DeletingSetItems()
+    {
+        UnEquip();
+    }
+
     public ItemBase GetcurrentItem()
     {
         return currentItem;
@@ -137,16 +159,4 @@ public class EquipmentManager : MonoBehaviour
             }
         }
     }
-
-
-    /// <summary>
-    /// PlayerManagerの登録
-    /// </summary>
-    /// <param name="_owner"></param>
-    public void RegisterPlayer(PlayerManager _owner)
-    {
-        owner = _owner;
-    }
-
-
 }

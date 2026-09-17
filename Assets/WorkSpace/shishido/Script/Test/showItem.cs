@@ -8,6 +8,8 @@ public class showItem : MonoBehaviour
     [SerializeField]
     public PlayerManager pm;
 
+    public InventoryManager im;
+
     public TextMeshProUGUI t1;
     public TextMeshProUGUI t2;
     public TextMeshProUGUI t3;
@@ -16,23 +18,35 @@ public class showItem : MonoBehaviour
     public TextMeshProUGUI t6;
     public TextMeshProUGUI t20;
 
+    private bool isInit = false;
 
     void Start()
     {
+        StartCoroutine(GetPlayer());
+    }
 
+    public IEnumerator GetPlayer()
+    {
+        yield return null;
+
+        pm = GUIManager.instance.myPlayer;
+        im = pm.inventoryManager;
+
+        isInit = true;
     }
 
     // Update is called once per frame
     void Update()
     {
-        InventoryManager im = pm.inventoryManager;
 
-        t1.text = im.GetAmmo(AmmoType.SmallAmmo).ToString();
-        t2.text = im.GetAmmo(AmmoType.MiddleAmmo).ToString();
-        t3.text = im.GetAmmo(AmmoType.BigAmmo).ToString();
-        t4.text = im.GetMat(BildingMatType.Wood).ToString();
-        t5.text = im.GetMat(BildingMatType.Brick).ToString();
-        t6.text = im.GetMat(BildingMatType.Iron).ToString();
+        if (!isInit) return;
+
+        t1.text = im?.GetAmmo(AmmoType.SmallAmmo).ToString();
+        t2.text = im?.GetAmmo(AmmoType.MiddleAmmo).ToString();
+        t3.text = im?.GetAmmo(AmmoType.BigAmmo).ToString();
+        t4.text = im?.GetMat(BildingMatType.Wood).ToString();
+        t5.text = im?.GetMat(BildingMatType.Brick).ToString();
+        t6.text = im?.GetMat(BildingMatType.Iron).ToString();
         showAmmoRemaining();
     }
 
@@ -47,6 +61,12 @@ public class showItem : MonoBehaviour
             WeaponBase weapon = (WeaponBase)ib;
             t20.text = weapon.GetcurrentAmmo().ToString();
         }
+        else
+        {
+            t20.text = "No equipment".ToString();
+        }
+
+
     }
 
 }
