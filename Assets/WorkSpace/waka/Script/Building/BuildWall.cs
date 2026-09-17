@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using static GameConst;
 
 /// <summary>
 /// 壁建築を担当するクラス
@@ -15,6 +16,14 @@ public class BuildWall : MonoBehaviour
     [Header("参照")]
     public Camera playerCamera;
     public Transform player;
+
+    [Header("建材消費")]
+    [Tooltip("建材を消費するPlayer。未設定ならPlayer参照の親から取得")]
+    public PlayerManager playerManager;
+    [Tooltip("消費する建材の種類。Inspectorで選択してください")]
+    public BildingMatType materialType;
+    [Min(1)]
+    public int materialCost = 10;
 
     [Header("壁Prefab")]
     public GameObject wallPrefab;
@@ -135,7 +144,7 @@ public class BuildWall : MonoBehaviour
             rotation
         );
 
-        SetPreviewMaterial(canBuild);
+        SetPreviewMaterial(canBuild && HasEnoughMaterials());
     }
 
     /// <summary>
@@ -172,6 +181,12 @@ public class BuildWall : MonoBehaviour
             return;
         }
 
+        // 位置・接続・重複・Prefabの確認がすべて通ってから消費する。
+        if (!TryPayMaterials())
+        {
+            return;
+        }
+
         Instantiate(
             wallPrefab,
             position,
@@ -179,6 +194,46 @@ public class BuildWall : MonoBehaviour
         );
 
         builtPositions.Add(key);
+    }
+
+    private bool TryGetMaterialInventory(out InventoryManager inventory)
+    {
+        inventory = null;
+        if (playerManager == null && player != null)
+            playerManager = player.GetComponentInParent<PlayerManager>();
+
+        if (playerManager == null) return false;
+        // PlayerManagerの初期化済みの参照を使う。
+        inventory = playerManager.inventoryManager;
+        return inventory != null;
+    }
+
+    private bool HasEnoughMaterials()
+    {
+        InventoryManager inventory;
+        return materialCost > 0 &&
+            TryGetMaterialInventory(out inventory) &&
+            inventory.GetMat(materialType) >= materialCost;
+    }
+
+    private bool TryPayMaterials()
+    {
+        InventoryManager inventory;
+        if (materialCost <= 0 || !TryGetMaterialInventory(out inventory))
+        {
+            Debug.LogWarning(
+                "BuildWall: Player ManagerとInventory Managerの参照、およびMaterial Cost（1以上）を確認してください。",
+                this);
+            return false;
+        }
+
+        // 既存の消費APIは不足分だけでも消費するため、必ず先に必要数を確認。
+        // 確認と消費の間に待機や別の処理を挟まない。
+        if (inventory.GetMat(materialType) < materialCost) return false;
+
+        int consumed;
+        return playerManager.TryConsumeBildMat(materialType, materialCost, out consumed)
+            && consumed == materialCost;
     }
 
     /// <summary>
@@ -999,7 +1054,7 @@ public class BuildWall : MonoBehaviour
     {
         int x =
             Mathf.RoundToInt(
-                position.x * 100f
+                position.x * 100f 
             );
 
         int y =
