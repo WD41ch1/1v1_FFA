@@ -1188,6 +1188,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerCamera: {fileID: 877880251}
   player: {fileID: 1666229339}
+  playerManager: {fileID: 0}
+  materialType: 0
+  materialCost: 10
   rampPrefab: {fileID: 7585568590100317355, guid: bd27c99dc8e805e4b85c06eda82a5c93, type: 3}
   rampPreviewPrefab: {fileID: 2082210205880270045, guid: 21f021990abcceb4eb09e49c10757399, type: 3}
   canBuildMaterial: {fileID: 2100000, guid: 5d392703f89e96c42803b4c11d65cb6c, type: 2}
@@ -1221,6 +1224,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerCamera: {fileID: 877880251}
   player: {fileID: 1666229339}
+  playerManager: {fileID: 0}
+  materialType: 0
+  materialCost: 10
   floorPrefab: {fileID: 2207945317159536514, guid: 44f6e7ef71e412a4886f748f7b879c46, type: 3}
   floorPreviewPrefab: {fileID: 822347329086317667, guid: e9329043fef1b1c439585f6e90a7b950, type: 3}
   canBuildMaterial: {fileID: 2100000, guid: 5d392703f89e96c42803b4c11d65cb6c, type: 2}
@@ -1254,6 +1260,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerCamera: {fileID: 877880251}
   player: {fileID: 1666229339}
+  playerManager: {fileID: 0}
+  materialType: 0
+  materialCost: 10
   conePrefab: {fileID: 6232721762845926028, guid: d096aeb3aa55e1a499c95a7489ac61c9, type: 3}
   conePreviewPrefab: {fileID: 8685105314018210112, guid: 7fa56f1215ae6db499bebd7f6b6cde09, type: 3}
   canBuildMaterial: {fileID: 2100000, guid: 5d392703f89e96c42803b4c11d65cb6c, type: 2}
@@ -1565,6 +1574,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 317081884195937378, guid: 9a7d8593727d7814d9f62bf63edf4244, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1033365180458493589, guid: 9a7d8593727d7814d9f62bf63edf4244, type: 3}
       propertyPath: itemSocket
       value: 
