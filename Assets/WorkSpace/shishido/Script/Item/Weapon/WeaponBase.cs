@@ -138,7 +138,7 @@ public abstract class WeaponBase : ItemBase
         Camera camera = owner.cameraController.PlayerCamera;
         if (camera == null) return;
 
-        camera.DOFieldOfView(DEFAULTPLAYER_FOV, 0.2f);
+        camera.DOFieldOfView(DEFAULT_PLAYER_FOV, 0.2f);
 
         //camera.transform.DOMove(normalPosition, 0.2f);
         //camera.transform.DORotate(normalRotation, 0.2f);
@@ -148,15 +148,20 @@ public abstract class WeaponBase : ItemBase
     /// リロードコルーチン
     /// </summary>
     /// <param name="reloadTime"></param>
+    /// <param name="_approvalValue"></param>
     /// <returns></returns>
-    protected IEnumerator ReloadAnimation(float reloadTime)
+    protected virtual IEnumerator ReloadAnimation(float reloadTime, int _approvalValue)
     {
         isReloading = true;
         yield return new WaitForSeconds(reloadTime);
+
+        //  弾補充     
+        weaponState.currentAmmo += _approvalValue;
+
         isReloading = false;
     }
 
-    protected void BulletShoot(WeaponView weaponView, Vector3 target)
+    protected virtual void BulletShoot(WeaponView weaponView, Vector3 target)
     {
         if (weaponView == null) return;
         Transform muzzlePoint = weaponView.muzzlePoint;

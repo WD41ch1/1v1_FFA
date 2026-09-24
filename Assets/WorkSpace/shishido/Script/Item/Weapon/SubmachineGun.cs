@@ -61,12 +61,8 @@ public class SubmachineGun : WeaponBase
             requestValue,
             out approvalValue))
         {
-            //  リロード時間
-            StartCoroutine(ReloadAnimation(weaponData.reloadTime));
-
-            //  弾補充     
-            weaponState.currentAmmo += approvalValue;
-            //  TODO:現状武器を切り替え、落としてすぐに拾うなどをするとリロードしていないにもかかわらず弾が装填される
+            //  リロード時間 + 弾補充
+            StartCoroutine(ReloadAnimation(weaponData.reloadTime, approvalValue));
 
             //  万が一マガジン数が上限より上を行った場合
             if (weaponData.maxAmmo <= weaponState.currentAmmo)

@@ -4,7 +4,7 @@ public class GameConst
     //  Player
     public static readonly float PLAYER_MAXHEALTH = 100;
     public static readonly float PLAYER_MAXSHIELDE = 100;
-    public static readonly float DEFAULTPLAYER_FOV = 60;
+    public static readonly float DEFAULT_PLAYER_FOV = 60;
 
     //  インベントリ：ホットバー
     public static readonly int PICKEL_SLOT = 100;
@@ -16,9 +16,12 @@ public class GameConst
     public static readonly int ITEM_SLOT_5 = 4;
 
 
-    //  資材系
+    //  アイテム・資材関係
+    public static readonly float ITEM_RORATE_SPEED = 0.5f;
+    public static readonly float ITEM_MOVE_HEIGHT = 0.25f;
+    public static readonly float ITEM_MOVE_SPEED = 1;
+
     public static readonly int MAX_AMMO = 999;
     public static readonly int MAX_BILDMAT = 999;
-
 
 }

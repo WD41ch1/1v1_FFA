@@ -51,7 +51,7 @@ public class CameraController : MonoBehaviour
         }
 
         if (playerCamera != null)
-            playerCamera.fieldOfView = DEFAULTPLAYER_FOV;
+            playerCamera.fieldOfView = DEFAULT_PLAYER_FOV;
     }
 
     private void LateUpdate()
