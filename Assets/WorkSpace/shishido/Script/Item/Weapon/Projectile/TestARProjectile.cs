@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class TestARProjectile : ProjectileBase
@@ -40,19 +41,71 @@ public class TestARProjectile : ProjectileBase
     /// </summary>
     public override void AmmoBehavior()
     {
-        //transform.position += direction * speed * Time.deltaTime;
-
+        //  テスト用
         Vector3 currentPosition = transform.position;
+        float moveDistance = speed * Time.deltaTime;
+        
+        if (moveDistance <= 0f) return;
 
-        transform.position += direction * speed * Time.deltaTime;
+        // 弾が移動する区間を調べる
+        RaycastHit[] hits = Physics.RaycastAll(
+            currentPosition,
+            direction,
+            moveDistance,
+            Physics.DefaultRaycastLayers,
+            QueryTriggerInteraction.Ignore
+        );
 
+        // 手前のものから調べる
+        Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+        // すべてのヒットを調べる
+        foreach (RaycastHit hit in hits)
+        {
+            // ヒットしたコライダーを取得
+            Collider other = hit.collider;
+
+            // 弾自身は無視
+            if (other.transform == transform ||
+                other.transform.IsChildOf(transform))
+            {
+                continue;
+            }
+
+            // 射撃者自身は無視
+            if (owner != null &&
+                (other.transform == owner.transform ||
+                 other.transform.IsChildOf(owner.transform)))
+            {
+                continue;
+            }
+            // 建築物のHPを持つコンポーネントを取得
+            BuildHP buildHP = other.GetComponentInParent<BuildHP>();
+
+            if (buildHP != null)
+            {
+                // 建築物にヒットしたことを記録
+                transform.position = hit.point;
+
+                // ProjectileBaseの建築ダメージ処理を呼ぶ
+                OnTriggerEnter(other);
+                return;
+            }
+
+            // 手前に別の障害物があるなら、
+            // その奥の建築物にはダメージを与えない
+            break;
+        }
+        // 弾を移動させる
+        transform.position =
+            currentPosition + direction * moveDistance;
+        //  テスト用
         Debug.DrawLine(
             previousPosition,
             transform.position,
             Color.red,
             1f
         );
-
+        
         previousPosition = transform.position;
     }
 
