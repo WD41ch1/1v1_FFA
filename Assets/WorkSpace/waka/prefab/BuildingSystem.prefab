@@ -1,0 +1,205 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &4355871512576070418
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8250525945124591122}
+  - component: {fileID: 7804155851807698814}
+  - component: {fileID: 3077657103043195030}
+  - component: {fileID: 4351910751405210728}
+  - component: {fileID: 5034936294660844431}
+  - component: {fileID: 2969218827903182648}
+  m_Layer: 0
+  m_Name: BuildingSystem
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8250525945124591122
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4355871512576070418}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 2, z: 6.32}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7804155851807698814
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4355871512576070418}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cfd8ed0adae34b4ca85545384369b76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  input: {fileID: 0}
+  wallBuilder: {fileID: 3077657103043195030}
+  rampBuilder: {fileID: 4351910751405210728}
+  floorBuilder: {fileID: 5034936294660844431}
+  coneBuilder: {fileID: 2969218827903182648}
+  buildInterval: 0.15
+--- !u!114 &3077657103043195030
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4355871512576070418}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0e5d78cd7bda6f545ae623509bf7253a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerCamera: {fileID: 0}
+  player: {fileID: 0}
+  playerManager: {fileID: 0}
+  materialType: 0
+  materialCost: 10
+  wallPrefab: {fileID: 21281137193718817, guid: 329ba115949f3734e9ab77e33aea0622, type: 3}
+  wallPreviewPrefab: {fileID: 2042916248963457750, guid: 0c1f4ef8668c9264fbcd66c7c85ab18b, type: 3}
+  canBuildMaterial: {fileID: 2100000, guid: 5d392703f89e96c42803b4c11d65cb6c, type: 2}
+  cannotBuildMaterial: {fileID: 2100000, guid: ae19b7cc0a48c1744b2ae3f71ebac9e6, type: 2}
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 8
+  buildLayer:
+    serializedVersion: 2
+    m_Bits: 7936
+  wallLayer:
+    serializedVersion: 2
+    m_Bits: 512
+  buildDistance: 2
+  gridSize: 4
+  candidateSearchRadius: 2
+  candidateSearchHeight: 1
+  connectionThickness: 0.15
+  edgeCheckRatio: 0.4
+--- !u!114 &4351910751405210728
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4355871512576070418}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b1a7aabbe2247a4fbc391bb9b9197cd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerCamera: {fileID: 0}
+  player: {fileID: 0}
+  playerManager: {fileID: 0}
+  materialType: 0
+  materialCost: 10
+  rampPrefab: {fileID: 7585568590100317355, guid: bd27c99dc8e805e4b85c06eda82a5c93, type: 3}
+  rampPreviewPrefab: {fileID: 2082210205880270045, guid: 21f021990abcceb4eb09e49c10757399, type: 3}
+  canBuildMaterial: {fileID: 2100000, guid: 5d392703f89e96c42803b4c11d65cb6c, type: 2}
+  cannotBuildMaterial: {fileID: 2100000, guid: ae19b7cc0a48c1744b2ae3f71ebac9e6, type: 2}
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 8
+  buildLayer:
+    serializedVersion: 2
+    m_Bits: 7936
+  rampLayer:
+    serializedVersion: 2
+    m_Bits: 2048
+  buildDistance: 7
+  gridSize: 4
+  lookDownThreshold: -0.45
+  playerBlockHeight: 1.2
+  connectionThickness: 0.15
+  edgeCheckRatio: 0.4
+--- !u!114 &5034936294660844431
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4355871512576070418}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bc0fb41194a7eeb4bb7c2141c7d47ffd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerCamera: {fileID: 0}
+  player: {fileID: 0}
+  playerManager: {fileID: 0}
+  materialType: 0
+  materialCost: 10
+  floorPrefab: {fileID: 2207945317159536514, guid: 44f6e7ef71e412a4886f748f7b879c46, type: 3}
+  floorPreviewPrefab: {fileID: 822347329086317667, guid: e9329043fef1b1c439585f6e90a7b950, type: 3}
+  canBuildMaterial: {fileID: 2100000, guid: 5d392703f89e96c42803b4c11d65cb6c, type: 2}
+  cannotBuildMaterial: {fileID: 2100000, guid: ae19b7cc0a48c1744b2ae3f71ebac9e6, type: 2}
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 8
+  buildLayer:
+    serializedVersion: 2
+    m_Bits: 7936
+  floorLayer:
+    serializedVersion: 2
+    m_Bits: 1024
+  buildDistance: 6
+  gridSize: 4
+  floorThickness: 0.1
+  lookDownThreshold: -0.45
+  lookUpThreshold: 0.3
+  connectionThickness: 0.15
+--- !u!114 &2969218827903182648
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4355871512576070418}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 32e4f2f8f24d6344abfd6fa4ee84f177, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerCamera: {fileID: 0}
+  player: {fileID: 0}
+  playerManager: {fileID: 0}
+  materialType: 0
+  materialCost: 10
+  conePrefab: {fileID: 6232721762845926028, guid: d096aeb3aa55e1a499c95a7489ac61c9, type: 3}
+  conePreviewPrefab: {fileID: 8685105314018210112, guid: 7fa56f1215ae6db499bebd7f6b6cde09, type: 3}
+  canBuildMaterial: {fileID: 2100000, guid: 5d392703f89e96c42803b4c11d65cb6c, type: 2}
+  cannotBuildMaterial: {fileID: 2100000, guid: ae19b7cc0a48c1744b2ae3f71ebac9e6, type: 2}
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 8
+  buildLayer:
+    serializedVersion: 2
+    m_Bits: 7936
+  floorLayer:
+    serializedVersion: 2
+    m_Bits: 1024
+  coneLayer:
+    serializedVersion: 2
+    m_Bits: 4096
+  gridSize: 4
+  buildDistance: 6
+  conePivotFromBottom: 0
+  coneHeight: 0
+  coneRotationY: 45
+  lookDownThreshold: -0.45
+  lookUpThreshold: 0.3
+  connectionThickness: 0.15
