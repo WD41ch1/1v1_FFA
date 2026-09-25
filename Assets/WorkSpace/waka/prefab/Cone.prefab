@@ -588,11 +588,17 @@ MonoBehaviour:
   preserveResultPrefabSize: 1
   gridMaterial: {fileID: 0}
   patterns:
-  - name: "\u968E\u6BB5"
+  - name: "\u6B63\u9762\u968E\u6BB5"
     selectedCells: 0200000003000000
     resultPrefab: {fileID: 2353978540189570138, guid: ae77f1a493e8cdf4bb37191338b8c278, type: 3}
-  - name: Shape 0+1
+  - name: "\u9006\u968E\u6BB5"
     selectedCells: 0000000001000000
+    resultPrefab: {fileID: 0}
+  - name: "\u53F3\u5411\u304D\u968E\u6BB5"
+    selectedCells: 0300000001000000
+    resultPrefab: {fileID: 0}
+  - name: "\u5DE6\u5411\u304D\u968E\u6BB5"
+    selectedCells: 0200000000000000
     resultPrefab: {fileID: 0}
 --- !u!114 &6142442148653457008
 MonoBehaviour:

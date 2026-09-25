@@ -120,63 +120,9 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": true
                 },
                 {
-                    ""name"": ""Wall"",
+                    ""name"": ""ExitBuilding"",
                     ""type"": ""Button"",
-                    ""id"": ""eaf15718-16c0-42e8-b4c2-52a0bfd3a73a"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""Ramp"",
-                    ""type"": ""Button"",
-                    ""id"": ""5f70586e-36fa-44ff-9c61-9ad711a6b7be"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""Floor"",
-                    ""type"": ""Button"",
-                    ""id"": ""463120a8-b23f-492c-b957-9e3fdebb734f"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""Cone"",
-                    ""type"": ""Button"",
-                    ""id"": ""7106bbeb-04b2-4bc1-b4e1-43cd38dec49c"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""Fire"",
-                    ""type"": ""Button"",
-                    ""id"": ""06257509-a247-420c-899b-970a19be300e"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""ADS"",
-                    ""type"": ""Button"",
-                    ""id"": ""78d538c9-bbbc-43a9-8769-f84f70ba2de8"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""Reload"",
-                    ""type"": ""Button"",
-                    ""id"": ""3fcfe648-2491-44c4-999f-9f9cd5270fcd"",
+                    ""id"": ""7fab23ee-783e-4543-831f-c9e1136d78b9"",
                     ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
@@ -263,51 +209,97 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""e9679992-ff4d-45ea-96bd-3ad935990307"",
-                    ""path"": ""<Mouse>/backButton"",
+                    ""id"": ""3f694dc1-90de-4e0e-b26a-880e459820c5"",
+                    ""path"": ""<Keyboard>/1"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""Wall"",
+                    ""action"": ""ExitBuilding"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
                 {
                     ""name"": """",
-                    ""id"": ""17dae028-23f0-4dbe-bcb5-1859d6df9632"",
-                    ""path"": ""<Mouse>/forwardButton"",
+                    ""id"": ""92beb2d0-ebbd-445d-8837-069e4a413f4c"",
+                    ""path"": ""<Keyboard>/2"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""Ramp"",
+                    ""action"": ""ExitBuilding"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
                 {
                     ""name"": """",
-                    ""id"": ""020be919-56a2-4d1c-9755-91513506c836"",
-                    ""path"": ""<Keyboard>/v"",
+                    ""id"": ""ecae0fac-f68f-4dab-ae8f-b335baa21f41"",
+                    ""path"": ""<Keyboard>/3"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""Floor"",
+                    ""action"": ""ExitBuilding"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
                 {
                     ""name"": """",
-                    ""id"": ""675286f1-78bd-4bc1-9075-d4419f520fc6"",
-                    ""path"": ""<Keyboard>/c"",
+                    ""id"": ""4f683db1-4873-48c6-a443-a3919332b837"",
+                    ""path"": ""<Keyboard>/4"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""Cone"",
+                    ""action"": ""ExitBuilding"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
                 {
                     ""name"": """",
-                    ""id"": ""68cdd2ee-e720-4f40-a7e5-ff258bb3644f"",
+                    ""id"": ""22f0bbbb-0bd1-4492-b7da-e922b4fa0f6f"",
+                    ""path"": ""<Keyboard>/5"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ExitBuilding"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
+        },
+        {
+            ""name"": ""Combat"",
+            ""id"": ""0c3f318d-9c03-4e7e-afff-63c32ddc9dd2"",
+            ""actions"": [
+                {
+                    ""name"": ""Fire"",
+                    ""type"": ""Button"",
+                    ""id"": ""266a3a1a-009f-4b5f-b2d6-59fa0203e8a9"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ADS"",
+                    ""type"": ""Button"",
+                    ""id"": ""bce55398-b899-4fe2-aa5a-a04188928cf4"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Reload"",
+                    ""type"": ""Button"",
+                    ""id"": ""a593452f-ba28-4582-a986-0563d63efcba"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""4feff4b9-4b9c-4506-9911-5405a21ad363"",
                     ""path"": ""<Mouse>/leftButton"",
                     ""interactions"": """",
                     ""processors"": """",
@@ -318,7 +310,7 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""ba454b9d-fa96-410b-99f3-67773bb01716"",
+                    ""id"": ""cbc4158b-5f74-4009-9611-91eccc0969bf"",
                     ""path"": ""<Mouse>/rightButton"",
                     ""interactions"": """",
                     ""processors"": """",
@@ -329,7 +321,7 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""18c3062d-920a-41cc-bbbb-59b7e2e589a0"",
+                    ""id"": ""5101823b-c652-4fd9-b05c-147857d714e2"",
                     ""path"": ""<Keyboard>/r"",
                     ""interactions"": """",
                     ""processors"": """",
@@ -341,10 +333,112 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
             ]
         },
         {
-            ""name"": ""Combat"",
-            ""id"": ""0c3f318d-9c03-4e7e-afff-63c32ddc9dd2"",
-            ""actions"": [],
-            ""bindings"": []
+            ""name"": ""Building"",
+            ""id"": ""024f21df-51c8-45c7-9bd1-07cae4f20b4d"",
+            ""actions"": [
+                {
+                    ""name"": ""Place"",
+                    ""type"": ""Button"",
+                    ""id"": ""476897ac-5567-43e4-9e2f-b01b13ec3c80"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Wall"",
+                    ""type"": ""Button"",
+                    ""id"": ""d8b99559-2ddf-49c2-b4bb-6d60d9fc3a33"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Ramp"",
+                    ""type"": ""Button"",
+                    ""id"": ""443a575f-1447-4470-a0d6-38119b1740aa"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Floor"",
+                    ""type"": ""Button"",
+                    ""id"": ""d2a7a059-86e4-48da-a7c8-7d26bc5d0b0d"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Cone"",
+                    ""type"": ""Button"",
+                    ""id"": ""503e0b5d-7724-43e9-9b0b-b3cab0977225"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""0cc5f380-6d0b-4be6-84e6-b40504b4534d"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Place"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""5c28b5f5-c515-42c9-9183-3125caeb369a"",
+                    ""path"": ""<Mouse>/backButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Wall"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""187c6665-8172-49a2-b3a0-afd809a90d56"",
+                    ""path"": ""<Mouse>/forwardButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Ramp"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""42426c07-887f-4af4-b59d-7bd0a182cd7d"",
+                    ""path"": ""<Keyboard>/v"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Floor"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""debbc1c3-6ca7-4dc0-98fc-43485513083e"",
+                    ""path"": ""<Keyboard>/c"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Cone"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
         }
     ],
     ""controlSchemes"": []
@@ -354,21 +448,26 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
         m_Player_Jump = m_Player.FindAction("Jump", throwIfNotFound: true);
         m_Player_Look = m_Player.FindAction("Look", throwIfNotFound: true);
         m_Player_Move = m_Player.FindAction("Move", throwIfNotFound: true);
-        m_Player_Wall = m_Player.FindAction("Wall", throwIfNotFound: true);
-        m_Player_Ramp = m_Player.FindAction("Ramp", throwIfNotFound: true);
-        m_Player_Floor = m_Player.FindAction("Floor", throwIfNotFound: true);
-        m_Player_Cone = m_Player.FindAction("Cone", throwIfNotFound: true);
-        m_Player_Fire = m_Player.FindAction("Fire", throwIfNotFound: true);
-        m_Player_ADS = m_Player.FindAction("ADS", throwIfNotFound: true);
-        m_Player_Reload = m_Player.FindAction("Reload", throwIfNotFound: true);
+        m_Player_ExitBuilding = m_Player.FindAction("ExitBuilding", throwIfNotFound: true);
         // Combat
         m_Combat = asset.FindActionMap("Combat", throwIfNotFound: true);
+        m_Combat_Fire = m_Combat.FindAction("Fire", throwIfNotFound: true);
+        m_Combat_ADS = m_Combat.FindAction("ADS", throwIfNotFound: true);
+        m_Combat_Reload = m_Combat.FindAction("Reload", throwIfNotFound: true);
+        // Building
+        m_Building = asset.FindActionMap("Building", throwIfNotFound: true);
+        m_Building_Place = m_Building.FindAction("Place", throwIfNotFound: true);
+        m_Building_Wall = m_Building.FindAction("Wall", throwIfNotFound: true);
+        m_Building_Ramp = m_Building.FindAction("Ramp", throwIfNotFound: true);
+        m_Building_Floor = m_Building.FindAction("Floor", throwIfNotFound: true);
+        m_Building_Cone = m_Building.FindAction("Cone", throwIfNotFound: true);
     }
 
     ~@PlayerInput()
     {
         UnityEngine.Debug.Assert(!m_Player.enabled, "This will cause a leak and performance issues, PlayerInput.Player.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_Combat.enabled, "This will cause a leak and performance issues, PlayerInput.Combat.Disable() has not been called.");
+        UnityEngine.Debug.Assert(!m_Building.enabled, "This will cause a leak and performance issues, PlayerInput.Building.Disable() has not been called.");
     }
 
     /// <summary>
@@ -447,13 +546,7 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_Jump;
     private readonly InputAction m_Player_Look;
     private readonly InputAction m_Player_Move;
-    private readonly InputAction m_Player_Wall;
-    private readonly InputAction m_Player_Ramp;
-    private readonly InputAction m_Player_Floor;
-    private readonly InputAction m_Player_Cone;
-    private readonly InputAction m_Player_Fire;
-    private readonly InputAction m_Player_ADS;
-    private readonly InputAction m_Player_Reload;
+    private readonly InputAction m_Player_ExitBuilding;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -478,33 +571,9 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @Move => m_Wrapper.m_Player_Move;
         /// <summary>
-        /// Provides access to the underlying input action "Player/Wall".
+        /// Provides access to the underlying input action "Player/ExitBuilding".
         /// </summary>
-        public InputAction @Wall => m_Wrapper.m_Player_Wall;
-        /// <summary>
-        /// Provides access to the underlying input action "Player/Ramp".
-        /// </summary>
-        public InputAction @Ramp => m_Wrapper.m_Player_Ramp;
-        /// <summary>
-        /// Provides access to the underlying input action "Player/Floor".
-        /// </summary>
-        public InputAction @Floor => m_Wrapper.m_Player_Floor;
-        /// <summary>
-        /// Provides access to the underlying input action "Player/Cone".
-        /// </summary>
-        public InputAction @Cone => m_Wrapper.m_Player_Cone;
-        /// <summary>
-        /// Provides access to the underlying input action "Player/Fire".
-        /// </summary>
-        public InputAction @Fire => m_Wrapper.m_Player_Fire;
-        /// <summary>
-        /// Provides access to the underlying input action "Player/ADS".
-        /// </summary>
-        public InputAction @ADS => m_Wrapper.m_Player_ADS;
-        /// <summary>
-        /// Provides access to the underlying input action "Player/Reload".
-        /// </summary>
-        public InputAction @Reload => m_Wrapper.m_Player_Reload;
+        public InputAction @ExitBuilding => m_Wrapper.m_Player_ExitBuilding;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -540,27 +609,9 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
             @Move.started += instance.OnMove;
             @Move.performed += instance.OnMove;
             @Move.canceled += instance.OnMove;
-            @Wall.started += instance.OnWall;
-            @Wall.performed += instance.OnWall;
-            @Wall.canceled += instance.OnWall;
-            @Ramp.started += instance.OnRamp;
-            @Ramp.performed += instance.OnRamp;
-            @Ramp.canceled += instance.OnRamp;
-            @Floor.started += instance.OnFloor;
-            @Floor.performed += instance.OnFloor;
-            @Floor.canceled += instance.OnFloor;
-            @Cone.started += instance.OnCone;
-            @Cone.performed += instance.OnCone;
-            @Cone.canceled += instance.OnCone;
-            @Fire.started += instance.OnFire;
-            @Fire.performed += instance.OnFire;
-            @Fire.canceled += instance.OnFire;
-            @ADS.started += instance.OnADS;
-            @ADS.performed += instance.OnADS;
-            @ADS.canceled += instance.OnADS;
-            @Reload.started += instance.OnReload;
-            @Reload.performed += instance.OnReload;
-            @Reload.canceled += instance.OnReload;
+            @ExitBuilding.started += instance.OnExitBuilding;
+            @ExitBuilding.performed += instance.OnExitBuilding;
+            @ExitBuilding.canceled += instance.OnExitBuilding;
         }
 
         /// <summary>
@@ -581,27 +632,9 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
             @Move.started -= instance.OnMove;
             @Move.performed -= instance.OnMove;
             @Move.canceled -= instance.OnMove;
-            @Wall.started -= instance.OnWall;
-            @Wall.performed -= instance.OnWall;
-            @Wall.canceled -= instance.OnWall;
-            @Ramp.started -= instance.OnRamp;
-            @Ramp.performed -= instance.OnRamp;
-            @Ramp.canceled -= instance.OnRamp;
-            @Floor.started -= instance.OnFloor;
-            @Floor.performed -= instance.OnFloor;
-            @Floor.canceled -= instance.OnFloor;
-            @Cone.started -= instance.OnCone;
-            @Cone.performed -= instance.OnCone;
-            @Cone.canceled -= instance.OnCone;
-            @Fire.started -= instance.OnFire;
-            @Fire.performed -= instance.OnFire;
-            @Fire.canceled -= instance.OnFire;
-            @ADS.started -= instance.OnADS;
-            @ADS.performed -= instance.OnADS;
-            @ADS.canceled -= instance.OnADS;
-            @Reload.started -= instance.OnReload;
-            @Reload.performed -= instance.OnReload;
-            @Reload.canceled -= instance.OnReload;
+            @ExitBuilding.started -= instance.OnExitBuilding;
+            @ExitBuilding.performed -= instance.OnExitBuilding;
+            @ExitBuilding.canceled -= instance.OnExitBuilding;
         }
 
         /// <summary>
@@ -639,6 +672,9 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
     // Combat
     private readonly InputActionMap m_Combat;
     private List<ICombatActions> m_CombatActionsCallbackInterfaces = new List<ICombatActions>();
+    private readonly InputAction m_Combat_Fire;
+    private readonly InputAction m_Combat_ADS;
+    private readonly InputAction m_Combat_Reload;
     /// <summary>
     /// Provides access to input actions defined in input action map "Combat".
     /// </summary>
@@ -650,6 +686,18 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
         /// Construct a new instance of the input action map wrapper class.
         /// </summary>
         public CombatActions(@PlayerInput wrapper) { m_Wrapper = wrapper; }
+        /// <summary>
+        /// Provides access to the underlying input action "Combat/Fire".
+        /// </summary>
+        public InputAction @Fire => m_Wrapper.m_Combat_Fire;
+        /// <summary>
+        /// Provides access to the underlying input action "Combat/ADS".
+        /// </summary>
+        public InputAction @ADS => m_Wrapper.m_Combat_ADS;
+        /// <summary>
+        /// Provides access to the underlying input action "Combat/Reload".
+        /// </summary>
+        public InputAction @Reload => m_Wrapper.m_Combat_Reload;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -676,6 +724,15 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
         {
             if (instance == null || m_Wrapper.m_CombatActionsCallbackInterfaces.Contains(instance)) return;
             m_Wrapper.m_CombatActionsCallbackInterfaces.Add(instance);
+            @Fire.started += instance.OnFire;
+            @Fire.performed += instance.OnFire;
+            @Fire.canceled += instance.OnFire;
+            @ADS.started += instance.OnADS;
+            @ADS.performed += instance.OnADS;
+            @ADS.canceled += instance.OnADS;
+            @Reload.started += instance.OnReload;
+            @Reload.performed += instance.OnReload;
+            @Reload.canceled += instance.OnReload;
         }
 
         /// <summary>
@@ -687,6 +744,15 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
         /// <seealso cref="CombatActions" />
         private void UnregisterCallbacks(ICombatActions instance)
         {
+            @Fire.started -= instance.OnFire;
+            @Fire.performed -= instance.OnFire;
+            @Fire.canceled -= instance.OnFire;
+            @ADS.started -= instance.OnADS;
+            @ADS.performed -= instance.OnADS;
+            @ADS.canceled -= instance.OnADS;
+            @Reload.started -= instance.OnReload;
+            @Reload.performed -= instance.OnReload;
+            @Reload.canceled -= instance.OnReload;
         }
 
         /// <summary>
@@ -720,6 +786,146 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
     /// Provides a new <see cref="CombatActions" /> instance referencing this action map.
     /// </summary>
     public CombatActions @Combat => new CombatActions(this);
+
+    // Building
+    private readonly InputActionMap m_Building;
+    private List<IBuildingActions> m_BuildingActionsCallbackInterfaces = new List<IBuildingActions>();
+    private readonly InputAction m_Building_Place;
+    private readonly InputAction m_Building_Wall;
+    private readonly InputAction m_Building_Ramp;
+    private readonly InputAction m_Building_Floor;
+    private readonly InputAction m_Building_Cone;
+    /// <summary>
+    /// Provides access to input actions defined in input action map "Building".
+    /// </summary>
+    public struct BuildingActions
+    {
+        private @PlayerInput m_Wrapper;
+
+        /// <summary>
+        /// Construct a new instance of the input action map wrapper class.
+        /// </summary>
+        public BuildingActions(@PlayerInput wrapper) { m_Wrapper = wrapper; }
+        /// <summary>
+        /// Provides access to the underlying input action "Building/Place".
+        /// </summary>
+        public InputAction @Place => m_Wrapper.m_Building_Place;
+        /// <summary>
+        /// Provides access to the underlying input action "Building/Wall".
+        /// </summary>
+        public InputAction @Wall => m_Wrapper.m_Building_Wall;
+        /// <summary>
+        /// Provides access to the underlying input action "Building/Ramp".
+        /// </summary>
+        public InputAction @Ramp => m_Wrapper.m_Building_Ramp;
+        /// <summary>
+        /// Provides access to the underlying input action "Building/Floor".
+        /// </summary>
+        public InputAction @Floor => m_Wrapper.m_Building_Floor;
+        /// <summary>
+        /// Provides access to the underlying input action "Building/Cone".
+        /// </summary>
+        public InputAction @Cone => m_Wrapper.m_Building_Cone;
+        /// <summary>
+        /// Provides access to the underlying input action map instance.
+        /// </summary>
+        public InputActionMap Get() { return m_Wrapper.m_Building; }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Enable()" />
+        public void Enable() { Get().Enable(); }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Disable()" />
+        public void Disable() { Get().Disable(); }
+        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.enabled" />
+        public bool enabled => Get().enabled;
+        /// <summary>
+        /// Implicitly converts an <see ref="BuildingActions" /> to an <see ref="InputActionMap" /> instance.
+        /// </summary>
+        public static implicit operator InputActionMap(BuildingActions set) { return set.Get(); }
+        /// <summary>
+        /// Adds <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
+        /// </summary>
+        /// <param name="instance">Callback instance.</param>
+        /// <remarks>
+        /// If <paramref name="instance" /> is <c>null</c> or <paramref name="instance"/> have already been added this method does nothing.
+        /// </remarks>
+        /// <seealso cref="BuildingActions" />
+        public void AddCallbacks(IBuildingActions instance)
+        {
+            if (instance == null || m_Wrapper.m_BuildingActionsCallbackInterfaces.Contains(instance)) return;
+            m_Wrapper.m_BuildingActionsCallbackInterfaces.Add(instance);
+            @Place.started += instance.OnPlace;
+            @Place.performed += instance.OnPlace;
+            @Place.canceled += instance.OnPlace;
+            @Wall.started += instance.OnWall;
+            @Wall.performed += instance.OnWall;
+            @Wall.canceled += instance.OnWall;
+            @Ramp.started += instance.OnRamp;
+            @Ramp.performed += instance.OnRamp;
+            @Ramp.canceled += instance.OnRamp;
+            @Floor.started += instance.OnFloor;
+            @Floor.performed += instance.OnFloor;
+            @Floor.canceled += instance.OnFloor;
+            @Cone.started += instance.OnCone;
+            @Cone.performed += instance.OnCone;
+            @Cone.canceled += instance.OnCone;
+        }
+
+        /// <summary>
+        /// Removes <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
+        /// </summary>
+        /// <remarks>
+        /// Calling this method when <paramref name="instance" /> have not previously been registered has no side-effects.
+        /// </remarks>
+        /// <seealso cref="BuildingActions" />
+        private void UnregisterCallbacks(IBuildingActions instance)
+        {
+            @Place.started -= instance.OnPlace;
+            @Place.performed -= instance.OnPlace;
+            @Place.canceled -= instance.OnPlace;
+            @Wall.started -= instance.OnWall;
+            @Wall.performed -= instance.OnWall;
+            @Wall.canceled -= instance.OnWall;
+            @Ramp.started -= instance.OnRamp;
+            @Ramp.performed -= instance.OnRamp;
+            @Ramp.canceled -= instance.OnRamp;
+            @Floor.started -= instance.OnFloor;
+            @Floor.performed -= instance.OnFloor;
+            @Floor.canceled -= instance.OnFloor;
+            @Cone.started -= instance.OnCone;
+            @Cone.performed -= instance.OnCone;
+            @Cone.canceled -= instance.OnCone;
+        }
+
+        /// <summary>
+        /// Unregisters <param cref="instance" /> and unregisters all input action callbacks via <see cref="BuildingActions.UnregisterCallbacks(IBuildingActions)" />.
+        /// </summary>
+        /// <seealso cref="BuildingActions.UnregisterCallbacks(IBuildingActions)" />
+        public void RemoveCallbacks(IBuildingActions instance)
+        {
+            if (m_Wrapper.m_BuildingActionsCallbackInterfaces.Remove(instance))
+                UnregisterCallbacks(instance);
+        }
+
+        /// <summary>
+        /// Replaces all existing callback instances and previously registered input action callbacks associated with them with callbacks provided via <param cref="instance" />.
+        /// </summary>
+        /// <remarks>
+        /// If <paramref name="instance" /> is <c>null</c>, calling this method will only unregister all existing callbacks but not register any new callbacks.
+        /// </remarks>
+        /// <seealso cref="BuildingActions.AddCallbacks(IBuildingActions)" />
+        /// <seealso cref="BuildingActions.RemoveCallbacks(IBuildingActions)" />
+        /// <seealso cref="BuildingActions.UnregisterCallbacks(IBuildingActions)" />
+        public void SetCallbacks(IBuildingActions instance)
+        {
+            foreach (var item in m_Wrapper.m_BuildingActionsCallbackInterfaces)
+                UnregisterCallbacks(item);
+            m_Wrapper.m_BuildingActionsCallbackInterfaces.Clear();
+            AddCallbacks(instance);
+        }
+    }
+    /// <summary>
+    /// Provides a new <see cref="BuildingActions" /> instance referencing this action map.
+    /// </summary>
+    public BuildingActions @Building => new BuildingActions(this);
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Player" which allows adding and removing callbacks.
     /// </summary>
@@ -749,6 +955,57 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnMove(InputAction.CallbackContext context);
         /// <summary>
+        /// Method invoked when associated input action "ExitBuilding" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnExitBuilding(InputAction.CallbackContext context);
+    }
+    /// <summary>
+    /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Combat" which allows adding and removing callbacks.
+    /// </summary>
+    /// <seealso cref="CombatActions.AddCallbacks(ICombatActions)" />
+    /// <seealso cref="CombatActions.RemoveCallbacks(ICombatActions)" />
+    public interface ICombatActions
+    {
+        /// <summary>
+        /// Method invoked when associated input action "Fire" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnFire(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "ADS" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnADS(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Reload" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnReload(InputAction.CallbackContext context);
+    }
+    /// <summary>
+    /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Building" which allows adding and removing callbacks.
+    /// </summary>
+    /// <seealso cref="BuildingActions.AddCallbacks(IBuildingActions)" />
+    /// <seealso cref="BuildingActions.RemoveCallbacks(IBuildingActions)" />
+    public interface IBuildingActions
+    {
+        /// <summary>
+        /// Method invoked when associated input action "Place" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnPlace(InputAction.CallbackContext context);
+        /// <summary>
         /// Method invoked when associated input action "Wall" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
@@ -776,34 +1033,5 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnCone(InputAction.CallbackContext context);
-        /// <summary>
-        /// Method invoked when associated input action "Fire" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
-        /// </summary>
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnFire(InputAction.CallbackContext context);
-        /// <summary>
-        /// Method invoked when associated input action "ADS" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
-        /// </summary>
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnADS(InputAction.CallbackContext context);
-        /// <summary>
-        /// Method invoked when associated input action "Reload" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
-        /// </summary>
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnReload(InputAction.CallbackContext context);
-    }
-    /// <summary>
-    /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Combat" which allows adding and removing callbacks.
-    /// </summary>
-    /// <seealso cref="CombatActions.AddCallbacks(ICombatActions)" />
-    /// <seealso cref="CombatActions.RemoveCallbacks(ICombatActions)" />
-    public interface ICombatActions
-    {
     }
 }

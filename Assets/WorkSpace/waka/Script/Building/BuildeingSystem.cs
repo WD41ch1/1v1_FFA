@@ -134,31 +134,6 @@ public class BuildingSystem : MonoBehaviour
 
     private void Update()
     {
-        // 上段の数字キー1～5、左Shiftで建築モードを解除する。
-        if (Input.GetKeyDown(KeyCode.Alpha1) ||
-            Input.GetKeyDown(KeyCode.Alpha2) ||
-            Input.GetKeyDown(KeyCode.Alpha3) ||
-            Input.GetKeyDown(KeyCode.Alpha4) ||
-            Input.GetKeyDown(KeyCode.Alpha5) ||
-            Input.GetKeyDown(KeyCode.LeftShift))
-        {
-            if (currentBuildType != BuildType.None)
-            {
-                CancelBuild();
-            }
-
-            // 同時に押した建築入力が翌フレームに残るのを防ぐ。
-            if (input != null)
-            {
-                input.ResetBuildWall();
-                input.ResetBuildRamp();
-                input.ResetBuildFloor();
-                input.ResetBuildCone();
-            }
-
-            return;
-        }
-
         // 入力参照がなければ処理できない
         if (input == null)
         {
@@ -214,7 +189,7 @@ public class BuildingSystem : MonoBehaviour
 
         // 左クリック長押しで連続建築
         if (currentBuildType != BuildType.None &&
-            Input.GetMouseButton(0))
+            input.BuildHeld)
         {
             // 建築間隔が経過している
             if (Time.time - lastBuildTime >=
@@ -263,6 +238,10 @@ public class BuildingSystem : MonoBehaviour
                 currentBuildType =
                     BuildType.None;
                 break;
+        }
+        if (input != null)
+        {
+            input.SetBuildingMode(currentBuildType != BuildType.None);
         }
     }
 
@@ -495,6 +474,11 @@ public class BuildingSystem : MonoBehaviour
 
         currentBuildType =
             BuildType.None;
+
+        if (input != null)
+        {
+            input.SetBuildingMode(false);
+        }
 
         Debug.Log(
             "建築モードを終了しました"

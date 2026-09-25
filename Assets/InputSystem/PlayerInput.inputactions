@@ -34,63 +34,9 @@
                     "initialStateCheck": true
                 },
                 {
-                    "name": "Wall",
+                    "name": "ExitBuilding",
                     "type": "Button",
-                    "id": "eaf15718-16c0-42e8-b4c2-52a0bfd3a73a",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "Ramp",
-                    "type": "Button",
-                    "id": "5f70586e-36fa-44ff-9c61-9ad711a6b7be",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "Floor",
-                    "type": "Button",
-                    "id": "463120a8-b23f-492c-b957-9e3fdebb734f",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "Cone",
-                    "type": "Button",
-                    "id": "7106bbeb-04b2-4bc1-b4e1-43cd38dec49c",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "Fire",
-                    "type": "Button",
-                    "id": "06257509-a247-420c-899b-970a19be300e",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "ADS",
-                    "type": "Button",
-                    "id": "78d538c9-bbbc-43a9-8769-f84f70ba2de8",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "Reload",
-                    "type": "Button",
-                    "id": "3fcfe648-2491-44c4-999f-9f9cd5270fcd",
+                    "id": "7fab23ee-783e-4543-831f-c9e1136d78b9",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -177,51 +123,97 @@
                 },
                 {
                     "name": "",
-                    "id": "e9679992-ff4d-45ea-96bd-3ad935990307",
-                    "path": "<Mouse>/backButton",
+                    "id": "3f694dc1-90de-4e0e-b26a-880e459820c5",
+                    "path": "<Keyboard>/1",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Wall",
+                    "action": "ExitBuilding",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
                 {
                     "name": "",
-                    "id": "17dae028-23f0-4dbe-bcb5-1859d6df9632",
-                    "path": "<Mouse>/forwardButton",
+                    "id": "92beb2d0-ebbd-445d-8837-069e4a413f4c",
+                    "path": "<Keyboard>/2",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Ramp",
+                    "action": "ExitBuilding",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
                 {
                     "name": "",
-                    "id": "020be919-56a2-4d1c-9755-91513506c836",
-                    "path": "<Keyboard>/v",
+                    "id": "ecae0fac-f68f-4dab-ae8f-b335baa21f41",
+                    "path": "<Keyboard>/3",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Floor",
+                    "action": "ExitBuilding",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
                 {
                     "name": "",
-                    "id": "675286f1-78bd-4bc1-9075-d4419f520fc6",
-                    "path": "<Keyboard>/c",
+                    "id": "4f683db1-4873-48c6-a443-a3919332b837",
+                    "path": "<Keyboard>/4",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Cone",
+                    "action": "ExitBuilding",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
                 {
                     "name": "",
-                    "id": "68cdd2ee-e720-4f40-a7e5-ff258bb3644f",
+                    "id": "22f0bbbb-0bd1-4492-b7da-e922b4fa0f6f",
+                    "path": "<Keyboard>/5",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ExitBuilding",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "Combat",
+            "id": "0c3f318d-9c03-4e7e-afff-63c32ddc9dd2",
+            "actions": [
+                {
+                    "name": "Fire",
+                    "type": "Button",
+                    "id": "266a3a1a-009f-4b5f-b2d6-59fa0203e8a9",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "ADS",
+                    "type": "Button",
+                    "id": "bce55398-b899-4fe2-aa5a-a04188928cf4",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Reload",
+                    "type": "Button",
+                    "id": "a593452f-ba28-4582-a986-0563d63efcba",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "4feff4b9-4b9c-4506-9911-5405a21ad363",
                     "path": "<Mouse>/leftButton",
                     "interactions": "",
                     "processors": "",
@@ -232,7 +224,7 @@
                 },
                 {
                     "name": "",
-                    "id": "ba454b9d-fa96-410b-99f3-67773bb01716",
+                    "id": "cbc4158b-5f74-4009-9611-91eccc0969bf",
                     "path": "<Mouse>/rightButton",
                     "interactions": "",
                     "processors": "",
@@ -243,7 +235,7 @@
                 },
                 {
                     "name": "",
-                    "id": "18c3062d-920a-41cc-bbbb-59b7e2e589a0",
+                    "id": "5101823b-c652-4fd9-b05c-147857d714e2",
                     "path": "<Keyboard>/r",
                     "interactions": "",
                     "processors": "",
@@ -255,10 +247,112 @@
             ]
         },
         {
-            "name": "Combat",
-            "id": "0c3f318d-9c03-4e7e-afff-63c32ddc9dd2",
-            "actions": [],
-            "bindings": []
+            "name": "Building",
+            "id": "024f21df-51c8-45c7-9bd1-07cae4f20b4d",
+            "actions": [
+                {
+                    "name": "Place",
+                    "type": "Button",
+                    "id": "476897ac-5567-43e4-9e2f-b01b13ec3c80",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Wall",
+                    "type": "Button",
+                    "id": "d8b99559-2ddf-49c2-b4bb-6d60d9fc3a33",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Ramp",
+                    "type": "Button",
+                    "id": "443a575f-1447-4470-a0d6-38119b1740aa",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Floor",
+                    "type": "Button",
+                    "id": "d2a7a059-86e4-48da-a7c8-7d26bc5d0b0d",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Cone",
+                    "type": "Button",
+                    "id": "503e0b5d-7724-43e9-9b0b-b3cab0977225",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "0cc5f380-6d0b-4be6-84e6-b40504b4534d",
+                    "path": "<Mouse>/leftButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Place",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "5c28b5f5-c515-42c9-9183-3125caeb369a",
+                    "path": "<Mouse>/backButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Wall",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "187c6665-8172-49a2-b3a0-afd809a90d56",
+                    "path": "<Mouse>/forwardButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Ramp",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "42426c07-887f-4af4-b59d-7bd0a182cd7d",
+                    "path": "<Keyboard>/v",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Floor",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "debbc1c3-6ca7-4dc0-98fc-43485513083e",
+                    "path": "<Keyboard>/c",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Cone",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
         }
     ],
     "controlSchemes": []
