@@ -11,7 +11,7 @@ public abstract class WeaponBase : ItemBase
 
     protected WeaponView weaponView;
 
-    protected WeaponState weaponState;
+    protected ItemState weaponState;
 
     //  リロード中かいなか
     protected bool isReloading;
@@ -179,6 +179,17 @@ public abstract class WeaponBase : ItemBase
 
         //  TODO: ※いずれプーリング処理で行う
         Destroy(projectile, 5.0f);
+    }
+
+    protected void AmmoCheker()
+    {
+        if (weaponData == null) return;
+
+        //  UIの更新要求
+        owner.inventoryManager.SlotUpdateRequest(
+            owner.equipmentManager.GetcurrentSlot(),
+            weaponData.itemType
+        );
     }
 
     public WeaponData GetWeaponData()

@@ -7,7 +7,7 @@ public class SubmachineGun : WeaponBase
     public override void Initialize(
         PlayerManager _owner,
         ItemData itemData,
-        WeaponState state = null)
+        ItemState state = null)
     {
         if (itemData is WeaponData)
         {
@@ -44,6 +44,10 @@ public class SubmachineGun : WeaponBase
 
         //  弾数消費
         weaponState.currentAmmo--;
+
+        //  UIの更新
+        AmmoCheker();
+
     }
 
     public override void Reload()

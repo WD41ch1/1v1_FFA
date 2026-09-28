@@ -10,7 +10,7 @@ public class ItemPickup : MonoBehaviour, IPickupable
     [Header("アイテムデータ")]
     public ItemData itemData;
 
-    public WeaponState weaponState;
+    public ItemState itemState;
 
     private float height;
     private float speed;
@@ -21,10 +21,10 @@ public class ItemPickup : MonoBehaviour, IPickupable
     /// </summary>
     /// <param name="type"></param>
     /// <param name="_amount"></param>
-    public void Initialize(ItemData data, WeaponState state)
+    public void Initialize(ItemData data, ItemState state)
     {
         itemData = data;
-        weaponState = state;
+        itemState = state;
 
         SetAppearance();
     }
@@ -55,7 +55,7 @@ public class ItemPickup : MonoBehaviour, IPickupable
 
     public void Pickup(PlayerManager character)
     {
-        character.inventoryManager.AddItem(itemData, weaponState);
+        character.inventoryManager.AddItem(itemData, itemState);
         //Destroy(gameObject);
     }
 

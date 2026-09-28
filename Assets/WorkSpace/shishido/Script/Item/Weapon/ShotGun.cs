@@ -16,7 +16,7 @@ public class ShotGun : WeaponBase
     public override void Initialize(
         PlayerManager _owner,
         ItemData itemData,
-        WeaponState state = null)
+        ItemState state = null)
     {
         if (itemData is WeaponData)
         {

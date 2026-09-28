@@ -105,11 +105,12 @@ public class PlayerManager : MonoBehaviour
 
                 break;
             case PlayerType.Bot:
+                BotHealth bot = GetComponent<BotHealth>();
                 playerHealth?.Initialize(
-                    100,
-                    PLAYER_MAXSHIELDE,
-                    1,
-                    1
+                    bot.maxHealth,
+                    bot.maxShielde,
+                    bot.Health,
+                    bot.Shielde
                     );
 
                 break;

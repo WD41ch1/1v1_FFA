@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
+using TMPro;
 
 public class BerSlot : MonoBehaviour
 {
@@ -12,6 +13,7 @@ public class BerSlot : MonoBehaviour
     public Image rarityIcon;
     public Image SelectedFrame;
     public Sprite emptyFrame;
+    public TextMeshProUGUI counter;
 
     private bool isInitialized = false;
     private Vector3 initPos;
@@ -31,6 +33,10 @@ public class BerSlot : MonoBehaviour
         slotNumber = num;
     }
 
+    /// <summary>
+    /// 選択中
+    /// </summary>
+    /// <param name="flag"></param>
     public void OnSelected(bool flag)
     {
         SelectedFrame.gameObject.SetActive(flag);
@@ -49,6 +55,7 @@ public class BerSlot : MonoBehaviour
     {
         ItemIcon.sprite = emptyFrame;
         rarityIcon = null;
+        counter.text= string.Empty;
     }
 
     private void SlotSelectMove(bool flag)
@@ -62,4 +69,8 @@ public class BerSlot : MonoBehaviour
             transform.DOMove(initPos, 0.5f).SetUpdate(true);
     }
 
+    public void UpdateCounter(int count)
+    {
+        counter.text = count.ToString();
+    }
 }

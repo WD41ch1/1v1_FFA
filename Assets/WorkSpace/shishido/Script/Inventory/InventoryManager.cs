@@ -2,9 +2,8 @@ using NaughtyAttributes;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
 using static GameConst;
 using static UnityEditor.Progress;
 
@@ -39,7 +38,7 @@ public class InventoryManager : MonoBehaviour
     //=======================================================
 
     //  武器の状態を保存しておくリスト
-    public List<WeaponState> weaponStates = new();
+    public List<ItemState> itemStates = new();
 
     //=======================================================
     //EquipmentManager側装備通知処理
@@ -47,6 +46,7 @@ public class InventoryManager : MonoBehaviour
 
     //  ホットバーUI側装備通知処理
     public event Action<int> OnRemoveItem;
+    public event Action<int, int> OnUpdateItem;
 
     //  インベントリUI側通知処理
     public event Action<int, ItemData, ResourceChangeType> OnChangeInventoryItem;
@@ -61,78 +61,225 @@ public class InventoryManager : MonoBehaviour
         for (int i = 0; i < ITEM_SLOT_MAX; i++)
         {
             slots.Add(null);
-            weaponStates.Add(null);
+            itemStates.Add(null);
         }
     }
 
-    #region 基本アイテム系(武器等)
     /// <summary>
-    /// アイテムを拾う（追加)
+    /// 空きがあるスロットの番号取得
     /// </summary>
-    /// <param name="item"></param>
-    public void AddItem(ItemData item, WeaponState state = null)
+    /// <returns></returns>
+    public bool isAvailableSlot(out int availableSlotNum)
     {
+        availableSlotNum = -1;
+
         for (int i = 0; i < slots.Count; i++)
         {
             //  何も入っていないなら
             if (slots[i] == null)
             {
-                //  スロット内にアイテムを装備(アイテムを取る)
-                slots[i] = item;
-                SetWeaponState(i, item, state);
+                availableSlotNum = i;
 
-                //  UI関係の呼び出し
-                OnChangeInventoryItem?.Invoke(i, slots[i], ResourceChangeType.AddedNew);
-                OnAddHotbarItem?.Invoke(i);
-                return;
+                return true;
             }
         }
+
+        return false;
     }
 
     /// <summary>
-    /// WeaponStateの生成
+    /// スタック可能なアイテムのスロット番号を取得
+    /// </summary>
+    private bool IsAvailableStackSlot(
+        ItemData item,
+        out int slotNum)
+    {
+        slotNum = -1;
+
+        for (int i = 0; i < slots.Count; i++)
+        {
+            //  違うアイテムなら次へ
+            if (slots[i] != item)
+                continue;
+
+            //  Stateが存在しないなら次へ
+            if (itemStates[i] == null)
+                continue;
+
+            //  スタックに空きがあるなら
+            if (itemStates[i].currentStack < item.maxStack)
+            {
+                slotNum = i;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// アイテムを拾う（追加)
+    /// </summary>
+    /// <param name="item"></param>
+    public void AddItem(ItemData item, ItemState state = null)
+    {
+        // 武器以外かつスタック可能なスロットが存在する
+        if (item.itemType != BerItemType.Weapon
+            && IsAvailableStackSlot(item, out int index))
+        {
+            //  取ったアイテムがすでにstateを持っているか
+            if (state != null)
+            {
+                int stack =
+                    itemStates[index].currentStack
+                    + state.currentStack;
+
+                //  スタック上限に達した場合
+                if (item.maxStack <= stack)
+                {
+                    int overStack = stack - item.maxStack;
+
+                    itemStates[index].currentStack = item.maxStack;
+
+                    ItemState newState =
+                        new ItemState(item.itemType, overStack, index);
+
+                    // 超過分はドロップ
+                    ItemDroping(index, item, newState);
+                }
+                else
+                {
+                    itemStates[index].currentStack = stack;
+                }
+            }
+            else
+            {
+                itemStates[index].currentStack++;
+            }
+
+            SlotUpdateRequest(index, item.itemType);
+
+            return;
+        }
+
+        // ここから「新しいスロットに入れる処理」
+        if (isAvailableSlot(out int availableSlotNum))
+        {
+            slots[availableSlotNum] = item;
+
+            HaveItemState(
+                availableSlotNum,
+                item,
+                state
+            );
+
+            OnChangeInventoryItem?.Invoke(
+                availableSlotNum,
+                slots[availableSlotNum],
+                ResourceChangeType.AddedNew
+            );
+
+            OnAddHotbarItem?.Invoke(availableSlotNum);
+
+            SlotUpdateRequest(
+                availableSlotNum,
+                item.itemType
+            );
+
+            return;
+        }
+
+    }
+
+    #region 基本アイテム系
+
+    /// <summary>
+    /// ItemStateを持っているかの確認
     /// </summary>
     /// <param name="listNum"></param>
     /// <param name="item"></param>
     /// <param name="state"></param>
-    private void SetWeaponState(
+    private void HaveItemState(
         int listNum,
         ItemData item,
-        WeaponState state = null)
+        ItemState state = null)
     {
-        //  アイテムが武器関連なら
-        if (item is WeaponData weaponData)
+        if (state != null)
         {
-            if (state != null)
-                weaponStates[listNum] = state;
-            else
-                weaponStates[listNum] = new WeaponState(weaponData.maxAmmo);
+            //  そのまま代入
+            itemStates[listNum] = state;
+        }
+        else
+        {
+            //  アイテムの種類別で新しく作成
+            switch (item.itemType)
+            {
+                //  アイテムが武器関連なら
+                case BerItemType.Weapon:
+                    if (item is WeaponData weaponData)
+                    {
+                        itemStates[listNum] = new ItemState(item.itemType, weaponData.maxAmmo, listNum);
+                    }
+                    break;
 
+                //  アイテムが回復関連なら
+                case BerItemType.Healing:
+                    if (item is HealingItemData HealingData)
+                    {
+                        itemStates[listNum] = new ItemState(item.itemType, 1, listNum);
+                    }
+                    break;
+                case BerItemType.Throwing:
+                    break;
+                default:
+                    break;
+            }
         }
     }
+
 
     /// <summary>
     /// List内のWeaponState取得関数
     /// </summary>
     /// <param name="listNum"></param>
     /// <returns></returns>
-    public WeaponState GetWeaponState(int listNum)
+    public ItemState GetItemState(int listNum)
     {
-        return weaponStates[listNum];
+        return itemStates[listNum];
     }
 
     /// <summary>
-    /// アイテムを捨てる
+    /// インベントリ内部のアイテムデータを削除
     /// </summary>
     public void RemoveItem(int number)
     {
         //  対応スロットのデータ削除
         slots[number] = null;
-        weaponStates[number] = null;
+        itemStates[number] = null;
 
         //  見た目の削除要求
         OnDeletingSetItems.Invoke();
         //  UIの更新要求
+        OnRemoveItem.Invoke(number);
+    }
+
+    /// <summary>
+    /// インベントリ内部のアイテムデータを削除
+    /// </summary>
+    public void RemoveItem(ItemData data)
+    {
+        //  アイテムからスロット番号を取得
+        int number = slots.IndexOf(data);
+
+        //  対応スロットのデータ削除
+        slots[number] = null;
+        itemStates[number] = null;
+
+        //  見た目の削除要求
+        OnDeletingSetItems.Invoke();
+        //  インベントリ側UIの更新要求
+        OnChangeInventoryItem.Invoke(number, data, ResourceChangeType.Removed);
+        //  ホットバー側UIの更新要求
         OnRemoveItem.Invoke(number);
     }
 
@@ -145,15 +292,18 @@ public class InventoryManager : MonoBehaviour
     {
         //  変更予定の場所に入っているデータを格納
         ItemData temp1 = slots[indexB];
-        WeaponState temp2 = weaponStates[indexB];
+        ItemState temp2 = itemStates[indexB];
 
         //  データを移動
         //  ItemData
         slots[indexB] = slots[indexA];
         slots[indexA] = temp1;
-        // WeaponState 
-        weaponStates[indexB] = weaponStates[indexA];
-        weaponStates[indexA] = temp2;
+        //  State内スロット番号のセット
+        itemStates[indexA]?.SetuseSlotNum(indexB);
+        itemStates[indexB]?.SetuseSlotNum(indexA);
+        // ItemState 
+        itemStates[indexB] = itemStates[indexA];
+        itemStates[indexA] = temp2;
 
         //  ホットバーへ変更の通知
         OnSwapHotbarItem?.Invoke(indexA, indexB);
@@ -169,7 +319,37 @@ public class InventoryManager : MonoBehaviour
     {
         GameObject obj;
 
-        WeaponState state = GetWeaponState(number);
+        ItemState state = GetItemState(number);
+        RemoveItem(number);
+
+        //  ドロップオブジェクトを生成
+        obj = Instantiate(
+            ItemdropObj,
+            transform.position + transform.forward * 5f,
+            Quaternion.identity);
+
+        //  ドロップアイテム(オブジェクト)の初期化
+        ItemPickup item = obj.GetComponent<ItemPickup>();
+        item.Initialize(dropData, state);
+
+        //  通知
+        OnChangeInventoryItem?.Invoke(
+            number,
+            dropData,
+            ResourceChangeType.Removed);
+
+        return true;
+    }
+
+    /// <summary>
+    /// アイテムの捨てる処理(ステートを新たに設定)
+    /// </summary>
+    public bool ItemDroping(int number, ItemData dropData, ItemState _state)
+    {
+        GameObject obj;
+
+        ItemState state = _state;
+        //  インベントリ内部のアイテムデータを削除
         RemoveItem(number);
 
         //  ドロップオブジェクトを生成
@@ -198,6 +378,24 @@ public class InventoryManager : MonoBehaviour
             return null;
 
         return slots[slotNumber];
+    }
+
+    public void SlotUpdateRequest(int slotNum, BerItemType itemType)
+    {
+        int count = 0;
+        switch (itemType)
+        {
+            case BerItemType.Weapon:
+                count = itemStates[slotNum].currentAmmo;
+                break;
+            case BerItemType.Healing:
+                count = itemStates[slotNum].currentStack;
+                break;
+            case BerItemType.Throwing:
+                break;
+        }
+
+        OnUpdateItem.Invoke(slotNum, count);
     }
 
     #endregion

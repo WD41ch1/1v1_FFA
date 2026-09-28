@@ -125,18 +125,30 @@ public class PlayerHealth : MonoBehaviour
         return result;
     }
 
-    public void Heal(float amount)
+    /// <summary>
+    /// HPの回復処理
+    /// </summary>
+    /// <param name="amount"></param>
+    public void Heal(float amount, float limit)
     {
-        currentHealth += amount;
-        if (currentHealth >= MaxHealth)
-            currentHealth = MaxHealth;
+        // 回復
+        currentHealth = Mathf.Min(currentHealth + amount, limit);
+        //  UI通知
+        OnHealthChanged.Invoke(MaxHealth, currentHealth);
+
     }
 
-    public void AddShield(float amount)
+    /// <summary>
+    /// シールドの回復処理
+    /// </summary>
+    /// <param name="amount"></param>
+    public void AddShield(float amount, float limit)
     {
-        currentShield += amount;
-        if (currentShield >= MaxShield)
-            currentShield = MaxShield;
+        // 回復
+        currentShield = Mathf.Min(currentShield + amount, limit);
+        //  UI通知
+        OnShieldChanged.Invoke(MaxShield, currentShield);
+
     }
 
     public void SetHealth(float amount)

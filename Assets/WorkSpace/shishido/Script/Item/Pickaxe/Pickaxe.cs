@@ -11,7 +11,7 @@ public class Pickaxe : ItemBase
     public override void Initialize(
         PlayerManager _owner,
         ItemData itemData,
-        WeaponState state = null)
+        ItemState state = null)
     {
         if (itemData is PickaxeData)
         {

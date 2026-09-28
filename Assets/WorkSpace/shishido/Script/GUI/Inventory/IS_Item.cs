@@ -30,6 +30,15 @@ public class IS_Item : InventorySlotBase<BerItemType>
 
     }
 
+    public override void DeleteData()
+    {
+        //  中身を削除(念のため)
+        itemData = null;
+
+        //  自身を削除
+        Destroy(gameObject);
+    }
+
     public override void Droping()
     {
         //  指定数捨てる
@@ -38,6 +47,8 @@ public class IS_Item : InventorySlotBase<BerItemType>
         Destroy(gameObject);
 
     }
+
+
 
     //public override void DetectDropZone(PointerEventData eventData)
     //{
