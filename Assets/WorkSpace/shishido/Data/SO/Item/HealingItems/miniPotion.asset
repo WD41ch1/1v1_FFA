@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b4b308337a475d4f8f1035955381eaa, type: 3}
+  m_Name: miniPotion
+  m_EditorClassIdentifier: 
+  itemIcon: {fileID: 21300000, guid: b3f20d6b7b7a80a40b4d3413819b161c, type: 3}
+  rarityBackGroundIcon: {fileID: 0}
+  ItemName: "\u30DF\u30CB\u30DD\u30FC\u30B7\u30E7\u30F3"
+  itemType: 1
+  itemPrefab: {fileID: 3682867802421972290, guid: 08485b605a5df154d9a9df116ba93936, type: 3}
+  maxStack: 6
+  healingValue: 25
+  maxHealingAmount: 50
+  healingTiem: 2
+  healingCoolTiem: 0

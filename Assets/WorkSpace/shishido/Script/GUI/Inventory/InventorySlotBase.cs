@@ -40,6 +40,8 @@ public abstract class InventorySlotBase<T> : MonoBehaviour,
 
     public virtual void Droping() { }
 
+    public virtual void DeleteData() { }
+
     public T GetResourceType()
     {
         return type;

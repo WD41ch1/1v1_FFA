@@ -35,6 +35,7 @@ public class HotbarUI : UIBase
         myPlayer.inventoryManager.OnAddHotbarItem += UpdateSlotIcon;
         myPlayer.inventoryManager.OnSwapHotbarItem += SwapSlotData;
         myPlayer.inventoryManager.OnRemoveItem += UpdateSlotIcon;
+        myPlayer.inventoryManager.OnUpdateItem += UpdateSlotCounter;
     }
 
     /// <summary>
@@ -59,6 +60,15 @@ public class HotbarUI : UIBase
     public void UpdateSlotIcon(int num)
     {
         ShowItemIcon(num);
+    }
+
+    /// <summary>
+    /// スロットアイコンのカウンター更新
+    /// </summary>
+    /// <param name="num"></param>
+    public void UpdateSlotCounter(int num,int count)
+    {
+        SlotIcons[num].UpdateCounter(count);
     }
 
     /// <summary>

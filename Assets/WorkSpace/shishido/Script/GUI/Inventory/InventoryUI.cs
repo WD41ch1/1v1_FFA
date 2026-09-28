@@ -38,8 +38,9 @@ public class InventoryUI : UIBase, IDropHandler
     [SerializeField, Header("建材アイコンPrefab")]
     private GameObject BIldMatListPrefab;
 
-
+    [SerializeField,Header("items")]
     private List<IS_Item> items = new List<IS_Item>();
+
     private List<IS_Ammo> ammoList = new List<IS_Ammo>();
     private List<IS_BIldMat> BIldMatList = new List<IS_BIldMat>();
     protected override void OnInitialize()
@@ -67,7 +68,7 @@ public class InventoryUI : UIBase, IDropHandler
             holder.Initialize(myPlayer, gui);
 
             //  その他設定
-            holder.Setting(this,holderIndex);
+            holder.Setting(this, holderIndex);
             holderIndex++;
         }
         //  transformの割り当て
@@ -132,7 +133,7 @@ public class InventoryUI : UIBase, IDropHandler
                 UpdateSlot(items, data.itemType, 0);
                 break;
             case ResourceChangeType.Removed:
-                //RemovedSlot(items, data.itemType, 0);
+                RemoveItemSlot(slotNum, data, items);
                 break;
         }
     }
@@ -185,8 +186,8 @@ public class InventoryUI : UIBase, IDropHandler
 
         //  リストに追加
         if (!list.Contains(slot))
-        {
-            list.Add(slot);
+        {   
+            list[slotNum] = slot;
             //  初期化
             slot.Initialize(this, data.itemType);
             slot.DataInitialize(trans, data, slotNum);
@@ -223,6 +224,27 @@ public class InventoryUI : UIBase, IDropHandler
         {
             holder.SlotUpdate();
         }
+    }
+
+    /// <summary>
+    /// アイテムの削除
+    /// </summary>
+    /// <param name="slotNum"></param>
+    /// <param name="data"></param>
+    /// <param name="prefab"></param>
+    /// <param name="trans"></param>
+    /// <param name="list"></param>
+    public void RemoveItemSlot(
+        int slotNum,
+        ItemData data,
+        List<IS_Item> list
+       )
+    {
+        //  入っているデータを削除
+        list[slotNum].DeleteData();
+
+        //  リストの要素を空にする
+        list[slotNum] = null;
     }
 
     public ItemData GetItemData(int slotNumber)

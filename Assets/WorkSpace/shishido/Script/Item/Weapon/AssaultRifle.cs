@@ -5,7 +5,7 @@ public class AssaultRifle : WeaponBase
     public override void Initialize(
         PlayerManager _owner,
         ItemData itemData,
-        WeaponState state = null)
+        ItemState state = null)
     {
         if (itemData is WeaponData)
         {
@@ -43,6 +43,9 @@ public class AssaultRifle : WeaponBase
 
         //  弾数消費
         weaponState.currentAmmo--;
+
+        //  UIの更新等の処理
+        AmmoCheker();
     }
 
     public override void Reload()
@@ -60,12 +63,8 @@ public class AssaultRifle : WeaponBase
             requestValue,
             out approvalValue))
         {
-            //  リロード時間
-            StartCoroutine(ReloadAnimation(weaponData.reloadTime));
-
-            //  弾補充     
-            weaponState.currentAmmo += approvalValue;
-            //  TODO:現状武器を切り替え、落としてすぐに拾うなどをするとリロードしていないにもかかわらず弾が装填される
+            //  リロード時間 + 弾補充
+            StartCoroutine(ReloadAnimation(weaponData.reloadTime, approvalValue));
 
             //  万が一マガジン数が上限より上を行った場合
             if (weaponData.maxAmmo <= weaponState.currentAmmo)

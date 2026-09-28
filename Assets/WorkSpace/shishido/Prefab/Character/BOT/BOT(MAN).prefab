@@ -1751,6 +1751,7 @@ GameObject:
   - component: {fileID: 4846999885953369041}
   - component: {fileID: 496115323901770056}
   - component: {fileID: 5192213404160077144}
+  - component: {fileID: 166598300268738102}
   - component: {fileID: 4447703914791894201}
   - component: {fileID: 2617735670408254245}
   - component: {fileID: 5313674617597215012}
@@ -1824,6 +1825,22 @@ MonoBehaviour:
   playerHealth: {fileID: 0}
   equipmentManager: {fileID: 0}
   inventoryManager: {fileID: 0}
+--- !u!114 &166598300268738102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3437019260471447999}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: acb2076bef8b5134fa12dd9ab05b3fd2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHealth: 100
+  maxShielde: 100
+  Health: 100
+  Shielde: 100
 --- !u!114 &4447703914791894201
 MonoBehaviour:
   m_ObjectHideFlags: 0

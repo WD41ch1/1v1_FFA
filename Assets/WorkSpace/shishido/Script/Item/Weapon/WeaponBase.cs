@@ -11,7 +11,7 @@ public abstract class WeaponBase : ItemBase
 
     protected WeaponView weaponView;
 
-    protected WeaponState weaponState;
+    protected ItemState weaponState;
 
     //  リロード中かいなか
     protected bool isReloading;
@@ -138,7 +138,7 @@ public abstract class WeaponBase : ItemBase
         Camera camera = owner.cameraController.PlayerCamera;
         if (camera == null) return;
 
-        camera.DOFieldOfView(DEFAULTPLAYER_FOV, 0.2f);
+        camera.DOFieldOfView(DEFAULT_PLAYER_FOV, 0.2f);
 
         //camera.transform.DOMove(normalPosition, 0.2f);
         //camera.transform.DORotate(normalRotation, 0.2f);
@@ -148,15 +148,20 @@ public abstract class WeaponBase : ItemBase
     /// リロードコルーチン
     /// </summary>
     /// <param name="reloadTime"></param>
+    /// <param name="_approvalValue"></param>
     /// <returns></returns>
-    protected IEnumerator ReloadAnimation(float reloadTime)
+    protected virtual IEnumerator ReloadAnimation(float reloadTime, int _approvalValue)
     {
         isReloading = true;
         yield return new WaitForSeconds(reloadTime);
+
+        //  弾補充     
+        weaponState.currentAmmo += _approvalValue;
+
         isReloading = false;
     }
 
-    protected void BulletShoot(WeaponView weaponView, Vector3 target)
+    protected virtual void BulletShoot(WeaponView weaponView, Vector3 target)
     {
         if (weaponView == null) return;
         Transform muzzlePoint = weaponView.muzzlePoint;
@@ -174,6 +179,17 @@ public abstract class WeaponBase : ItemBase
 
         //  TODO: ※いずれプーリング処理で行う
         Destroy(projectile, 5.0f);
+    }
+
+    protected void AmmoCheker()
+    {
+        if (weaponData == null) return;
+
+        //  UIの更新要求
+        owner.inventoryManager.SlotUpdateRequest(
+            owner.equipmentManager.GetcurrentSlot(),
+            weaponData.itemType
+        );
     }
 
     public WeaponData GetWeaponData()

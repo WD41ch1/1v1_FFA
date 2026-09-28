@@ -58,8 +58,8 @@ public class EquipmentManager : MonoBehaviour
         //  指定しているスロット
         currentSlot = slotNum;
         //  対応スロットのWeaponState取得(武器関連以外はNULLになる)
-        WeaponState state 
-            = owner.inventoryManager.GetWeaponState(currentSlot);
+        ItemState state 
+            = owner.inventoryManager.GetItemState(currentSlot);
         //  UIに通知
         OnEquipChanged.Invoke(currentSlot);
         //  見た目アイテムの生成
@@ -69,7 +69,7 @@ public class EquipmentManager : MonoBehaviour
     /// <summary>
     /// 装備アイテムの生成
     /// </summary>
-    private void CreateEquipItem(PlayerManager owner, ItemData data, WeaponState state)
+    private void CreateEquipItem(PlayerManager owner, ItemData data, ItemState state)
     {
         //  生成場所があるか
         if (itemSocket == null || data == null)
@@ -110,6 +110,10 @@ public class EquipmentManager : MonoBehaviour
     public ItemBase GetcurrentItem()
     {
         return currentItem;
+    }
+    public int GetcurrentSlot()
+    {
+        return currentSlot;
     }
 
     public WeaponBase GetcurrentWeapon()
