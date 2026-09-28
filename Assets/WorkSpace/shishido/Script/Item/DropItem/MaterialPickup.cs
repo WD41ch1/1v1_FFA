@@ -22,6 +22,11 @@ public class MaterialPickup : MonoBehaviour, IPickupable
         amount = _amount;
     }
 
+    public Transform GetTransform()
+    {
+        return transform;
+    }
+
     public void Pickup(PlayerManager character)
     {
         if (character.inventoryManager.GetMat(bildingMatType) >= MAX_BILDMAT)

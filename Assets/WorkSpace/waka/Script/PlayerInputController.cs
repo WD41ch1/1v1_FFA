@@ -200,6 +200,13 @@ public class PlayerInputController : MonoBehaviour
         JumpPressed = true;
         Debug.Log("Jump");
     }
+    // PlayerInputのOnPickUPイベントにはこちらを登録する。
+    public void OnPickUP(InputAction.CallbackContext context)
+    {
+        if (!context.performed) return;
+
+        owner.cameraController.StandbyPickUpItem();
+    }
 
     // BuildingのWallは、建築モードへの入口も兼ねる。
     public void OnBuildWall(InputAction.CallbackContext context)

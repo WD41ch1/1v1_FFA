@@ -760,6 +760,7 @@ GameObject:
   - component: {fileID: 1786759125029253417}
   - component: {fileID: 315614260272458629}
   - component: {fileID: 3898852614253834201}
+  - component: {fileID: 5607220126571505438}
   m_Layer: 0
   m_Name: TestPistol
   m_TagString: Untagged
@@ -812,6 +813,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e557e1c65c0de584b9942bc3d902215c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &5607220126571505438
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3763604498974455608}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abd6ed60d3209af4eac71b4ffd9a6e90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &3899073714259699312

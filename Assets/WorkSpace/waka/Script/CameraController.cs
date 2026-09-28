@@ -117,6 +117,33 @@ public class CameraController : MonoBehaviour
         transform.rotation = rotation;
     }
 
+    public void StandbyPickUpItem()
+    {
+        Ray ray = GetCrosshairRay();
+
+        if (Physics.Raycast(ray, out RaycastHit hit))
+        {
+            // Rayが当たったオブジェクトからItemPickupを探す
+            IPickupable item = hit.collider.GetComponentInParent<IPickupable>();
+
+            if (item == null)
+                return;
+
+            // Playerとアイテムの距離を確認
+            float distance = Vector3.Distance(
+                transform.position,
+                item.GetTransform().position
+            );
+
+            if (distance > PICKUP_DISTANCE)
+                return;
+
+            // 取得処理
+            item.Pickup(owner);
+            Destroy(item.GetTransform().gameObject);
+        }
+    }
+
     /// <summary>
     /// PlayerManagerの登録
     /// </summary>

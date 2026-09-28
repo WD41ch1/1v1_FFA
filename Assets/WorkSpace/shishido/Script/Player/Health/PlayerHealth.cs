@@ -165,6 +165,9 @@ public class PlayerHealth : MonoBehaviour
     private void Die()
     {
         Debug.Log($"{lastAttacker?.name}に倒された");
-        Destroy(this.gameObject);
+
+        this.gameObject.SetActive( false );
+
+        //Destroy(this.gameObject);
     }
 }

@@ -3,7 +3,6 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using static GameConst;
-using static UnityEditor.Timeline.TimelinePlaybackControls;
 
 public class Test : MonoBehaviour
 {
@@ -60,6 +59,8 @@ public class Test : MonoBehaviour
     }
     public void TestInventory()
     {
+#if false
+
         //  アイテムを取得
         if (Input.GetKeyDown(KeyCode.F))
         {
@@ -68,6 +69,9 @@ public class Test : MonoBehaviour
             TestInventoryInit();
 
         }
+
+#endif
+
         //  ピッケルを装備
         if (Input.GetKeyDown(KeyCode.LeftShift))
         {
@@ -185,6 +189,9 @@ public class Test : MonoBehaviour
     }
     #endregion
 
+
+#if false
+
     private void OnTriggerEnter(Collider other)
     {
         if (other.TryGetComponent<IPickupable>(out var pickup))
@@ -193,4 +200,6 @@ public class Test : MonoBehaviour
             Destroy(other?.gameObject);
         }
     }
+#endif
+
 }

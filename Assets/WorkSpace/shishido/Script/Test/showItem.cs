@@ -14,8 +14,9 @@ public class showItem : MonoBehaviour
     public TextMeshProUGUI t2;
     public TextMeshProUGUI t3;
     public TextMeshProUGUI t4;
-    public TextMeshProUGUI t5;
-    public TextMeshProUGUI t6;
+    public TextMeshProUGUI t11;
+    public TextMeshProUGUI t12;
+    public TextMeshProUGUI t13;
     public TextMeshProUGUI t20;
 
     private bool isInit = false;
@@ -44,9 +45,10 @@ public class showItem : MonoBehaviour
         t1.text = im?.GetAmmo(AmmoType.SmallAmmo).ToString();
         t2.text = im?.GetAmmo(AmmoType.MiddleAmmo).ToString();
         t3.text = im?.GetAmmo(AmmoType.BigAmmo).ToString();
-        t4.text = im?.GetMat(BildingMatType.Wood).ToString();
-        t5.text = im?.GetMat(BildingMatType.Brick).ToString();
-        t6.text = im?.GetMat(BildingMatType.Iron).ToString();
+        t4.text = im?.GetAmmo(AmmoType.ShotgunAmmo).ToString();
+        t11.text = im?.GetMat(BildingMatType.Wood).ToString();
+        t12.text = im?.GetMat(BildingMatType.Brick).ToString();
+        t13.text = im?.GetMat(BildingMatType.Iron).ToString();
         showAmmoRemaining();
     }
 

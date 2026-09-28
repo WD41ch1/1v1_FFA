@@ -29,6 +29,11 @@ public class ItemPickup : MonoBehaviour, IPickupable
         SetAppearance();
     }
 
+    public Transform GetTransform()
+    {
+        return transform;
+    }
+
     /// <summary>
     /// 見た目のせってい
     /// </summary>

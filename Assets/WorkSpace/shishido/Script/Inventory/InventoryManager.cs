@@ -5,7 +5,6 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.InputSystem.LowLevel;
 using static GameConst;
-using static UnityEditor.Progress;
 
 public class InventoryManager : MonoBehaviour
 {

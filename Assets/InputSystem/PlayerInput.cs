@@ -127,6 +127,15 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""PickUP"",
+                    ""type"": ""Button"",
+                    ""id"": ""c258f072-31bc-435c-84a9-5fac1b0bfa71"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -259,6 +268,17 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""ExitBuilding"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""a921964f-7656-49dd-b178-357401039072"",
+                    ""path"": ""<Keyboard>/f"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""PickUP"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -449,6 +469,7 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
         m_Player_Look = m_Player.FindAction("Look", throwIfNotFound: true);
         m_Player_Move = m_Player.FindAction("Move", throwIfNotFound: true);
         m_Player_ExitBuilding = m_Player.FindAction("ExitBuilding", throwIfNotFound: true);
+        m_Player_PickUP = m_Player.FindAction("PickUP", throwIfNotFound: true);
         // Combat
         m_Combat = asset.FindActionMap("Combat", throwIfNotFound: true);
         m_Combat_Fire = m_Combat.FindAction("Fire", throwIfNotFound: true);
@@ -547,6 +568,7 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_Look;
     private readonly InputAction m_Player_Move;
     private readonly InputAction m_Player_ExitBuilding;
+    private readonly InputAction m_Player_PickUP;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -574,6 +596,10 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Player/ExitBuilding".
         /// </summary>
         public InputAction @ExitBuilding => m_Wrapper.m_Player_ExitBuilding;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/PickUP".
+        /// </summary>
+        public InputAction @PickUP => m_Wrapper.m_Player_PickUP;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -612,6 +638,9 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
             @ExitBuilding.started += instance.OnExitBuilding;
             @ExitBuilding.performed += instance.OnExitBuilding;
             @ExitBuilding.canceled += instance.OnExitBuilding;
+            @PickUP.started += instance.OnPickUP;
+            @PickUP.performed += instance.OnPickUP;
+            @PickUP.canceled += instance.OnPickUP;
         }
 
         /// <summary>
@@ -635,6 +664,9 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
             @ExitBuilding.started -= instance.OnExitBuilding;
             @ExitBuilding.performed -= instance.OnExitBuilding;
             @ExitBuilding.canceled -= instance.OnExitBuilding;
+            @PickUP.started -= instance.OnPickUP;
+            @PickUP.performed -= instance.OnPickUP;
+            @PickUP.canceled -= instance.OnPickUP;
         }
 
         /// <summary>
@@ -961,6 +993,13 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnExitBuilding(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "PickUP" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnPickUP(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Combat" which allows adding and removing callbacks.

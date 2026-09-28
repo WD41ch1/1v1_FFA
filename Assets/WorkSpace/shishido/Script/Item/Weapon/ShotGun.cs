@@ -78,7 +78,7 @@ public class ShotGun : WeaponBase
             projectile.GetComponent<ProjectileBase>()?
             .Initialize(owner, this, Vector3.zero);
 
-
+            Destroy( projectile ,5f);
         }
 
         //  弾数消費
@@ -109,8 +109,8 @@ public class ShotGun : WeaponBase
         while (weaponState.currentAmmo < weaponData.maxAmmo)
         {
             // 射撃されたらリロード中断
-            if (isShooting)
-                break;
+            //if (isShooting)
+            //    break;
 
             int approvalValue = 0;
 

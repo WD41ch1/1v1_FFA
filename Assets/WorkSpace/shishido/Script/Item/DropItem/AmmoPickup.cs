@@ -11,6 +11,11 @@ public class AmmoPickup : MonoBehaviour, IPickupable
     [SerializeField]
     private int amount;
 
+    public Transform GetTransform()
+    {
+        return transform;
+    }
+
     /// <summary>
     /// 生成時初期化関数
     /// </summary>
