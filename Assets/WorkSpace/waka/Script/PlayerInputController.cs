@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using static GameConst;
 
 public class PlayerInputController : MonoBehaviour
 {
@@ -207,6 +208,52 @@ public class PlayerInputController : MonoBehaviour
 
         owner.cameraController.StandbyPickUpItem();
     }
+
+    #region PlayerInputのスロット関連
+    public void OnEquipPickelSlot(InputAction.CallbackContext context) {
+        owner.equipmentManager.Equip(this.owner, PICKEL_SLOT);
+    }
+    public void OnEquipItemSlot1(InputAction.CallbackContext context) {
+        owner.equipmentManager.Equip(this.owner, ITEM_SLOT_1);
+    }
+    public void OnEquipItemSlot2(InputAction.CallbackContext context) {
+        owner.equipmentManager.Equip(this.owner, ITEM_SLOT_2);
+    }
+    public void OnEquipItemSlot3(InputAction.CallbackContext context) {
+        owner.equipmentManager.Equip(this.owner, ITEM_SLOT_3);
+    }
+    public void OnEquipItemSlot4(InputAction.CallbackContext context) {
+        owner.equipmentManager.Equip(this.owner, ITEM_SLOT_4);
+    }
+    public void OnEquipItemSlot5(InputAction.CallbackContext context) {
+        owner.equipmentManager.Equip(this.owner, ITEM_SLOT_5);
+    }
+    public void OnNextSlot(InputAction.CallbackContext context) {
+
+        if (!context.performed) return;
+
+        Vector2 scroll = context.ReadValue<Vector2>();
+
+        if (scroll.y < 0)
+        {
+            //Debug.Log("上にスクロール");
+            owner.equipmentManager.NextItemEquip(this.owner);
+        }
+    }
+    public void OnPreviousSlot(InputAction.CallbackContext context) {
+
+        if (!context.performed) return;
+
+        Vector2 scroll = context.ReadValue<Vector2>();
+
+        if (scroll.y > 0)
+        {
+            //Debug.Log("下にスクロール");
+            owner.equipmentManager.PreviousItemEquip(this.owner);
+        }
+    }
+
+    #endregion
 
     // BuildingのWallは、建築モードへの入口も兼ねる。
     public void OnBuildWall(InputAction.CallbackContext context)

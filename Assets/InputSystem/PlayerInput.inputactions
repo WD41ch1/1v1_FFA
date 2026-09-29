@@ -109,7 +109,7 @@
                     "name": "PreviousSlot",
                     "type": "Value",
                     "id": "18fd9c9d-f168-4f93-ac27-f0900a089b24",
-                    "expectedControlType": "",
+                    "expectedControlType": "Vector2",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": true
@@ -337,7 +337,18 @@
                 {
                     "name": "",
                     "id": "f7eb7feb-66ef-4f13-a9d3-59be9e29894e",
-                    "path": "<Mouse>/scroll/up",
+                    "path": "<Mouse>/scroll",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "PreviousSlot",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "535d9dd5-b08c-442d-8338-d6a66d8998e6",
+                    "path": "",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -348,7 +359,18 @@
                 {
                     "name": "",
                     "id": "22c0a8a4-48b1-455b-abf7-b42085719fba",
-                    "path": "<Mouse>/scroll/up",
+                    "path": "<Mouse>/scroll",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "NextSlot",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "8208b724-3e92-4542-8d54-12195838c57d",
+                    "path": "",
                     "interactions": "",
                     "processors": "",
                     "groups": "",

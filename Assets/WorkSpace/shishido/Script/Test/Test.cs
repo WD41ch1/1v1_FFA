@@ -70,7 +70,6 @@ public class Test : MonoBehaviour
 
         }
 
-#endif
 
         //  ピッケルを装備
         if (Input.GetKeyDown(KeyCode.LeftShift))
@@ -137,12 +136,16 @@ public class Test : MonoBehaviour
         {
             im.RemoveItem(ITEM_SLOT_5);
         }
+#endif
+
     }
 
     private InputAction.CallbackContext cantext;
 
     public void TestPlayer()
     {
+#if false
+
 
         //  左クリック処理
         if (Input.GetMouseButtonDown(0))
@@ -174,6 +177,7 @@ public class Test : MonoBehaviour
         {
             em.UnEquip();
         }
+#endif
 
         //  被弾処理
         if (Input.GetKeyDown(KeyCode.K))
@@ -186,6 +190,7 @@ public class Test : MonoBehaviour
 
             pm.playerHealth.TakeDamage(testinfo);
         }
+
     }
     #endregion
 
