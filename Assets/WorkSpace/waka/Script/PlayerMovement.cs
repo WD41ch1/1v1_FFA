@@ -1,7 +1,8 @@
 using UnityEngine;
 using static UnityEngine.UI.GridLayoutGroup;
+using FishNet.Object;
 
-public class PlayerMovement : MonoBehaviour
+public class PlayerMovement : NetworkBehaviour
 {
     [Header("参照")]
     private PlayerManager owner;
