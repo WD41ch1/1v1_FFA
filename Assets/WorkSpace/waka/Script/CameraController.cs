@@ -1,7 +1,8 @@
 using UnityEngine;
 using static GameConst;
+using FishNet.Object;
 
-public class CameraController : MonoBehaviour
+public class CameraController :NetworkBehaviour
 {
     [SerializeField]
     private Camera playerCamera;
