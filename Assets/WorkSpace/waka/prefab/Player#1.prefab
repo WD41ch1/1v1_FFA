@@ -616,6 +616,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f7c2d749a5af714c902d6bec76675e6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 0}
+  _networkObjectCache: {fileID: 0}
   owner: {fileID: 0}
   playerInput: {fileID: 0}
   buildingSystem: {fileID: 0}
@@ -658,6 +661,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78fbaac399e1331478b46ba948037c10, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 0}
+  _networkObjectCache: {fileID: 0}
   input: {fileID: 4473443603770587236}
   cameraTransform: {fileID: 0}
   groundCheck: {fileID: 174929350141774530}

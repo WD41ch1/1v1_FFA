@@ -12,4 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ad70174b079c2f4ebc7931d3dd1af6f, type: 3}
   m_Name: DefaultPrefabObjects
   m_EditorClassIdentifier: 
-  _prefabs: []
+  _prefabs:
+  - {fileID: -7409264338402803999, guid: 9a7d8593727d7814d9f62bf63edf4244, type: 3}
+  - {fileID: -5164403125306869623, guid: 419b7d290e399cf4d8b3e2af4730c508, type: 3}

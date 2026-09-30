@@ -1,7 +1,8 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using FishNet.Object;
 
-public class PlayerInputController : MonoBehaviour
+public class PlayerInputController : NetworkBehaviour
 {
     public PlayerManager owner;
 

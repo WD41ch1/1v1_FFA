@@ -86,6 +86,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 36078ab0369161e49a29d349ae3e0739, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2353254740914125523}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 36078ab0369161e49a29d349ae3e0739, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 0}
   m_SourcePrefab: {fileID: 100100000, guid: 36078ab0369161e49a29d349ae3e0739, type: 3}
 --- !u!1 &4828222914586169212 stripped
 GameObject:
@@ -104,6 +107,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f7c2d749a5af714c902d6bec76675e6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 0}
+  _networkObjectCache: {fileID: 0}
   owner: {fileID: 3334962904251742259}
   playerInput: {fileID: 7800303080664912021}
   buildingSystem: {fileID: 0}
@@ -443,6 +449,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78fbaac399e1331478b46ba948037c10, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 0}
+  _networkObjectCache: {fileID: 0}
   input: {fileID: 5793718492925560719}
   cameraTransform: {fileID: 0}
   groundCheck: {fileID: 0}
