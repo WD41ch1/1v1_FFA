@@ -1,4 +1,5 @@
 using UnityEngine;
+using FishNet.Object;
 
 /// <summary>
 /// 建築全体を管理するクラス
@@ -6,7 +7,7 @@ using UnityEngine;
 /// ・壁、階段、床のモード切り替え
 /// ・選択中の建築プレビュー更新
 /// ・左クリック長押しによる連続建築
-/// ・未設定の参照をシーン内から自動取得
+/// ・未設定の参照を同じPlayerのPrefab内から自動取得
 /// </summary>
 public class BuildingSystem : MonoBehaviour
 {
@@ -22,9 +23,11 @@ public class BuildingSystem : MonoBehaviour
         Cone
     }
 
-    [Header("入力")]
-    [Tooltip("PlayerInputControllerを設定する")]
-    public PlayerInputController input;
+    public PlayerInputController input { get; private set; }
+    private NetworkObject playerNetworkObject;
+    private bool wasLocalOwner;
+    public bool CanProcessInput => playerNetworkObject != null &&
+        playerNetworkObject.IsClientInitialized && playerNetworkObject.IsOwner;
 
     [Header("建築スクリプト")]
     public BuildWall wallBuilder;
@@ -45,39 +48,34 @@ public class BuildingSystem : MonoBehaviour
 
     private void Awake()
     {
-        /*
-         * Inspectorで参照が設定されていない場合は
-         * シーン内から自動的に探す。
-         */
-
-        if (input == null)
-        {
-            input =
-                FindObjectOfType<PlayerInputController>();
-        }
+        playerNetworkObject = GetComponentInParent<NetworkObject>(true);
+        input = playerNetworkObject != null
+            ? playerNetworkObject.GetComponent<PlayerInputController>() : null;
+        if (playerNetworkObject == null)
+            Debug.LogError("BuildingSystem: 親PlayerにNetworkObjectが必要です。", this);
 
         if (wallBuilder == null)
         {
             wallBuilder =
-                FindObjectOfType<BuildWall>();
+                GetComponentInChildren<BuildWall>(true);
         }
 
         if (rampBuilder == null)
         {
             rampBuilder =
-                FindObjectOfType<BuildRamp>();
+                GetComponentInChildren<BuildRamp>(true);
         }
 
         if (floorBuilder == null)
         {
             floorBuilder =
-                FindObjectOfType<BuildFloor>();
+                GetComponentInChildren<BuildFloor>(true);
         }
 
         if (coneBuilder == null)
         {
             coneBuilder =
-                FindObjectOfType<BuildCone>();
+                GetComponentInChildren<BuildCone>(true);
         }
 
         // 必要な参照が見つからなかった場合はエラーを表示
@@ -118,7 +116,7 @@ public class BuildingSystem : MonoBehaviour
             Debug.LogError(
                 "BuildingSystem: " +
                 "BuildFloorが見つかりません。" +
-                "BuildFloorをシーン内のGameObjectへ追加してください"
+                "BuildFloorをBuildingSystemのPrefab内へ追加してください"
             );
         }
 
@@ -127,13 +125,21 @@ public class BuildingSystem : MonoBehaviour
             Debug.LogError(
                 "BuildingSystem: " +
                 "BuildConeが見つかりません。" +
-                "BuildConeをシーン内のGameObjectへ追加してください"
+                "BuildConeをBuildingSystemのPrefab内へ追加してください"
             );
         }
     }
 
     private void Update()
     {
+        bool localOwner = CanProcessInput;
+        if (!localOwner)
+        {
+            if (wasLocalOwner) CancelBuild();
+            wasLocalOwner = false;
+            return;
+        }
+        wasLocalOwner = true;
         // 入力参照がなければ処理できない
         if (input == null)
         {
@@ -206,6 +212,12 @@ public class BuildingSystem : MonoBehaviour
     /// <summary>
     /// 建築タイプを切り替える
     /// </summary>
+    private void OnDisable()
+    {
+        CancelBuild();
+        wasLocalOwner = false;
+    }
+
     private void SelectBuild(
         BuildType buildType
     )
@@ -305,7 +317,7 @@ public class BuildingSystem : MonoBehaviour
         if (floorBuilder == null)
         {
             floorBuilder =
-                FindObjectOfType<BuildFloor>();
+                GetComponentInChildren<BuildFloor>(true);
         }
 
         if (floorBuilder == null)
@@ -341,7 +353,7 @@ public class BuildingSystem : MonoBehaviour
         if (coneBuilder == null)
         {
             coneBuilder =
-                FindObjectOfType<BuildCone>();
+                GetComponentInChildren<BuildCone>(true);
         }
 
         if (coneBuilder == null)
