@@ -618,7 +618,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   owner: {fileID: 0}
   playerInput: {fileID: 0}
-  buildingSystem: {fileID: 0}
 --- !u!54 &5561931069051045473
 Rigidbody:
   m_ObjectHideFlags: 0
