@@ -20,7 +20,7 @@ public class StatusBerUI : UIBase
         PlayerHealth health = myPlayer.playerHealth;
 
         //  スライダーの初期化
-        SliderInitialize(health.MaxHealth, health.MaxShield);
+        SliderInitialize(health.GetMaxHealth(), health.GetMaxShield());
 
         //  アクション登録
         health.OnHealthChanged += HealthUpdate;

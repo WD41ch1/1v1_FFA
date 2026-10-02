@@ -1,3 +1,5 @@
+using FishNet.Object;
+using FishNet.Object.Synchronizing;
 using System;
 using UnityEngine;
 using static GameConst;
@@ -10,14 +12,16 @@ using static UnityEngine.UI.GridLayoutGroup;
  使用処理の呼び出し
  を担当
  */
-public class EquipmentManager : MonoBehaviour
+public class EquipmentManager : NetworkBehaviour
 {
     private PlayerManager owner;
 
     [SerializeField, Header("アイテム生成場所")]
     private Transform itemSocket;
     //  現在装備スロット番号
-    private int currentSlot;
+    private readonly SyncVar<int> currentSlot = new SyncVar<int>();
+    //  装備アイテム同期    TODO:
+    private readonly SyncVar<int> currentItemID = new SyncVar<int>();
     //  現在装備しているもの
     private ItemBase currentItem;
     //  生成したアイテム
@@ -46,6 +50,8 @@ public class EquipmentManager : MonoBehaviour
     /// <param name="slotNum"></param>
     public void Equip(PlayerManager owner, int slotNum)
     {
+        if (!IsOwner) return;
+
         ItemData data;
         //  装備したいアイテム情報を取得
         if (slotNum == PICKEL_SLOT)
@@ -56,12 +62,12 @@ public class EquipmentManager : MonoBehaviour
         if (data == null) return;
 
         //  指定しているスロット
-        currentSlot = slotNum;
+        currentSlot.Value = slotNum;
         //  対応スロットのWeaponState取得(武器関連以外はNULLになる)
         ItemState state 
-            = owner.inventoryManager.GetItemState(currentSlot);
+            = owner.inventoryManager.GetItemState(currentSlot.Value);
         //  UIに通知
-        OnEquipChanged.Invoke(currentSlot);
+        OnEquipChanged.Invoke(currentSlot.Value);
         //  見た目アイテムの生成
         CreateEquipItem(owner, data, state);
     }
@@ -113,7 +119,7 @@ public class EquipmentManager : MonoBehaviour
     }
     public int GetcurrentSlot()
     {
-        return currentSlot;
+        return currentSlot.Value;
     }
 
     public WeaponBase GetcurrentWeapon()
@@ -130,7 +136,7 @@ public class EquipmentManager : MonoBehaviour
     /// <param name="owner"></param>
     public void NextItemEquip(PlayerManager owner)
     {
-        int index = currentSlot;
+        int index = currentSlot.Value;
 
         for (int i = 0; i < ITEM_SLOT_MAX; i++)
         {
@@ -150,7 +156,7 @@ public class EquipmentManager : MonoBehaviour
     /// <param name="owner"></param>
     public void PreviousItemEquip(PlayerManager owner)
     {
-        int index = currentSlot;
+        int index = currentSlot.Value;
 
         for (int i = ITEM_SLOT_MAX; 0 <= i; i--)
         {

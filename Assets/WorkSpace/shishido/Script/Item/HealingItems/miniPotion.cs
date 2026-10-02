@@ -30,7 +30,7 @@ public class miniPotion : HealingItemBase
         //  使用者がわからない もしくは すでに回復中　
         if (owner == null || isHealing ||
         //  もしくは アイテムの回復上限よりシールドが高かったら
-            owner.playerHealth.currentShield >= healingData.maxHealingAmount) return;
+            owner.playerHealth.GetcurrentShield() >= healingData.maxHealingAmount) return;
 
         StartCoroutine(HealingAnimation(healingData.healingTiem));
 

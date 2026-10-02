@@ -352,8 +352,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 87b9907f856616c48894d7fc83822a5b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 0}
+  _networkObjectCache: {fileID: 0}
+  isLocalDebug: 0
+  _cameraPrefab: {fileID: 0}
+  _cameraHolder: {fileID: 0}
   playerType: 0
-  isLocalPlayer: 1
   inputController: {fileID: 5793718492925560719}
   controller: {fileID: 2353254740914125523}
   cameraController: {fileID: 0}
@@ -389,6 +394,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9633721c51cfdb4ba72174e0c7473f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 0}
+  _networkObjectCache: {fileID: 0}
   itemSocket: {fileID: 5810038069426956685}
 --- !u!114 &2856082182595222096
 MonoBehaviour:
@@ -402,6 +410,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5c6a01725e77b5145ae2a10b1286d569, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 0}
+  _networkObjectCache: {fileID: 0}
+  haveShield: 0
 --- !u!114 &3755750721763025930
 MonoBehaviour:
   m_ObjectHideFlags: 0

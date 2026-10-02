@@ -344,6 +344,37 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.5
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &5069781391502788167
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3335521646143132300}
+  m_Layer: 7
+  m_Name: CameraHolder
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3335521646143132300
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5069781391502788167}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7311350174921958986}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6433605546227940833
 GameObject:
   m_ObjectHideFlags: 0
@@ -503,8 +534,10 @@ GameObject:
   - component: {fileID: 8436918713647236620}
   - component: {fileID: 4154642799924072691}
   - component: {fileID: 4244902542408463872}
+  - component: {fileID: 5534016147868527283}
+  - component: {fileID: 7476201432694213064}
   m_Layer: 7
-  m_Name: Player#1
+  m_Name: NET_Player#1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -529,6 +562,7 @@ Transform:
   - {fileID: 2553968601570320863}
   - {fileID: 2255248164325297454}
   - {fileID: 4971415834855567989}
+  - {fileID: 3335521646143132300}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &4110077703232918801
@@ -658,8 +692,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78fbaac399e1331478b46ba948037c10, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _componentIndexCache: 255
-  _addedNetworkObject: {fileID: 0}
+  _componentIndexCache: 0
+  _addedNetworkObject: {fileID: 7476201432694213064}
   _networkObjectCache: {fileID: 0}
   input: {fileID: 4473443603770587236}
   cameraTransform: {fileID: 0}
@@ -748,81 +782,77 @@ MonoBehaviour:
     m_ActionId: d0e5213c-385d-43b4-9ec2-61ef28850207
     m_ActionName: Player/Move
   - m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 4473443603770587236}
-        m_TargetAssemblyTypeName: PlayerInputController, Assembly-CSharp
-        m_MethodName: OnBuildWall
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-    m_ActionId: eaf15718-16c0-42e8-b4c2-52a0bfd3a73a
-    m_ActionName: Player/Build[/Mouse/backButton,/Mouse/forwardButton]
-  - m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 4473443603770587236}
-        m_TargetAssemblyTypeName: PlayerInputController, Assembly-CSharp
-        m_MethodName: OnBuildRamp
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-    m_ActionId: 5f70586e-36fa-44ff-9c61-9ad711a6b7be
-    m_ActionName: Player/Ramp[/Mouse/forwardButton]
-  - m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 4473443603770587236}
-        m_TargetAssemblyTypeName: PlayerInputController, Assembly-CSharp
-        m_MethodName: OnBuildFloor
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-    m_ActionId: 463120a8-b23f-492c-b957-9e3fdebb734f
-    m_ActionName: Player/Floor[/Keyboard/v]
-  - m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 4473443603770587236}
-        m_TargetAssemblyTypeName: PlayerInputController, Assembly-CSharp
-        m_MethodName: OnBuildCone
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-    m_ActionId: 7106bbeb-04b2-4bc1-b4e1-43cd38dec49c
-    m_ActionName: Player/Cone[/Keyboard/c]
+      m_Calls: []
+    m_ActionId: 7fab23ee-783e-4543-831f-c9e1136d78b9
+    m_ActionName: Player/ExitBuilding[/Keyboard/1,/Keyboard/2,/Keyboard/3,/Keyboard/4,/Keyboard/5]
   - m_PersistentCalls:
       m_Calls: []
-    m_ActionId: 06257509-a247-420c-899b-970a19be300e
-    m_ActionName: Player/Fire[/Mouse/leftButton]
+    m_ActionId: c258f072-31bc-435c-84a9-5fac1b0bfa71
+    m_ActionName: Player/PickUP[/Keyboard/f]
   - m_PersistentCalls:
       m_Calls: []
-    m_ActionId: 78d538c9-bbbc-43a9-8769-f84f70ba2de8
-    m_ActionName: Player/ADS[/Mouse/rightButton]
+    m_ActionId: fde3bf96-c1e5-4132-af2d-e6de4028bf8c
+    m_ActionName: Player/PickelSlot[/Keyboard/leftShift]
   - m_PersistentCalls:
       m_Calls: []
-    m_ActionId: 3fcfe648-2491-44c4-999f-9f9cd5270fcd
-    m_ActionName: Player/Reload[/Keyboard/r]
+    m_ActionId: 4f14e90e-e829-4386-a890-0ac314091ff2
+    m_ActionName: Player/Slot1[/Keyboard/1]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 89168be4-a6d0-4422-9db6-b975420aebb9
+    m_ActionName: Player/Slot2[/Keyboard/2]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 2c40e3a7-4b18-4cee-bdc5-17c93fa37884
+    m_ActionName: Player/Slot3[/Keyboard/3]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: b66c23cf-c1cf-44df-bd27-a69e5f5d90db
+    m_ActionName: Player/Slot4[/Keyboard/4]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 902a89b6-907e-4a49-8f82-e8352c375d4b
+    m_ActionName: Player/Slot5[/Keyboard/5]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 18fd9c9d-f168-4f93-ac27-f0900a089b24
+    m_ActionName: Player/PreviousSlot[/Mouse/scroll]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 5c09413f-ef17-4b11-8dab-f990870c9e50
+    m_ActionName: Player/NextSlot[/Mouse/scroll]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 266a3a1a-009f-4b5f-b2d6-59fa0203e8a9
+    m_ActionName: Combat/Fire[/Mouse/leftButton]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: bce55398-b899-4fe2-aa5a-a04188928cf4
+    m_ActionName: Combat/ADS[/Mouse/rightButton]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: a593452f-ba28-4582-a986-0563d63efcba
+    m_ActionName: Combat/Reload[/Keyboard/r]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 476897ac-5567-43e4-9e2f-b01b13ec3c80
+    m_ActionName: Building/Place[/Mouse/leftButton]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: d8b99559-2ddf-49c2-b4bb-6d60d9fc3a33
+    m_ActionName: Building/Wall[/Mouse/backButton]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 443a575f-1447-4470-a0d6-38119b1740aa
+    m_ActionName: Building/Ramp[/Mouse/forwardButton]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: d2a7a059-86e4-48da-a7c8-7d26bc5d0b0d
+    m_ActionName: Building/Floor[/Keyboard/v]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 503e0b5d-7724-43e9-9b0b-b3cab0977225
+    m_ActionName: Building/Cone[/Keyboard/c]
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
   m_DefaultActionMap: Player
@@ -857,11 +887,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _componentIndexCache: 255
-  _addedNetworkObject: {fileID: 0}
+  _addedNetworkObject: {fileID: 7476201432694213064}
   _networkObjectCache: {fileID: 0}
-  isLocalDebug: 0
-  _cameraPrefab: {fileID: 0}
-  _cameraHolder: {fileID: 0}
+  isLocalDebug: 1
+  _cameraPrefab: {fileID: 1115277162502803027, guid: bda6f13cf259cee40a3e601ce867bfa7, type: 3}
+  _cameraHolder: {fileID: 3335521646143132300}
   playerType: 0
   inputController: {fileID: 4473443603770587236}
   controller: {fileID: 6600365596503939205}
@@ -899,7 +929,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _componentIndexCache: 255
-  _addedNetworkObject: {fileID: 0}
+  _addedNetworkObject: {fileID: 7476201432694213064}
   _networkObjectCache: {fileID: 0}
   itemSocket: {fileID: 4971415834855567989}
 --- !u!114 &8436918713647236620
@@ -915,7 +945,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _componentIndexCache: 255
-  _addedNetworkObject: {fileID: 0}
+  _addedNetworkObject: {fileID: 7476201432694213064}
   _networkObjectCache: {fileID: 0}
   haveShield: 0
 --- !u!114 &4154642799924072691
@@ -938,7 +968,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7767811910394218741}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a21fbf189c7d6b746a9771339f06af33, type: 3}
   m_Name: 
@@ -950,3 +980,106 @@ MonoBehaviour:
   si: {fileID: 0}
   itemData: {fileID: 11400000, guid: 86bf548c0bdc9da49bf20813f883f633, type: 2}
   itemData2: {fileID: 11400000, guid: 5ddaaa04021ec3c41be821974a526c9c, type: 2}
+--- !u!114 &5534016147868527283
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7767811910394218741}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2836e36774ca1c4bbbee976e17b649c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 7476201432694213064}
+  _networkObjectCache: {fileID: 0}
+  _componentConfiguration: 0
+  _synchronizeParent: 0
+  _packing:
+    Position: 1
+    Rotation: 1
+    Scale: 0
+  _useScaledTime: 1
+  _interpolation: 2
+  _extrapolation: 2
+  _enableTeleport: 0
+  _teleportThreshold: 1
+  _clientAuthoritative: 1
+  _sendToOwner: 1
+  _interval: 1
+  _synchronizePosition: 1
+  _positionSensitivity: 0.001
+  _positionSnapping:
+    X: 0
+    Y: 0
+    Z: 0
+  _synchronizeRotation: 1
+  _rotationSnapping:
+    X: 0
+    Y: 0
+    Z: 0
+  _synchronizeScale: 1
+  _scaleSensitivity: 0.001
+  _scaleSnapping:
+    X: 0
+    Y: 0
+    Z: 0
+--- !u!114 &7476201432694213064
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7767811910394218741}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26b716c41e9b56b4baafaf13a523ba2e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <IsNested>k__BackingField: 0
+  WasActiveDuringEdit: 0
+  WasActiveDuringEdit_Set1: 1
+  <ComponentIndex>k__BackingField: 0
+  <PredictedSpawn>k__BackingField: {fileID: 0}
+  <PredictedOwner>k__BackingField: {fileID: 0}
+  NetworkBehaviours: []
+  InitializedParentNetworkBehaviour: {fileID: 0}
+  InitializedNestedNetworkObjects: []
+  RuntimeParentNetworkBehaviour: {fileID: 0}
+  RuntimeChildNetworkBehaviours: []
+  _isNetworked: 1
+  _isSpawnable: 1
+  _isGlobal: 0
+  _initializeOrder: 0
+  _preventDespawnOnDisconnect: 0
+  _defaultDespawnType: 0
+  _initializedTimestamp: 0
+  _localLevelOfDetailCalculationType: 0
+  _useLevelOfDetail: 0
+  _useRootLevelOfDetail: 1
+  NetworkObserver: {fileID: 0}
+  _enablePrediction: 0
+  _predictionType: 0
+  _localReconcileCorrectionType: 2
+  _graphicalObject: {fileID: 0}
+  _detachGraphicalObject: 0
+  _enableStateForwarding: 1
+  _networkTransform: {fileID: 0}
+  _ownerInterpolation: 1
+  _ownerSmoothedProperties: 255
+  _adaptiveInterpolation: 3
+  _spectatorSmoothedProperties: 255
+  _spectatorInterpolation: 2
+  _enableTeleport: 0
+  _teleportThreshold: 1
+  <PrefabId>k__BackingField: 65535
+  <SpawnableCollectionId>k__BackingField: 0
+  <AssetPathHash>k__BackingField: 504205940145589704
+  SceneId: 0
+  SerializedTransformProperties:
+    Position: {x: 0, y: 0, z: 0}
+    Rotation: {x: 0, y: 0, z: 0, w: 0}
+    Scale: {x: 0, y: 0, z: 0}
+    IsValid: 0

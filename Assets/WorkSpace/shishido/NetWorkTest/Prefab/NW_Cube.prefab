@@ -17,7 +17,7 @@ GameObject:
   - component: {fileID: 707413992467438075}
   - component: {fileID: 2782407496721388706}
   m_Layer: 0
-  m_Name: Cube
+  m_Name: NW_Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -159,7 +159,7 @@ MonoBehaviour:
   _teleportThreshold: 1
   <PrefabId>k__BackingField: 65535
   <SpawnableCollectionId>k__BackingField: 0
-  <AssetPathHash>k__BackingField: 15626077684301582992
+  <AssetPathHash>k__BackingField: 8506532857079875484
   SceneId: 0
   SerializedTransformProperties:
     Position: {x: 0, y: 0, z: 0}

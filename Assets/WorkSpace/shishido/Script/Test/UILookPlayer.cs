@@ -16,6 +16,8 @@ public class UILookPlayer : MonoBehaviour
     // Update is called once per frame
     void LateUpdate()
     {
+        if (mainCamera == null) return;
+
         //  UIがカメラのほうに向く
         transform.LookAt(
             transform.position + mainCamera.transform.rotation * Vector3.forward,

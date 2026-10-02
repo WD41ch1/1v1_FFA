@@ -29,7 +29,7 @@ public class HealthPotion : HealingItemBase
         //  使用者がわからない もしくは すでに回復中　
         if (owner == null || isHealing ||
         //  もしくは アイテムの回復上限よりHPが高かったら
-            owner.playerHealth.currentHealth >= healingData.maxHealingAmount) return;
+            owner.playerHealth.GetcurrentHealth() >= healingData.maxHealingAmount) return;
 
         StartCoroutine(HealingAnimation(healingData.healingTiem));
 

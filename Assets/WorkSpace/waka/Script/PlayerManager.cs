@@ -1,30 +1,42 @@
-using System.Collections;
-using System.Collections.Generic;
+using FishNet.Object;
 using UnityEngine;
-using UnityEngine.InputSystem.XInput;
-using UnityEngine.InputSystem.XR;
 using static GameConst;
 
 /// <summary>
 /// Playerについているclassを管理するクラス
 /// </summary>
-public class PlayerManager : MonoBehaviour
+public class PlayerManager : NetworkBehaviour
 {
+    [SerializeField, Header("ローカル上でのデバッグ")]
+    private bool isLocalDebug = false;
+
+    #region SerializeField
+
+    [Header("Cameraの生成")]
+    [SerializeField] private Camera _cameraPrefab;
+    [SerializeField] private Transform _cameraHolder;
+
     [Header("Player種別")]
     [SerializeField]
     private PlayerType playerType;
+
+    #endregion
+
+    #region public
 
     /// <summary>
     /// Player種別を外部から取得
     /// </summary>
     public PlayerType PlayerType => playerType;
 
+    #endregion
 
-    [Header("ローカルPlayerかの判別 ※現状は手動")]
-    [SerializeField]
-    private bool isLocalPlayer;
+    #region private
 
-    public bool IsLocalPlayer => isLocalPlayer;
+    //  生成されるカメラの格納場所
+    private Camera _camera = null;
+
+    #endregion
 
     #region Components
 
@@ -50,7 +62,6 @@ public class PlayerManager : MonoBehaviour
     {
         inputController = GetComponent<PlayerInputController>();
         controller = GetComponent<PlayerMovement>();
-        cameraController = Camera.main.gameObject.GetComponent<CameraController>();
         playerHealth = GetComponent<PlayerHealth>();
         equipmentManager = GetComponent<EquipmentManager>();
         inventoryManager = GetComponent<InventoryManager>();
@@ -61,7 +72,7 @@ public class PlayerManager : MonoBehaviour
         switch (playerType)
         {
             case PlayerType.Player:
-                if (IsLocalPlayer)
+                if (IsOwner || isLocalDebug)
                 {
                     guiManager = GUIManager.instance;
                 }
@@ -98,7 +109,6 @@ public class PlayerManager : MonoBehaviour
                 //  自身の登録
                 controller.RegisterPlayer(this);
                 inputController.RegisterPlayer(this);
-                cameraController.RegisterPlayer(this);
 
                 //  初期化処理
                 equipmentManager.Initialize(this);
@@ -126,10 +136,44 @@ public class PlayerManager : MonoBehaviour
 
     #endregion
 
+    /// <summary>
+    /// カメラの生成
+    /// ※このオブジェクトが生成されると、このメソッドはクライアント側で実行されます。
+    /// </summary>
+    public override void OnStartClient()
+    {
+        Debug.Log("OnStartClient");
+        // この処理は、このオブジェクトがインスタンス化されているすべてのクライアントで実行されるため、
+        // 自分たちが管理するオブジェクトに対してのみ、カメラをインスタンス化すればよい。        if (IsOwner)
+        if (IsOwner)
+            CreateMyCamera();
+    }
+
     void Start()
     {
+#if UNITY_EDITOR
+        Debug.Log("Start");
+        //  ローカルデバッグ時のカメラ生成
+        if (isLocalDebug) CreateMyCamera();
+#endif
+
         GetPlayerClass();
         Initialize();
+    }
+
+    /// <summary>
+    /// 自身のカメラを生成
+    /// </summary>
+    private void CreateMyCamera()
+    {
+        //  すでに生成されていれば
+        if (_camera != null) return;
+        //  カメラ生成
+        _camera =
+            Instantiate(_cameraPrefab, _cameraHolder.position, _cameraHolder.rotation, _cameraHolder);
+        //  コンポーネント取得 + 初期化
+        cameraController = _camera.gameObject.GetComponent<CameraController>();
+        cameraController?.RegisterPlayer(this);
     }
 
     /// <summary>
