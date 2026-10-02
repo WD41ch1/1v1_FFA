@@ -1,4 +1,5 @@
 using UnityEngine;
+using FishNet.Object;
 
 // Other building types can implement this interface without changing EditSystem.
 public interface IBuildingEditTarget
@@ -14,9 +15,9 @@ public interface IBuildingEditTarget
 [DefaultExecutionOrder(-100)]
 public class EditSystem : MonoBehaviour
 {
-    public Camera playerCamera;
-    public Transform player;
-    public BuildingSystem buildingSystem;
+    private Camera playerCamera;
+    private Transform player;
+    private BuildingSystem buildingSystem;
     public LayerMask targetMask = ~0;
     public LayerMask obstructionMask = ~0;
     public float editDistance = 6f;
@@ -31,8 +32,57 @@ public class EditSystem : MonoBehaviour
     private string message;
     private bool selecting;
 
+    private NetworkObject playerNetworkObject;
+    private bool wasLocalOwner;
+    private bool CanProcessInput => playerNetworkObject != null &&
+        playerNetworkObject.IsClientInitialized && playerNetworkObject.IsOwner;
+
+    private void Awake()
+    {
+        playerNetworkObject = GetComponentInParent<NetworkObject>(true);
+        if (playerNetworkObject == null)
+        {
+            Debug.LogError("EditSystem: 親PlayerにNetworkObjectが必要です。", this);
+            return;
+        }
+        player = playerNetworkObject.transform;
+        buildingSystem = player.GetComponentInChildren<BuildingSystem>(true);
+        playerCamera = player.GetComponentInChildren<Camera>(true);
+        if (buildingSystem == null)
+            Debug.LogError("EditSystem: Player配下にBuildingSystemが必要です。", this);
+    }
+
+    public void SetPlayerCamera(Camera camera)
+    {
+        CancelEditing();
+        playerCamera = camera;
+    }
+
+    private void CancelEditing()
+    {
+        if (target != null && target.EditTransform != null) target.CancelEdit();
+        target = null;
+        selecting = false;
+        message = "";
+        RestoreBuilding();
+    }
+
     private void Update()
     {
+        bool localOwner = CanProcessInput;
+        if (!localOwner)
+        {
+            if (wasLocalOwner)
+            {
+                CancelEditing();
+                playerCamera = null;
+            }
+            wasLocalOwner = false;
+            return;
+        }
+        wasLocalOwner = true;
+        if (playerCamera == null && player != null)
+            playerCamera = player.GetComponentInChildren<Camera>(true);
         if (waitingForRelease)
         {
             if (!Input.GetMouseButton(0)) RestoreBuilding();
@@ -132,14 +182,13 @@ public class EditSystem : MonoBehaviour
 
     private void OnDisable()
     {
-        if (target != null && target.EditTransform != null) target.CancelEdit();
-        target = null;
-        RestoreBuilding();
+        CancelEditing();
+        wasLocalOwner = false;
     }
 
     private void OnGUI()
     {
-        if (!IsEditing) return;
+        if (!CanProcessInput || !IsEditing) return;
         GUI.Box(new Rect(10, 10, 460, 65),
             "LMB drag: Select | Release LMB: Confirm | " + resetKey + ": Reset wall | " + cancelKey + ": Cancel\n" + message);
     }
