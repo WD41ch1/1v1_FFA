@@ -62,10 +62,10 @@ public class PlayerHealth : NetworkBehaviour
     /// <summary>
     /// LocalPlayerの情報を接続
     /// </summary>
-    /// <param name="player"></param>
-    public void RegisterPlayer(PlayerManager player)
+    /// <param name="_myPlayer"></param>
+    public void RegisterPlayer(PlayerManager _myPlayer)
     {
-        myPlayer = player;
+       myPlayer = _myPlayer;
     }
 
     #endregion
@@ -177,8 +177,13 @@ public class PlayerHealth : NetworkBehaviour
     /// </summary>
     public void UIUpdateRequest()
     {
-        OnHealthChanged.Invoke(MaxHealth, currentHealth.Value);
-        OnShieldChanged.Invoke(MaxShield, currentShield.Value);
+        if (myPlayer == null || !myPlayer.IsInitialized) return;
+
+        float health = currentHealth.Value;
+        float shield = currentShield.Value;
+
+        OnHealthChanged?.Invoke(MaxHealth, health);
+        OnShieldChanged?.Invoke(MaxShield, shield);
     }
 
     #region Action
@@ -194,11 +199,13 @@ public class PlayerHealth : NetworkBehaviour
     float next,
     bool asServer)
     {
-        if (!IsOwner)
+        if (!IsOwner ||
+            myPlayer == null ||
+            !myPlayer.IsInitialized)
             return;
 
         // 自分のHP UIだけ更新
-        OnHealthChanged.Invoke(MaxHealth, next);
+        OnHealthChanged?.Invoke(MaxHealth, next);
         //guiManager.UpdateHealth(next);
     }
 
@@ -213,11 +220,13 @@ public class PlayerHealth : NetworkBehaviour
     float next,
     bool asServer)
     {
-        if (!IsOwner)
+        if (!IsOwner ||
+            myPlayer == null ||
+            !myPlayer.IsInitialized)
             return;
 
         // 自分のHP UIだけ更新
-        OnShieldChanged.Invoke(MaxShield, next);
+        OnShieldChanged?.Invoke(MaxShield, next);
         //guiManager.UpdateHealth(next);
     }
 

@@ -1,6 +1,7 @@
 using FishNet.Object;
 using System.Threading.Tasks;
 using Unity.VisualScripting;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using static GameConst;
 
@@ -31,6 +32,11 @@ public class PlayerManager : NetworkBehaviour
     /// </summary>
     public PlayerType PlayerType => playerType;
 
+    /// <summary>
+    /// 初期化が完了しているかのフラグ
+    /// </summary>
+    public bool IsInitialized { get; private set; } = false;
+
     #endregion
 
     #region private
@@ -58,12 +64,25 @@ public class PlayerManager : NetworkBehaviour
     #region Initialize
 
     /// <summary>
+    /// 初期化
+    /// </summary>
+    private async void Initialize()
+    {
+        //  Playerのすべてのクラスを初期化
+        PlayerClassInitialize();
+
+        IsInitialized = true;
+
+        //  status管理側からのUI更新要求
+        playerHealth?.UIUpdateRequest();
+    }
+
+
+    /// <summary>
     /// 必要なコンポーネント取得
     /// </summary>
     private void GetPlayerClass()
     {
-
-
         inputController = GetComponent<PlayerInputController>();
         controller = GetComponent<PlayerMovement>();
         playerHealth = GetComponent<PlayerHealth>();
@@ -88,16 +107,22 @@ public class PlayerManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// Playerの初期化
+    /// 登録
     /// </summary>
-    private void Initialize()
+    private void Register()
     {
-        /*
-            [RegisterPlayer]　初期化を別(Start・Awake)で行ってるClassで自身の登録だけを行う
-        　　[Initialize]　　　自身の登録と初期化を同時に行うClass
-            (※guiManagerは特殊のため例外(修正する可能性あり))
-         */
+        inputController?.RegisterPlayer(this);
+        controller?.RegisterPlayer(this);
+        equipmentManager?.RegisterPlayer(this);
+        playerHealth?.RegisterPlayer(this);
+        guiManager?.RegisterPlayer(this);
+    }
 
+    /// <summary>
+    /// Playerについているすべてのクラスの初期化
+    /// </summary>
+    private void PlayerClassInitialize()
+    {
         // Player・Bot初期化
         switch (playerType)
         {
@@ -110,12 +135,9 @@ public class PlayerManager : NetworkBehaviour
                     100
                     );
 
-                //  自身の登録
-                inputController.RegisterPlayer(this);
-
                 //  初期化処理
-                controller.Initialize(this, _camera.transform);
-                equipmentManager.Initialize(this);
+                controller.Initialize(_camera.transform);
+                equipmentManager?.Initialize();
 
                 break;
             case PlayerType.Bot:
@@ -131,11 +153,7 @@ public class PlayerManager : NetworkBehaviour
         }
 
         // UIを初期化
-        guiManager?.RegisterPlayer(this);
         guiManager?.Initialize();
-
-        //  status管理側からのUI更新要求
-        playerHealth?.UIUpdateRequest();
     }
 
     #endregion
@@ -150,7 +168,19 @@ public class PlayerManager : NetworkBehaviour
         // この処理は、このオブジェクトがインスタンス化されているすべてのクライアントで実行されるため、
         // 自分たちが管理するオブジェクトに対してのみ、カメラをインスタンス化すればよい。        if (IsOwner)
         if (IsOwner)
+        {
             CreateMyCamera();
+            //  初期化
+            Initialize();
+        }
+    }
+
+    private void Awake()
+    {
+        //  Playerのすべてのクラスを取得
+        GetPlayerClass();
+        //  Playerのすべてのクラスに自身を登録
+        Register();
     }
 
     void Start()
@@ -160,10 +190,8 @@ public class PlayerManager : NetworkBehaviour
         //  ローカルデバッグ時のカメラ生成
         if (isLocalDebug) CreateMyCamera();
 #endif
-
-        GetPlayerClass();
-        Initialize();
-
+        //  初期化
+        //Initialize();
     }
 
     /// <summary>

@@ -5,7 +5,7 @@ using FishNet.Object;
 public class PlayerMovement : NetworkBehaviour
 {
     [Header("参照")]
-    private PlayerManager owner;
+    private PlayerManager myPlayer;
     public PlayerInputController input;
     public Transform cameraTransform;
     public Transform groundCheck;
@@ -29,14 +29,21 @@ public class PlayerMovement : NetworkBehaviour
     private Rigidbody rb;
 
     /// <summary>
+    /// 自身の登録
+    /// </summary>
+    /// <param name="_myPlayer"></param>
+    public void RegisterPlayer(PlayerManager _myPlayer)
+    {
+        myPlayer = _myPlayer;
+    }
+
+    /// <summary>
     /// 初期化
     /// </summary>
     /// <param name="_owner"></param>
-    public void Initialize(
-        PlayerManager _owner,
-        Transform _cameraTrans)
+    public void Initialize(Transform _cameraTrans)
     {
-        owner = _owner;
+        Debug.Log("PlayerMovement:Initialized!");
         cameraTransform = _cameraTrans;
     }
 
@@ -50,7 +57,7 @@ public class PlayerMovement : NetworkBehaviour
 
     private void FixedUpdate()
     {
-        if (!IsOwner) return; 
+        if (!IsOwner&&!myPlayer.IsInitialized) return; 
 
         Move();
         RotateBodyWhenIdle();
@@ -137,7 +144,7 @@ public class PlayerMovement : NetworkBehaviour
             return;
 
         //  ADS中なら回さない
-        if (owner.inputController.isADS)
+        if (myPlayer.inputController.isADS)
             return;
 
             // 45度以上ズレたらカメラ方向へ回す

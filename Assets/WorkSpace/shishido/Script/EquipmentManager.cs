@@ -14,7 +14,7 @@ using static UnityEngine.UI.GridLayoutGroup;
  */
 public class EquipmentManager : NetworkBehaviour
 {
-    private PlayerManager owner;
+    private PlayerManager myPlayer;
 
     [SerializeField, Header("アイテム生成場所")]
     private Transform itemSocket;
@@ -32,12 +32,15 @@ public class EquipmentManager : NetworkBehaviour
 
     #region 初期化
 
-
-    public void Initialize(PlayerManager _owner)
+    public void RegisterPlayer(PlayerManager _myPlayer)
     {
-        owner = _owner;
+        myPlayer = _myPlayer;
+    }
 
-        owner.inventoryManager.OnDeletingSetItems += DeletingSetItems;
+
+    public void Initialize()
+    {
+        myPlayer.inventoryManager.OnDeletingSetItems += DeletingSetItems;
     }
 
     #endregion

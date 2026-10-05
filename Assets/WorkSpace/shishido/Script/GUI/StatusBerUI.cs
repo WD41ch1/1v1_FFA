@@ -25,6 +25,7 @@ public class StatusBerUI : UIBase
         //  アクション登録
         health.OnHealthChanged += HealthUpdate;
         health.OnShieldChanged += ShieldUpdate;
+        Debug.Log("StatusBerUI：登録完了");
     }
 
     private void SliderInitialize(float _maxHealth, float _maxShield)
@@ -36,7 +37,6 @@ public class StatusBerUI : UIBase
 
     private void HealthUpdate(float _maxHealth, float _currentHealth)
     {
-
         healthBer.value = _currentHealth;
         healthCounter.text = _currentHealth.ToString();
     }
