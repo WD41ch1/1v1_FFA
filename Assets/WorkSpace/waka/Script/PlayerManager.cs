@@ -1,4 +1,6 @@
 using FishNet.Object;
+using System.Threading.Tasks;
+using Unity.VisualScripting;
 using UnityEngine;
 using static GameConst;
 
@@ -60,6 +62,8 @@ public class PlayerManager : NetworkBehaviour
     /// </summary>
     private void GetPlayerClass()
     {
+
+
         inputController = GetComponent<PlayerInputController>();
         controller = GetComponent<PlayerMovement>();
         playerHealth = GetComponent<PlayerHealth>();
@@ -107,10 +111,10 @@ public class PlayerManager : NetworkBehaviour
                     );
 
                 //  自身の登録
-                controller.RegisterPlayer(this);
                 inputController.RegisterPlayer(this);
 
                 //  初期化処理
+                controller.Initialize(this, _camera.transform);
                 equipmentManager.Initialize(this);
 
                 break;
@@ -159,6 +163,7 @@ public class PlayerManager : NetworkBehaviour
 
         GetPlayerClass();
         Initialize();
+
     }
 
     /// <summary>
@@ -173,7 +178,7 @@ public class PlayerManager : NetworkBehaviour
             Instantiate(_cameraPrefab, _cameraHolder.position, _cameraHolder.rotation, _cameraHolder);
         //  コンポーネント取得 + 初期化
         cameraController = _camera.gameObject.GetComponent<CameraController>();
-        cameraController?.RegisterPlayer(this);
+        cameraController?.Initialize(this, transform);
     }
 
     /// <summary>

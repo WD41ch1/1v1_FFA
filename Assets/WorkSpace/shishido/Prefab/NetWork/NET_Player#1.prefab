@@ -652,7 +652,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   owner: {fileID: 0}
   playerInput: {fileID: 0}
-  buildingSystem: {fileID: 0}
 --- !u!54 &5561931069051045473
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -889,7 +888,7 @@ MonoBehaviour:
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 7476201432694213064}
   _networkObjectCache: {fileID: 0}
-  isLocalDebug: 1
+  isLocalDebug: 0
   _cameraPrefab: {fileID: 1115277162502803027, guid: bda6f13cf259cee40a3e601ce867bfa7, type: 3}
   _cameraHolder: {fileID: 3335521646143132300}
   playerType: 0

@@ -1,8 +1,9 @@
-using UnityEngine;
-using static GameConst;
 using FishNet.Object;
+using UnityEngine;
+using UnityEngine.Windows;
+using static GameConst;
 
-public class CameraController :NetworkBehaviour
+public class CameraController :MonoBehaviour
 {
     [SerializeField]
     private Camera playerCamera;
@@ -43,6 +44,20 @@ public class CameraController :NetworkBehaviour
 
     // 上下回転
     private float pitch = 15f;
+
+    /// <summary>
+    /// 初期化
+    /// </summary>
+    /// <param name="_owner"></param>
+    public void Initialize(
+        PlayerManager _owner,
+        Transform _target
+        )
+    {
+        owner = _owner;
+        input = owner?.inputController;
+        target = _target;
+    }
 
     private void Start()
     {
@@ -143,15 +158,6 @@ public class CameraController :NetworkBehaviour
             item.Pickup(owner);
             Destroy(item.GetTransform().gameObject);
         }
-    }
-
-    /// <summary>
-    /// PlayerManagerの登録
-    /// </summary>
-    /// <param name="_owner"></param>
-    public void RegisterPlayer(PlayerManager _owner)
-    {
-        owner = _owner;
     }
 
     /// <summary>

@@ -28,6 +28,18 @@ public class PlayerMovement : NetworkBehaviour
 
     private Rigidbody rb;
 
+    /// <summary>
+    /// 初期化
+    /// </summary>
+    /// <param name="_owner"></param>
+    public void Initialize(
+        PlayerManager _owner,
+        Transform _cameraTrans)
+    {
+        owner = _owner;
+        cameraTransform = _cameraTrans;
+    }
+
     private void Start()
     {
         rb = GetComponent<Rigidbody>();
@@ -38,6 +50,8 @@ public class PlayerMovement : NetworkBehaviour
 
     private void FixedUpdate()
     {
+        if (!IsOwner) return; 
+
         Move();
         RotateBodyWhenIdle();
         Jump();
@@ -170,15 +184,6 @@ public class PlayerMovement : NetworkBehaviour
                 ForceMode.Acceleration
             );
         }
-    }
-
-    /// <summary>
-    /// PlayerManagerの登録
-    /// </summary>
-    /// <param name="_owner"></param>
-    public void RegisterPlayer(PlayerManager _owner)
-    {
-        owner = _owner;
     }
 
 }
