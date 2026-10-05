@@ -5,7 +5,7 @@ using UnityEngine;
 public class GUIManager : MonoBehaviour, IGuiInitialize
 {
     //  シングルトン
-    public static GUIManager instance;
+    //public static GUIManager instance;
 
     public PlayerManager myPlayer;
 
@@ -17,7 +17,7 @@ public class GUIManager : MonoBehaviour, IGuiInitialize
     private void Awake()
     {
         //  シングルトン
-        instance = this;
+        //instance = this;
     }
 
     /// <summary>

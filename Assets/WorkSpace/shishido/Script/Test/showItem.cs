@@ -30,7 +30,7 @@ public class showItem : MonoBehaviour
     {
         yield return null;
 
-        pm = GUIManager.instance.myPlayer;
+        //pm = GUIManager.instance.myPlayer;
         im = pm.inventoryManager;
 
         isInit = true;

@@ -19,6 +19,10 @@ public class PlayerManager : NetworkBehaviour
     [SerializeField] private Camera _cameraPrefab;
     [SerializeField] private Transform _cameraHolder;
 
+    [Header("UIの生成")]
+    [SerializeField]
+    private GameObject canvasPrefab;
+
     [Header("Player種別")]
     [SerializeField]
     private PlayerType playerType;
@@ -56,8 +60,11 @@ public class PlayerManager : NetworkBehaviour
     public EquipmentManager equipmentManager;
     public InventoryManager inventoryManager;
 
-    [Header("UI")]      // UI全体の見た目、処理を管理
-    public IGuiInitialize guiManager;
+    [Header("UI")]      
+    // 全体処理用変数
+    public IGuiInitialize characterGUI;
+    //  Player側のGUIManager
+    public GUIManager guiManager;
 
     #endregion
 
@@ -88,22 +95,6 @@ public class PlayerManager : NetworkBehaviour
         playerHealth = GetComponent<PlayerHealth>();
         equipmentManager = GetComponent<EquipmentManager>();
         inventoryManager = GetComponent<InventoryManager>();
-
-
-        // HACK:    オンライン対応時 変更予定
-        // UIを登録
-        switch (playerType)
-        {
-            case PlayerType.Player:
-                if (IsOwner || isLocalDebug)
-                {
-                    guiManager = GUIManager.instance;
-                }
-                break;
-            case PlayerType.Bot:
-                guiManager = GetComponentInChildren<BOTHealthBer>();
-                break;
-        }
     }
 
     /// <summary>
@@ -115,7 +106,7 @@ public class PlayerManager : NetworkBehaviour
         controller?.RegisterPlayer(this);
         equipmentManager?.RegisterPlayer(this);
         playerHealth?.RegisterPlayer(this);
-        guiManager?.RegisterPlayer(this);
+        characterGUI.RegisterPlayer(this);
     }
 
     /// <summary>
@@ -153,10 +144,37 @@ public class PlayerManager : NetworkBehaviour
         }
 
         // UIを初期化
-        guiManager?.Initialize();
+        characterGUI?.Initialize();
+    }
+
+    /// <summary>
+    /// Canvasの生成or取得
+    /// </summary>
+    private void CreateGUI()
+    {
+        // UIを登録
+        switch (playerType)
+        {
+            case PlayerType.Player:
+                GameObject go = Instantiate(canvasPrefab);
+                characterGUI = go.GetComponentInChildren<GUIManager>();
+                break;
+            case PlayerType.Bot:
+                characterGUI = GetComponentInChildren<BOTHealthBer>();
+                break;
+        }
     }
 
     #endregion
+    private void Awake()
+    {
+        //  PlayerCanvasの生成
+        CreateGUI();
+        //  Playerのすべてのクラスを取得
+        GetPlayerClass();
+        //  Playerのすべてのクラスに自身を登録
+        Register();
+    }
 
     /// <summary>
     /// カメラの生成
@@ -175,23 +193,19 @@ public class PlayerManager : NetworkBehaviour
         }
     }
 
-    private void Awake()
-    {
-        //  Playerのすべてのクラスを取得
-        GetPlayerClass();
-        //  Playerのすべてのクラスに自身を登録
-        Register();
-    }
 
     void Start()
     {
 #if UNITY_EDITOR
         Debug.Log("Start");
         //  ローカルデバッグ時のカメラ生成
-        if (isLocalDebug) CreateMyCamera();
+        if (isLocalDebug)
+        {
+            CreateMyCamera();
+            //  初期化
+            Initialize();
+        }
 #endif
-        //  初期化
-        //Initialize();
     }
 
     /// <summary>
