@@ -1,5 +1,4 @@
 using UnityEngine;
-using static UnityEngine.UI.GridLayoutGroup;
 using FishNet.Object;
 
 public class PlayerMovement : NetworkBehaviour
@@ -26,12 +25,23 @@ public class PlayerMovement : NetworkBehaviour
     public float groundDistance = 0.2f;
     public LayerMask groundLayer;
 
+    [Header("アニメーション")]
+    [SerializeField] private Animator animator;
+
+    private static readonly int SpeedHash =
+        Animator.StringToHash("Speed");
+
+    private static readonly int MoveXHash =
+        Animator.StringToHash("MoveX");
+
+    private static readonly int MoveYHash =
+        Animator.StringToHash("MoveY");
+
     private Rigidbody rb;
 
     /// <summary>
     /// 自身の登録
     /// </summary>
-    /// <param name="_myPlayer"></param>
     public void RegisterPlayer(PlayerManager _myPlayer)
     {
         myPlayer = _myPlayer;
@@ -40,7 +50,6 @@ public class PlayerMovement : NetworkBehaviour
     /// <summary>
     /// 初期化
     /// </summary>
-    /// <param name="_owner"></param>
     public void Initialize(Transform _cameraTrans)
     {
         Debug.Log("PlayerMovement:Initialized!");
@@ -53,11 +62,24 @@ public class PlayerMovement : NetworkBehaviour
 
         // 転倒防止
         rb.freezeRotation = true;
+
+        if (animator == null)
+        {
+            animator = GetComponentInChildren<Animator>();
+        }
     }
 
     private void FixedUpdate()
     {
-        if (!IsOwner&&!myPlayer.IsInitialized) return; 
+        // 所有者以外、または初期化前は処理しない
+        if (!IsOwner || myPlayer == null || !myPlayer.IsInitialized)
+            return;
+
+        if (rb == null ||
+            input == null ||
+            cameraTransform == null ||
+            groundCheck == null)
+            return;
 
         Move();
         RotateBodyWhenIdle();
@@ -91,6 +113,37 @@ public class PlayerMovement : NetworkBehaviour
         velocity.z = moveDirection.z * moveSpeed;
         rb.velocity = velocity;
 
+        // 2D Blend Tree用にアニメーションを更新
+        if (animator != null)
+        {
+            // 斜め入力も長さ1以内にする
+            Vector2 animationInput =
+                Vector2.ClampMagnitude(moveInput, 1f);
+
+            animator.SetFloat(
+                SpeedHash,
+                animationInput.magnitude,
+                0.1f,
+                Time.fixedDeltaTime
+            );
+
+            // 左：-1、右：1、停止：0
+            animator.SetFloat(
+                MoveXHash,
+                animationInput.x,
+                0.1f,
+                Time.fixedDeltaTime
+            );
+
+            // 後退：-1、前進：1、停止：0
+            animator.SetFloat(
+                MoveYHash,
+                animationInput.y,
+                0.1f,
+                Time.fixedDeltaTime
+            );
+        }
+
         // 移動中は体をカメラ正面へ向ける
         if (moveInput.sqrMagnitude > 0.01f)
         {
@@ -111,11 +164,10 @@ public class PlayerMovement : NetworkBehaviour
     {
         Vector2 moveInput = input.MoveInput;
 
-        // WASD入力中はMove側で回転するのでここでは何もしない
+        // 入力中はMove側で回転する
         if (moveInput.sqrMagnitude > 0.01f)
             return;
 
-        // カメラの前方向を取得
         Vector3 cameraForward = cameraTransform.forward;
         cameraForward.y = 0f;
 
@@ -124,12 +176,10 @@ public class PlayerMovement : NetworkBehaviour
 
         cameraForward.Normalize();
 
-        // 体の前方向を取得
         Vector3 bodyForward = transform.forward;
         bodyForward.y = 0f;
         bodyForward.Normalize();
 
-        // 体の正面とカメラ正面の角度差
         float angle =
             Vector3.SignedAngle(
                 bodyForward,
@@ -143,12 +193,11 @@ public class PlayerMovement : NetworkBehaviour
         if (absAngle < idleRotateStartAngle)
             return;
 
-        //  ADS中なら回さない
+        // ADS中なら回さない
         if (myPlayer.inputController.isADS)
             return;
 
-            // 45度以上ズレたらカメラ方向へ回す
-            Quaternion targetRotation =
+        Quaternion targetRotation =
             Quaternion.LookRotation(cameraForward, Vector3.up);
 
         rb.MoveRotation(
@@ -192,5 +241,4 @@ public class PlayerMovement : NetworkBehaviour
             );
         }
     }
-
 }
