@@ -1,10 +1,11 @@
+using FishNet.Object;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using static GameConst;
 
-public class ItemPickup : MonoBehaviour, IPickupable
+public class ItemPickup : NetworkBehaviour, IPickupable
 {
 
     [Header("アイテムデータ")]
@@ -61,7 +62,7 @@ public class ItemPickup : MonoBehaviour, IPickupable
     public void Pickup(PlayerManager character)
     {
         character.inventoryManager.AddItem(itemData, itemState);
-        //Destroy(gameObject);
+        Despawn();
     }
 
     private void Start()

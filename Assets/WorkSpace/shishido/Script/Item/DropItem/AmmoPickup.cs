@@ -1,9 +1,10 @@
+using FishNet.Object;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using static GameConst;
 
-public class AmmoPickup : MonoBehaviour, IPickupable
+public class AmmoPickup : NetworkBehaviour,IPickupable 
 {
     [SerializeField]
     private AmmoType ammoType;
@@ -37,6 +38,6 @@ public class AmmoPickup : MonoBehaviour, IPickupable
             return;
 
         character.inventoryManager.AddAmmo(ammoType, amount);
-        //Destroy(gameObject);
+        Despawn();
     }
 }
