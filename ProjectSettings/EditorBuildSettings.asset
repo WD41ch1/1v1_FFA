@@ -12,6 +12,9 @@ EditorBuildSettings:
     path: Assets/WorkSpace/shishido/Scene/ConnectionLobbyScene.unity
     guid: c614ee7a855a1b34f90a4385dab9dbbd
   - enabled: 1
+    path: Assets/WorkSpace/shishido/Scene/LobbyScene.unity
+    guid: 866262ea6d188bc44912c5eb9cde82e9
+  - enabled: 0
     path: Assets/WorkSpace/shishido/Scene/BattleScene.unity
     guid: 1c2f5739f4069d4478b3c1584afba4bc
   m_configObjects:
