@@ -156,7 +156,8 @@ public class CameraController :MonoBehaviour
 
             // 取得処理
             item.Pickup(owner);
-            Destroy(item.GetTransform().gameObject);
+           // Destroy(item.GetTransform().gameObject);
+            
         }
     }
 

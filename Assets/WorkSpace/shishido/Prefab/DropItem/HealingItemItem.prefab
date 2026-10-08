@@ -118,4 +118,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 404e8aadec9060d4bbbed51863f3014c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _componentIndexCache: 0
+  _addedNetworkObject: {fileID: 0}
+  _networkObjectCache: {fileID: 0}
   itemData: {fileID: 11400000, guid: b6dd945092d8ec7459f98b57396982d6, type: 2}

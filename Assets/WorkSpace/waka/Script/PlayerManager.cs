@@ -73,7 +73,7 @@ public class PlayerManager : NetworkBehaviour
     /// <summary>
     /// 初期化
     /// </summary>
-    private async void Initialize()
+    private void Initialize()
     {
         //  Playerのすべてのクラスを初期化
         PlayerClassInitialize();
@@ -106,7 +106,6 @@ public class PlayerManager : NetworkBehaviour
         controller?.RegisterPlayer(this);
         equipmentManager?.RegisterPlayer(this);
         playerHealth?.RegisterPlayer(this);
-        characterGUI.RegisterPlayer(this);
     }
 
     /// <summary>
@@ -163,13 +162,13 @@ public class PlayerManager : NetworkBehaviour
                 characterGUI = GetComponentInChildren<BOTHealthBer>();
                 break;
         }
+
+        characterGUI.RegisterPlayer(this);
     }
 
     #endregion
     private void Awake()
     {
-        //  PlayerCanvasの生成
-        CreateGUI();
         //  Playerのすべてのクラスを取得
         GetPlayerClass();
         //  Playerのすべてのクラスに自身を登録
@@ -177,7 +176,6 @@ public class PlayerManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// カメラの生成
     /// ※このオブジェクトが生成されると、このメソッドはクライアント側で実行されます。
     /// </summary>
     public override void OnStartClient()
@@ -187,6 +185,9 @@ public class PlayerManager : NetworkBehaviour
         // 自分たちが管理するオブジェクトに対してのみ、カメラをインスタンス化すればよい。        if (IsOwner)
         if (IsOwner)
         {
+            //  PlayerCanvasの生成
+            CreateGUI();
+            //  
             CreateMyCamera();
             //  初期化
             Initialize();
