@@ -22,8 +22,10 @@ public class BuildRamp : MonoBehaviour
     [Header("建材消費")]
     [Tooltip("建材を消費するPlayer。未設定ならPlayer参照の親から取得")]
     public PlayerManager playerManager;
+
     [Tooltip("消費する建材の種類。Inspectorで選択してください")]
     public BildingMatType materialType;
+
     [Min(1)]
     public int materialCost = 10;
 
@@ -68,9 +70,56 @@ public class BuildRamp : MonoBehaviour
 
     private GameObject currentPreview;
 
+    // 同じPlayerの移動スクリプトからカメラ参照を取得する
+    private PlayerMovement playerMovement;
+
     // このスクリプトから建築した階段を記録する
     private readonly HashSet<string> builtPositions =
         new HashSet<string>();
+
+    /// <summary>
+    /// PlayerMovementに設定された生成済みカメラを取得する
+    /// </summary>
+    private bool TryResolvePlayerCamera()
+    {
+        if (playerMovement == null)
+        {
+            playerMovement = GetComponentInParent<PlayerMovement>();
+
+            if (playerMovement == null && player != null)
+            {
+                playerMovement =
+                    player.GetComponentInParent<PlayerMovement>();
+            }
+        }
+
+        if (playerMovement == null ||
+            playerMovement.cameraTransform == null)
+        {
+            return false;
+        }
+
+        Transform cameraTransform =
+            playerMovement.cameraTransform;
+
+        Camera generatedCamera =
+            cameraTransform.GetComponent<Camera>();
+
+        if (generatedCamera == null)
+        {
+            generatedCamera =
+                cameraTransform.GetComponentInChildren<Camera>(true);
+        }
+
+        if (generatedCamera == null)
+        {
+            return false;
+        }
+
+        // Prefabではなく、生成済みカメラを参照する
+        playerCamera = generatedCamera;
+        return true;
+    }
 
     /// <summary>
     /// プレビューを生成する
@@ -191,10 +240,12 @@ public class BuildRamp : MonoBehaviour
     private bool TryGetMaterialInventory(out InventoryManager inventory)
     {
         inventory = null;
+
         if (playerManager == null && player != null)
             playerManager = player.GetComponentInParent<PlayerManager>();
 
         if (playerManager == null) return false;
+
         // PlayerManagerの初期化済みの参照を使う。
         inventory = playerManager.inventoryManager;
         return inventory != null;
@@ -203,6 +254,7 @@ public class BuildRamp : MonoBehaviour
     private bool HasEnoughMaterials()
     {
         InventoryManager inventory;
+
         return materialCost > 0 &&
             TryGetMaterialInventory(out inventory) &&
             inventory.GetMat(materialType) >= materialCost;
@@ -211,11 +263,14 @@ public class BuildRamp : MonoBehaviour
     private bool TryPayMaterials()
     {
         InventoryManager inventory;
+
         if (materialCost <= 0 || !TryGetMaterialInventory(out inventory))
         {
             Debug.LogWarning(
                 "BuildRamp: Player ManagerとInventory Managerの参照、およびMaterial Cost（1以上）を確認してください。",
-                this);
+                this
+            );
+
             return false;
         }
 
@@ -224,8 +279,12 @@ public class BuildRamp : MonoBehaviour
         if (inventory.GetMat(materialType) < materialCost) return false;
 
         int consumed;
-        return playerManager.TryConsumeBildMat(materialType, materialCost, out consumed)
-            && consumed == materialCost;
+
+        return playerManager.TryConsumeBildMat(
+            materialType,
+            materialCost,
+            out consumed
+        ) && consumed == materialCost;
     }
 
     /// <summary>
@@ -246,13 +305,17 @@ public class BuildRamp : MonoBehaviour
     )
     {
         position = Vector3.zero;
-        rotation = GetRampRotation();
-        canBuild = true;
+        rotation = Quaternion.identity;
+        canBuild = false;
 
-        if (playerCamera == null || player == null)
+        // カメラ取得前には、向きの計算を行わない
+        if (!TryResolvePlayerCamera() || player == null)
         {
             return false;
         }
+
+        rotation = GetRampRotation();
+        canBuild = true;
 
         Vector3 cameraForward =
             playerCamera.transform.forward;

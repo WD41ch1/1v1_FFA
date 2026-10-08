@@ -63,7 +63,7 @@ public class WallEdit : MonoBehaviour, IBuildingEditTarget
         Material material = gridMaterial;
         if (material == null)
         {
-            Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
+            Shader shader = Shader.Find("Unlit/Color");
             if (shader == null) shader = Shader.Find("Unlit/Color");
             if (shader == null) { Debug.LogError("WallEdit: assign Grid Material", this); return false; }
             ownedGridMaterial = new Material(shader);

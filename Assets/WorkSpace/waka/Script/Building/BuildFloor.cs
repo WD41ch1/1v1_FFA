@@ -72,6 +72,46 @@ public class BuildFloor : MonoBehaviour
 
     private GameObject currentPreview;
 
+    private PlayerMovement playerMovement;
+
+    // 同じPlayerが使用する生成済みカメラを取得する
+    private bool TryResolvePlayerCamera()
+    {
+        if (playerMovement == null)
+        {
+            playerMovement = GetComponentInParent<PlayerMovement>();
+
+            if (playerMovement == null && player != null)
+            {
+                playerMovement =
+                    player.GetComponentInParent<PlayerMovement>();
+            }
+        }
+
+        if (playerMovement == null ||
+            playerMovement.cameraTransform == null)
+        {
+            return false;
+        }
+
+        Transform cameraTransform = playerMovement.cameraTransform;
+        Camera generatedCamera = cameraTransform.GetComponent<Camera>();
+
+        if (generatedCamera == null)
+        {
+            generatedCamera =
+                cameraTransform.GetComponentInChildren<Camera>(true);
+        }
+
+        if (generatedCamera == null)
+        {
+            return false;
+        }
+
+        playerCamera = generatedCamera;
+        return true;
+    }
+
     // このスクリプトから建築した床の位置を記録する
     private readonly HashSet<string> builtPositions =
         new HashSet<string>();
@@ -256,12 +296,14 @@ public class BuildFloor : MonoBehaviour
     {
         position = Vector3.zero;
         rotation = Quaternion.identity;
-        canBuild = true;
+        canBuild = false;
 
-        if (playerCamera == null || player == null)
+        if (!TryResolvePlayerCamera() || player == null)
         {
             return false;
         }
+
+        canBuild = true;
 
         // 屋根と同じカメラ方向・同じグリッド階層を使用する。
         Vector3 forward = GetSnappedPlayerForward();

@@ -64,6 +64,46 @@ public class BuildWall : MonoBehaviour
 
     private GameObject currentPreview;
 
+    private PlayerMovement playerMovement;
+
+    // 同じPlayerが使用する生成済みカメラを取得する
+    private bool TryResolvePlayerCamera()
+    {
+        if (playerMovement == null)
+        {
+            playerMovement = GetComponentInParent<PlayerMovement>();
+
+            if (playerMovement == null && player != null)
+            {
+                playerMovement =
+                    player.GetComponentInParent<PlayerMovement>();
+            }
+        }
+
+        if (playerMovement == null ||
+            playerMovement.cameraTransform == null)
+        {
+            return false;
+        }
+
+        Transform cameraTransform = playerMovement.cameraTransform;
+        Camera generatedCamera = cameraTransform.GetComponent<Camera>();
+
+        if (generatedCamera == null)
+        {
+            generatedCamera =
+                cameraTransform.GetComponentInChildren<Camera>(true);
+        }
+
+        if (generatedCamera == null)
+        {
+            return false;
+        }
+
+        playerCamera = generatedCamera;
+        return true;
+    }
+
     private readonly HashSet<string> builtPositions =
         new HashSet<string>();
 
@@ -247,14 +287,15 @@ public class BuildWall : MonoBehaviour
     {
         position = Vector3.zero;
         rotation = Quaternion.identity;
-        canBuild = true;
+        canBuild = false;
 
-        if (playerCamera == null || player == null)
+        if (!TryResolvePlayerCamera() || player == null)
         {
             return false;
         }
 
         rotation = GetWallRotation();
+        canBuild = true;
 
         int rayMask =
             groundLayer.value |
@@ -1054,7 +1095,7 @@ public class BuildWall : MonoBehaviour
     {
         int x =
             Mathf.RoundToInt(
-                position.x * 100f 
+                position.x * 100f
             );
 
         int y =
