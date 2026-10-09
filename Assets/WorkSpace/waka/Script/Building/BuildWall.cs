@@ -170,11 +170,10 @@ public class BuildWall : MonoBehaviour
         string key =
             GetBuildKey(position, rotation);
 
-        // すでに同じ壁が存在する場合は候補を消す
+        // 埋まっている候補も赤色で表示し、横へ移動させない。
         if (builtPositions.Contains(key))
         {
-            currentPreview.SetActive(false);
-            return;
+            canBuild = false;
         }
 
         currentPreview.SetActive(true);
@@ -192,6 +191,7 @@ public class BuildWall : MonoBehaviour
     /// </summary>
     public void Build()
     {
+        Physics.SyncTransforms();
         bool hasCandidate = TryGetBuildPoint(
             out Vector3 position,
             out Quaternion rotation,
@@ -374,6 +374,12 @@ public class BuildWall : MonoBehaviour
         {
             canBuild = false;
         }
+        // 候補位置は変更せず、手前に完成壁がある場合だけ設置を拒否。
+        // プレビューとBuildの両方がこの判定を通り、建材消費より先に止まる。
+        if (IsBlockedByExistingWall(position))
+        {
+            canBuild = false;
+        }
 
         return true;
     }
@@ -488,25 +494,9 @@ public class BuildWall : MonoBehaviour
                         continue;
                     }
 
-                    // すでに壁がある位置は除外
-                    if (IsOverlappingWall(
-                            candidatePosition,
-                            rotation))
-                    {
-                        continue;
-                    }
-
-                    string key =
-                        GetBuildKey(
-                            candidatePosition,
-                            rotation
-                        );
-
-                    if (builtPositions.Contains(key))
-                    {
-                        continue;
-                    }
-
+                    // 重複した候補も位置選択には残す。
+                    // 正面が埋まっているだけで横の空きマスに飛ばさない。
+                    // 選択後、共通の重複・遮蔽判定で建築不可にする。
                     /*
                      * カメラ中央に近い候補を優先する。
                      * 高さも含めて判定するため、
@@ -928,6 +918,69 @@ public class BuildWall : MonoBehaviour
         return false;
     }
 
+    private bool wallMaskWarningShown;
+
+    /// <summary>
+    /// Playerから候補の中心までに完成壁がある場合は設置不可。
+    /// 床・坂は遮蔽物に含めず、壁に照準が当たっただけでは拒否しない。
+    /// </summary>
+    private bool IsBlockedByExistingWall(Vector3 target)
+    {
+        if (wallLayer.value == 0)
+        {
+            if (!wallMaskWarningShown)
+            {
+                Debug.LogError(
+                    "BuildWall：Wall Layerに完成壁のLayerを設定してください。",
+                    this);
+                wallMaskWarningShown = true;
+            }
+            return true;
+        }
+
+        if (player == null)
+            return true;
+
+        // 三人称カメラの位置ではなくPlayerの胴体から判定。
+        Vector3 origin = player.position + Vector3.up * 1f;
+        Collider body = player.GetComponent<Collider>();
+        if (body != null && body.enabled)
+            origin = body.bounds.center;
+
+        Vector3 delta = target - origin;
+        float distance = delta.magnitude;
+        if (distance <= 0.001f)
+            return false;
+
+        // Rayの始点が壁の内部にあるケースも拒否。
+        foreach (Collider wall in Physics.OverlapSphere(
+                     origin, 0.005f, wallLayer,
+                     QueryTriggerInteraction.Ignore))
+        {
+            if (!IsPreviewCollider(wall) && !IsPlayerCollider(wall))
+                return true;
+        }
+
+        // 終点付近の微小な接触は既存の重なり判定に任せる。
+        RaycastHit[] hits = Physics.RaycastAll(
+            origin,
+            delta / distance,
+            Mathf.Max(0f, distance - 0.01f),
+            wallLayer,
+            QueryTriggerInteraction.Ignore);
+
+        foreach (RaycastHit hit in hits)
+        {
+            if (IsPreviewCollider(hit.collider) ||
+                IsPlayerCollider(hit.collider))
+                continue;
+
+            return true;
+        }
+
+        return false;
+    }
+
     /// <summary>
     /// 候補位置がPlayerより後ろか確認する
     /// </summary>
@@ -1120,3 +1173,4 @@ public class BuildWall : MonoBehaviour
             rotationY;
     }
 }
+
