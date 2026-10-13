@@ -225,13 +225,11 @@ public class BuildCone : MonoBehaviour
             return;
         }
 
-        Instantiate(
-            conePrefab,
-            position,
-            rotation
-        );
+        GameObject placed = Instantiate(conePrefab, position, rotation);
 
         builtPositions.Add(key);
+        BuildSupport.Attach(placed, groundLayer,
+            () => builtPositions.Remove(key));
     }
 
     private bool TryGetMaterialInventory(out InventoryManager inventory)

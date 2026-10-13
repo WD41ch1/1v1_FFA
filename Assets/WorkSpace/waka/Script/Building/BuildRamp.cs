@@ -233,8 +233,10 @@ public class BuildRamp : MonoBehaviour
             return;
         }
 
-        Instantiate(rampPrefab, position, rotation);
+        GameObject placed = Instantiate(rampPrefab, position, rotation);
         builtPositions.Add(key);
+        BuildSupport.Attach(placed, groundLayer,
+            () => builtPositions.Remove(key));
     }
 
     private bool TryGetMaterialInventory(out InventoryManager inventory)
