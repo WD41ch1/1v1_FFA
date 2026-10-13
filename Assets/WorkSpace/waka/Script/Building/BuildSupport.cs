@@ -5,25 +5,37 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class BuildSupport : MonoBehaviour
 {
+    [Header("本物の地面のLayer")]
     public LayerMask groundLayer;
+
+    [Header("崩壊判定に使うCollider（自動更新）")]
     public Collider[] supportColliders;
 
     private Action onRemoved;
 
-    // 建築スクリプトから呼ぶ
+    /// <summary>
+    /// 完成した建築を登録する
+    /// </summary>
     public static void Attach(
         GameObject placed,
         LayerMask ground,
         Action removed)
     {
+        if (placed == null)
+            return;
+
         BuildSupport support =
             placed.GetComponent<BuildSupport>();
 
         if (support == null)
-            support = placed.AddComponent<BuildSupport>();
+        {
+            support =
+                placed.AddComponent<BuildSupport>();
+        }
 
         support.groundLayer = ground;
         support.onRemoved += removed;
+
         support.RefreshColliders();
 
         BuildSupportManager.Register(support);
@@ -35,22 +47,30 @@ public class BuildSupport : MonoBehaviour
         BuildSupportManager.Register(this);
     }
 
+    /// <summary>
+    /// 編集後の形状も含めて、毎回Colliderを取得し直す
+    /// </summary>
     public void RefreshColliders()
     {
-        if (supportColliders != null &&
-            supportColliders.Length > 0)
-            return;
-
         var colliders = new List<Collider>();
 
-        foreach (Collider col in GetComponentsInChildren<Collider>())
+        foreach (Collider col in
+                 GetComponentsInChildren<Collider>(true))
         {
-            if (col.enabled &&
-                !col.isTrigger &&
-                col.GetComponentInParent<BuildSupport>() == this)
+            // 無効化された編集前のColliderは使わない
+            if (col == null ||
+                !col.enabled ||
+                !col.gameObject.activeInHierarchy ||
+                col.isTrigger)
             {
-                colliders.Add(col);
+                continue;
             }
+
+            // 別のBuildSupportが管理している子は除外する
+            if (col.GetComponentInParent<BuildSupport>() != this)
+                continue;
+
+            colliders.Add(col);
         }
 
         supportColliders = colliders.ToArray();
@@ -58,9 +78,11 @@ public class BuildSupport : MonoBehaviour
 
     private void OnEnable()
     {
+        // 初回はStartまたはAttachで登録する
         if (supportColliders != null &&
             supportColliders.Length > 0)
         {
+            RefreshColliders();
             BuildSupportManager.Register(this);
         }
     }
@@ -79,6 +101,10 @@ public class BuildSupport : MonoBehaviour
         onRemoved = null;
     }
 
+    /// <summary>
+    /// 支えを失った建築を削除する
+    /// ローカルInstantiateで生成された建築用
+    /// </summary>
     public void Collapse()
     {
         gameObject.SetActive(false);

@@ -14,7 +14,7 @@ public class BuildSupportManager : MonoBehaviour
 
     [Header("下から順番に崩れる間隔")]
     [Min(0.01f)]
-    public float collapseInterval = 0.2f;
+    public float collapseInterval = 0.5f;
 
     private static BuildSupportManager instance;
 
