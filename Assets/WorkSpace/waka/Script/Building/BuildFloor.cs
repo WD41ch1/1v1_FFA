@@ -228,13 +228,11 @@ public class BuildFloor : MonoBehaviour
             return;
         }
 
-        Instantiate(
-            floorPrefab,
-            position,
-            rotation
-        );
+        GameObject placed = Instantiate(floorPrefab, position, rotation);
 
         builtPositions.Add(key);
+        BuildSupport.Attach(placed, groundLayer,
+            () => builtPositions.Remove(key));
     }
 
     private bool TryGetMaterialInventory(out InventoryManager inventory)

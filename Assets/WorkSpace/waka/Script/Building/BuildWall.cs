@@ -227,13 +227,11 @@ public class BuildWall : MonoBehaviour
             return;
         }
 
-        Instantiate(
-            wallPrefab,
-            position,
-            rotation
-        );
+        GameObject placed = Instantiate(wallPrefab, position, rotation);
 
         builtPositions.Add(key);
+        BuildSupport.Attach(placed, groundLayer,
+            () => builtPositions.Remove(key));
     }
 
     private bool TryGetMaterialInventory(out InventoryManager inventory)
@@ -1173,4 +1171,5 @@ public class BuildWall : MonoBehaviour
             rotationY;
     }
 }
+
 
