@@ -692,7 +692,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _componentIndexCache: 0
   _addedNetworkObject: {fileID: 7476201432694213064}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 7476201432694213064}
   input: {fileID: 4473443603770587236}
   cameraTransform: {fileID: 0}
   groundCheck: {fileID: 174929350141774530}
@@ -706,6 +706,9 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 7944
+  animator: {fileID: 0}
+  maxGroundAngle: 55
+  inputDeadZone: 0.1
 --- !u!114 &2114553256069805887
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1028,9 +1031,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 87b9907f856616c48894d7fc83822a5b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _componentIndexCache: 255
+  _componentIndexCache: 1
   _addedNetworkObject: {fileID: 7476201432694213064}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 7476201432694213064}
   isLocalDebug: 0
   _cameraPrefab: {fileID: 1115277162502803027, guid: bda6f13cf259cee40a3e601ce867bfa7, type: 3}
   _cameraHolder: {fileID: 3335521646143132300}
@@ -1042,6 +1045,7 @@ MonoBehaviour:
   playerHealth: {fileID: 8436918713647236620}
   equipmentManager: {fileID: 1033365180458493589}
   inventoryManager: {fileID: 1832575071957193531}
+  guiManager: {fileID: 0}
 --- !u!114 &1832575071957193531
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1071,9 +1075,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9633721c51cfdb4ba72174e0c7473f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _componentIndexCache: 255
+  _componentIndexCache: 2
   _addedNetworkObject: {fileID: 7476201432694213064}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 7476201432694213064}
   itemSocket: {fileID: 4971415834855567989}
 --- !u!114 &8436918713647236620
 MonoBehaviour:
@@ -1087,9 +1091,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5c6a01725e77b5145ae2a10b1286d569, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _componentIndexCache: 255
+  _componentIndexCache: 3
   _addedNetworkObject: {fileID: 7476201432694213064}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 7476201432694213064}
   haveShield: 0
 --- !u!114 &4244902542408463872
 MonoBehaviour:
@@ -1122,9 +1126,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2836e36774ca1c4bbbee976e17b649c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _componentIndexCache: 255
+  _componentIndexCache: 4
   _addedNetworkObject: {fileID: 7476201432694213064}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 7476201432694213064}
   _componentConfiguration: 0
   _synchronizeParent: 0
   _packing:
@@ -1174,7 +1178,12 @@ MonoBehaviour:
   <ComponentIndex>k__BackingField: 0
   <PredictedSpawn>k__BackingField: {fileID: 0}
   <PredictedOwner>k__BackingField: {fileID: 0}
-  NetworkBehaviours: []
+  NetworkBehaviours:
+  - {fileID: 6600365596503939205}
+  - {fileID: 1180577785889579773}
+  - {fileID: 1033365180458493589}
+  - {fileID: 8436918713647236620}
+  - {fileID: 5534016147868527283}
   InitializedParentNetworkBehaviour: {fileID: 0}
   InitializedNestedNetworkObjects: []
   RuntimeParentNetworkBehaviour: {fileID: 0}
@@ -1185,7 +1194,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: 0
+  _initializedTimestamp: -8584096681063742470
   _localLevelOfDetailCalculationType: 0
   _useLevelOfDetail: 0
   _useRootLevelOfDetail: 1
@@ -1204,12 +1213,12 @@ MonoBehaviour:
   _spectatorInterpolation: 2
   _enableTeleport: 0
   _teleportThreshold: 1
-  <PrefabId>k__BackingField: 65535
+  <PrefabId>k__BackingField: 1
   <SpawnableCollectionId>k__BackingField: 0
   <AssetPathHash>k__BackingField: 504205940145589704
   SceneId: 0
   SerializedTransformProperties:
-    Position: {x: 0, y: 0, z: 0}
-    Rotation: {x: 0, y: 0, z: 0, w: 0}
-    Scale: {x: 0, y: 0, z: 0}
-    IsValid: 0
+    Position: {x: 0, y: 1, z: 0}
+    Rotation: {x: 0, y: 0, z: 0, w: 1}
+    Scale: {x: 0.8, y: 1, z: 0.8}
+    IsValid: 1
