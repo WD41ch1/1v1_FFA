@@ -503,7 +503,7 @@ MonoBehaviour:
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 1993190805}
   _networkObjectCache: {fileID: 0}
-  _playerPrefab: {fileID: 7476201432694213064, guid: 5e0defaca57105c4dbd296bac6d6093c, type: 3}
+  _playerPrefab: {fileID: 3890100773366206426, guid: 1a709b1a4c446f2409ea0370fc7f5708, type: 3}
 --- !u!4 &1993190807
 Transform:
   m_ObjectHideFlags: 0
@@ -513,7 +513,7 @@ Transform:
   m_GameObject: {fileID: 1993190804}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3.4267938, y: -0.50118774, z: 2.760802}
+  m_LocalPosition: {x: 0, y: 3.49, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

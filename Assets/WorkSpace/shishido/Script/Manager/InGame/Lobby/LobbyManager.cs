@@ -16,7 +16,7 @@ public class LobbyManager : NetworkBehaviour
     #region Const
 
     //  マッチ開始最低人数
-    private const int MATCHI_MIN_PLAYERS = 2;
+    private const int MATCHI_MIN_PLAYERS = 1;
 
     #endregion
 

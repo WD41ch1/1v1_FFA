@@ -69,6 +69,9 @@ public class EquipmentManager : NetworkBehaviour
         //  対応スロットのWeaponState取得(武器関連以外はNULLになる)
         ItemState state 
             = owner.inventoryManager.GetItemState(currentSlot.Value);
+
+        if (state == null) return;
+
         //  UIに通知
         OnEquipChanged.Invoke(currentSlot.Value);
         //  見た目アイテムの生成
