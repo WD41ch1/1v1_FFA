@@ -3,14 +3,26 @@ using System.Runtime.CompilerServices;
 
 public struct ParticipantData
 {
+    public string PlayerName;
     public int PlayerId;
     public bool IsHost;
-    public string PlayerName;
+    public bool IsReady;
 
-    public ParticipantData(int _playerId, bool _isHost ,string _playerName)
+    public ParticipantData(
+        string _playerName, 
+        int _playerId, 
+        bool _isHost, 
+        bool _ready = false)
     {
+        PlayerName = _playerName;
         PlayerId = _playerId;
         IsHost = _isHost;
-        PlayerName = _playerName;
+        IsReady = _ready;
     }
+
+    public void SetReady(bool _ready)
+    {
+        IsReady = _ready;
+    }
+
 }   

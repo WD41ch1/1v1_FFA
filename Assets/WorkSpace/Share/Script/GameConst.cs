@@ -2,6 +2,13 @@
 public class GameConst 
 {
     //======================================================
+    //                      Scene
+    //======================================================
+    public static readonly string SCENE_CONNECTIONLOBBY = "ConnectionLobbyScene";
+    public static readonly string SCENE_LOBBY = "LobbyScene";
+    public static readonly string SCENE_BATTLE = "BattleScene";
+
+    //======================================================
     //                      Player
     //======================================================
     //  status関連

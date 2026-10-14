@@ -8,9 +8,16 @@ using UnityEngine;
 
 public class MatchManager : NetworkBehaviour
 {
+    private NetworkManager _networkManager;
+    private LobbyManager _lobbyManager;
+
     private List<NetworkConnection> matchPlayers
     = new List<NetworkConnection>();
 
+    private void Awake()
+    {
+        _networkManager = InstanceFinder.NetworkManager;
+    }
 
     public void StartBattle()
     {

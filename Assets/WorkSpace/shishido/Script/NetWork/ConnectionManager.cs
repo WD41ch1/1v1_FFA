@@ -3,19 +3,28 @@ using FishNet.Connection;
 using FishNet.Managing;
 using FishNet.Managing.Scened;
 using FishNet.Transporting;
+using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
+using UnityEngine.UI;
+using static GameConst;
 
 public class ConnectionManager : MonoBehaviour
 {
     [SerializeField] private NetworkManager _networkManager;
-    [SerializeField] private string SCENE_NAME = "LobbyScene";
+    [SerializeField] private TMP_InputField _inputField;
+    [SerializeField] private string _localHost = "127.0.0.1";
     public bool IsConnected { get; private set; }
 
     private void Awake()
     {
+        if (_networkManager == null)
+            _networkManager = InstanceFinder.NetworkManager;
+
         _networkManager.ClientManager.OnAuthenticated += OnAuthenticated;
         _networkManager.ClientManager.OnClientConnectionState += OnClientConnectionState;
+
+        if(_inputField != null)
+            _inputField.text = _localHost;
     }
 
     private void OnDestroy()
@@ -31,9 +40,9 @@ public class ConnectionManager : MonoBehaviour
     {
         IsConnected = true;
 
-        Debug.Log("Serverへの接続に成功しました");
+        GameDebug.Client("Serverへの接続に成功しました");
 
-        SceneLoadData loadData = new SceneLoadData(SCENE_NAME);
+        SceneLoadData loadData = new SceneLoadData(SCENE_LOBBY);
 
         loadData.ReplaceScenes = ReplaceOption.All;
 
@@ -44,7 +53,7 @@ public class ConnectionManager : MonoBehaviour
     private void OnClientConnectionState(
         FishNet.Transporting.ClientConnectionStateArgs args)
     {
-        Debug.Log($"Client状態: {args.ConnectionState}");
+        GameDebug.Client($"Client状態: {args.ConnectionState}");
     }
 
     public void StartHost()
