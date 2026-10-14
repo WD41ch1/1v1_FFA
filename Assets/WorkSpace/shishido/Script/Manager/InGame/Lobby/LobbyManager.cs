@@ -13,11 +13,21 @@ using static GameConst;
 
 public class LobbyManager : NetworkBehaviour
 {
+    #region Const
+
+    //  マッチ開始最低人数
+    private const int MATCHI_MIN_PLAYERS = 2;
+
+    #endregion
+
     #region Private
     private NetworkManager _networkManager;
 
     //  準備完了フラグ
     private bool _isReady = false;
+
+    // 全員の準備が完了しているか
+    private readonly SyncVar<bool> allParticipantsReady = new();
 
     private readonly SyncList<ParticipantData> participants
         = new SyncList<ParticipantData>();
@@ -39,12 +49,11 @@ public class LobbyManager : NetworkBehaviour
     [SerializeField] private int prevParticipants;
     #endregion
 
-
+    #region Main
     private void Awake()
     {
         _networkManager = InstanceFinder.NetworkManager;
 
-        //isReady.OnChange += OnReadyChange;
         participants.OnChange += OnParticipantsChanged;
 
         //  readyButtonの登録
@@ -58,7 +67,7 @@ public class LobbyManager : NetworkBehaviour
         if (disConectButton != null &&
             ConnectionMonitoringManager.Instance != null)
         {
-            ConnectionMonitoringManager cmm 
+            ConnectionMonitoringManager cmm
                 = ConnectionMonitoringManager.Instance;
             disConectButton.onClick.AddListener(cmm.OnDisConnection);
             disConectButtonUpdate(_networkManager.IsHostStarted);
@@ -98,6 +107,8 @@ public class LobbyManager : NetworkBehaviour
         participants.OnChange -= OnParticipantsChanged;
     }
 
+    #endregion
+
     #region override
 
     public override void OnStartServer()
@@ -115,6 +126,7 @@ public class LobbyManager : NetworkBehaviour
             InLobby(InstanceFinder.ClientManager.Connection);
         }
 
+        //  リモートクライアントの接続状態変化を検知
         InstanceFinder.ServerManager.OnRemoteConnectionState +=
             OnRemoteConnectionState;
     }
@@ -135,6 +147,16 @@ public class LobbyManager : NetworkBehaviour
         $"IsSpawned={IsSpawned}, " +
         $"IsClientInitialized={IsClientInitialized}"
         );
+
+        allParticipantsReady.OnChange += OnAllReadyChanged;
+
+        SetInteractive_ReadyButton(allParticipantsReady.Value);
+    }
+
+    public override void OnStopClient()
+    {
+        base.OnStopClient();
+        allParticipantsReady.OnChange -= OnAllReadyChanged;
     }
 
     #endregion
@@ -162,6 +184,15 @@ public class LobbyManager : NetworkBehaviour
         }
 
         return plate;
+    }
+
+    /// <summary>
+    /// 現在サーバーに接続しているクライアント数取得
+    /// </summary>
+    /// <returns></returns>
+    public int GetConnectionCount()
+    {
+        return InstanceFinder.ServerManager.Clients.Count;
     }
 
     #endregion
@@ -225,6 +256,14 @@ public class LobbyManager : NetworkBehaviour
         SetMatchStandby(next);
     }
 
+    private void SetInteractive_ReadyButton(bool allReady)
+    {
+        if (allReady)
+            HideReadyButton();
+        else
+            ShowReadyButton();
+    }
+
     /// <summary>
     /// 見た目変更
     /// </summary>
@@ -246,6 +285,22 @@ public class LobbyManager : NetworkBehaviour
                 TMP.text = "Ready:OFF";
             }
         }
+    }
+
+    private void HideReadyButton()
+    {
+        if (readyButton == null)
+            return;
+
+        readyButton.interactable = false;
+    }
+
+    private void ShowReadyButton()
+    {
+        if (readyButton == null)
+            return;
+
+        readyButton.interactable = true;
     }
 
     /// <summary>
@@ -285,6 +340,14 @@ public class LobbyManager : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// participantsに変更が加わった時に呼び出されるメソッド
+    /// </summary>
+    /// <param name="op"></param>
+    /// <param name="index"></param>
+    /// <param name="oldItem"></param>
+    /// <param name="newItem"></param>
+    /// <param name="asServer"></param>
     private void OnParticipantsChanged(
         SyncListOperation op,
         int index,
@@ -300,13 +363,17 @@ public class LobbyManager : NetworkBehaviour
         if (op != SyncListOperation.Set)
             return;
 
+        //  前回の状態と今の状態を比較
         if (oldItem.IsReady != newItem.IsReady)
         {
+            // 変更があった場合 
+
             GameDebug.Sync(
                 $"{newItem.PlayerName}: " +
                 $"{oldItem.IsReady} -> {newItem.IsReady}"
             );
 
+            //  UIの更新
             ParticipantPlate plate = GetParticipantPlate(newItem.PlayerId);
             plate?.SetReady(newItem.IsReady);
         }
@@ -324,10 +391,20 @@ public class LobbyManager : NetworkBehaviour
         return false;
     }
 
+    /// <summary>
+    /// リモートクライアントの接続状態変化を検知
+    /// </summary>
+    /// <param name="connection"></param>
+    /// <param name="args"></param>
     private void OnRemoteConnectionState(
     NetworkConnection connection,
     RemoteConnectionStateArgs args)
     {
+        GameDebug.Server(
+            $"接続状態: {args.ConnectionState}, " +
+            $"接続数: {GetConnectionCount()}"
+        );
+
         switch (args.ConnectionState)
         {
             case RemoteConnectionState.Started:
@@ -340,6 +417,10 @@ public class LobbyManager : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// Lobby参加処理
+    /// </summary>
+    /// <param name="connection"></param>
     private void InLobby(NetworkConnection connection)
     {
         ParticipantData data = new ParticipantData(
@@ -427,6 +508,9 @@ public class LobbyManager : NetworkBehaviour
             $"Ready RPC受信: PlayerId={playerId}, Ready={standby}");
 
         SetParticipantReady(playerId, standby);
+
+        // 更新後に全員のReady状態を判定
+        CheckAllParticipantsReady();
     }
 
 
@@ -475,43 +559,89 @@ public class LobbyManager : NetworkBehaviour
 
     #region Match開始管理
 
+    [Server]
+    private void CheckAllParticipantsReady()
+    {
+        bool allReady = IsAllParticipantsReady();
 
+        // 判定結果を同期
+        allParticipantsReady.Value = allReady;
+    }
 
+    /// <summary>
+    /// 参加者全員の準備が完了しているか
+    /// </summary>
+    /// <returns></returns>
+    [Server]
+    private bool IsAllParticipantsReady()
+    {
+        int participantCount = participants.Count;
+        int connectionCount = GetConnectionCount();
+
+        GameDebug.Log(
+            $"[AllReadyCheck] " +
+            $"participants={participantCount}, " +
+            $"connections={connectionCount}"
+        );
+
+        //  参加者データ数と参加人数が一致しているか
+        if (participantCount != connectionCount)
+        {
+            GameDebug.Log("[AllReadyCheck] 人数が一致しない");
+            return false;
+        }
+
+        //  最低参加人数に達しているか
+        if (connectionCount < MATCHI_MIN_PLAYERS)
+        {
+            GameDebug.Log("[AllReadyCheck] 最低参加人数に達していない");
+            return false;
+        }
+
+        foreach (ParticipantData data in participants)
+        {
+            GameDebug.Log(
+                $"[AllReadyCheck] " +
+                $"{data.PlayerName}: Ready={data.IsReady}"
+            );
+
+            if (!data.IsReady)
+                return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="prev"></param>
+    /// <param name="next"></param>
+    /// <param name="asServer"></param>
+    private void OnAllReadyChanged(
+    bool prev,
+    bool next,
+    bool asServer)
+    {
+        //  UIの更新
+        SetInteractive_ReadyButton(next);
+
+        //  シーンの遷移
+        StartBattle();
+    }
+
+    [Server]
     public void StartBattle()
     {
         if (!IsServerInitialized)
             return;
 
-        SceneLoadData sceneLoadData =
-            new SceneLoadData("BattleScene");
+        SceneLoadData loadData = new SceneLoadData(SCENE_BATTLE);
 
-        InstanceFinder.SceneManager.LoadConnectionScenes(
-            sceneLoadData
-        );
+        loadData.ReplaceScenes = ReplaceOption.All;
+
+        _networkManager.SceneManager.LoadGlobalScenes(loadData);
     }
-
-    public void StartMatch(
-        NetworkConnection playerA,
-        NetworkConnection playerB)
-    {
-        if (!IsServerInitialized)
-            return;
-
-        matchPlayers.Clear();
-
-        matchPlayers.Add(playerA);
-        matchPlayers.Add(playerB);
-
-        SceneLoadData loadData =
-            new SceneLoadData("Battle");
-
-        //InstanceFinder.SceneManager.LoadConnectionScenes(
-        //    matchPlayers,
-        //    loadData
-        //);
-    }
-
-
     #endregion
 
 }
