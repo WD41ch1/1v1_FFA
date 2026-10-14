@@ -1,9 +1,10 @@
+using FishNet.Object;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using static GameConst;
 
-public class MaterialPickup : MonoBehaviour, IPickupable
+public class MaterialPickup : NetworkBehaviour, IPickupable
 {
     [SerializeField]
     private BildingMatType bildingMatType;
@@ -33,6 +34,6 @@ public class MaterialPickup : MonoBehaviour, IPickupable
             return;
 
         character.inventoryManager.AddBildMat(bildingMatType, amount);
-        //Destroy(gameObject);
+        Despawn();
     }
 }

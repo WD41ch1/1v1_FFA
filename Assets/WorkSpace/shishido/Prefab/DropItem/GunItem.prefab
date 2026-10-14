@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 1033194524783827137}
   - component: {fileID: 5267237803734935758}
   - component: {fileID: 2660341966653911776}
-  - component: {fileID: 6605661731597840776}
+  - component: {fileID: 5359703045937445944}
   m_Layer: 0
   m_Name: GunItem
   m_TagString: PickupItem
@@ -119,11 +119,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 404e8aadec9060d4bbbed51863f3014c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _componentIndexCache: 255
-  _addedNetworkObject: {fileID: 6605661731597840776}
+  _componentIndexCache: 0
+  _addedNetworkObject: {fileID: 5359703045937445944}
   _networkObjectCache: {fileID: 0}
   itemData: {fileID: 11400000, guid: 5ddaaa04021ec3c41be821974a526c9c, type: 2}
---- !u!114 &6605661731597840776
+--- !u!114 &5359703045937445944
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
