@@ -2646,7 +2646,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584102710549406076
+  _initializedTimestamp: -8584096681063742470
   _localLevelOfDetailCalculationType: 0
   _useLevelOfDetail: 0
   _useRootLevelOfDetail: 1
@@ -2665,14 +2665,14 @@ MonoBehaviour:
   _spectatorInterpolation: 2
   _enableTeleport: 0
   _teleportThreshold: 1
-  <PrefabId>k__BackingField: 3
+  <PrefabId>k__BackingField: 4
   <SpawnableCollectionId>k__BackingField: 0
   <AssetPathHash>k__BackingField: 5599806022849210659
   SceneId: 0
   SerializedTransformProperties:
     Position: {x: 100, y: 0, z: 3.97}
     Rotation: {x: 0, y: 0, z: 0, w: 1}
-    Scale: {x: 1, y: 1, z: 1}
+    Scale: {x: 1.2, y: 1.2, z: 1.2}
     IsValid: 1
 --- !u!114 &2686211574380882674
 MonoBehaviour:

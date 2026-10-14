@@ -186,7 +186,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _componentIndexCache: 0
   _addedNetworkObject: {fileID: 77483119214094604}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 77483119214094604}
   _componentConfiguration: 0
   _synchronizeParent: 0
   _packing:
@@ -232,7 +232,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _componentIndexCache: 1
   _addedNetworkObject: {fileID: 77483119214094604}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 77483119214094604}
   MoveSpeed: 5
 --- !u!114 &6400092623186267985
 MonoBehaviour:
@@ -248,7 +248,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _componentIndexCache: 2
   _addedNetworkObject: {fileID: 77483119214094604}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 77483119214094604}
   CubePrefab: {fileID: 2765626097311853919, guid: 6c55184b6fa484143996b6e9f351420d, type: 3}
 --- !u!114 &2809590258922244638
 MonoBehaviour:
@@ -264,7 +264,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _componentIndexCache: 3
   _addedNetworkObject: {fileID: 77483119214094604}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 77483119214094604}
   _cameraPrefab: {fileID: 6711625266400935857, guid: be129dc29e8e60242b2ed2f7f9298052, type: 3}
   _cameraHolder: {fileID: 8098276034867104477}
 --- !u!114 &77483119214094604
@@ -285,7 +285,11 @@ MonoBehaviour:
   <ComponentIndex>k__BackingField: 0
   <PredictedSpawn>k__BackingField: {fileID: 0}
   <PredictedOwner>k__BackingField: {fileID: 0}
-  NetworkBehaviours: []
+  NetworkBehaviours:
+  - {fileID: 5239857698159800445}
+  - {fileID: 3101576362908839474}
+  - {fileID: 6400092623186267985}
+  - {fileID: 2809590258922244638}
   InitializedParentNetworkBehaviour: {fileID: 0}
   InitializedNestedNetworkObjects: []
   RuntimeParentNetworkBehaviour: {fileID: 0}
@@ -296,7 +300,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: 0
+  _initializedTimestamp: -8584096681063742470
   _localLevelOfDetailCalculationType: 0
   _useLevelOfDetail: 0
   _useRootLevelOfDetail: 1
@@ -315,12 +319,12 @@ MonoBehaviour:
   _spectatorInterpolation: 2
   _enableTeleport: 0
   _teleportThreshold: 1
-  <PrefabId>k__BackingField: 65535
+  <PrefabId>k__BackingField: 0
   <SpawnableCollectionId>k__BackingField: 0
   <AssetPathHash>k__BackingField: 497497023077831852
   SceneId: 0
   SerializedTransformProperties:
-    Position: {x: 0, y: 0, z: 0}
-    Rotation: {x: 0, y: 0, z: 0, w: 0}
-    Scale: {x: 0, y: 0, z: 0}
-    IsValid: 0
+    Position: {x: -13.049558, y: 1.5423265, z: -10.697409}
+    Rotation: {x: 0, y: 0, z: 0, w: 1}
+    Scale: {x: 1, y: 1, z: 1}
+    IsValid: 1

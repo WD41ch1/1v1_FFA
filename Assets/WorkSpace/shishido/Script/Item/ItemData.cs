@@ -2,6 +2,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum WeaponAnimationType
+{
+    None = 0,
+    Pistol = 1,
+    AssaultRifle = 2,
+    Pickaxe = 3
+}
+
+
 [CreateAssetMenu]
 public class ItemData : ScriptableObject
 {

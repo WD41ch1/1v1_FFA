@@ -1820,10 +1820,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _componentIndexCache: 0
   _addedNetworkObject: {fileID: -2178353538654501883}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: -2178353538654501883}
   isLocalDebug: 0
   _cameraPrefab: {fileID: 0}
   _cameraHolder: {fileID: 0}
+  canvasPrefab: {fileID: 0}
   playerType: 1
   inputController: {fileID: 0}
   controller: {fileID: 0}
@@ -1831,6 +1832,7 @@ MonoBehaviour:
   playerHealth: {fileID: 0}
   equipmentManager: {fileID: 0}
   inventoryManager: {fileID: 0}
+  guiManager: {fileID: 0}
 --- !u!114 &166598300268738102
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1861,7 +1863,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _componentIndexCache: 1
   _addedNetworkObject: {fileID: -2178353538654501883}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: -2178353538654501883}
   haveShield: 0
 --- !u!136 &2617735670408254245
 CapsuleCollider:
@@ -1931,7 +1933,9 @@ MonoBehaviour:
   <ComponentIndex>k__BackingField: 0
   <PredictedSpawn>k__BackingField: {fileID: 0}
   <PredictedOwner>k__BackingField: {fileID: 0}
-  NetworkBehaviours: []
+  NetworkBehaviours:
+  - {fileID: 5192213404160077144}
+  - {fileID: 4447703914791894201}
   InitializedParentNetworkBehaviour: {fileID: 0}
   InitializedNestedNetworkObjects: []
   RuntimeParentNetworkBehaviour: {fileID: 0}
@@ -1942,7 +1946,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: 0
+  _initializedTimestamp: -8584096681063742470
   _localLevelOfDetailCalculationType: 0
   _useLevelOfDetail: 0
   _useRootLevelOfDetail: 1
@@ -1961,15 +1965,15 @@ MonoBehaviour:
   _spectatorInterpolation: 2
   _enableTeleport: 0
   _teleportThreshold: 1
-  <PrefabId>k__BackingField: 65535
+  <PrefabId>k__BackingField: 7
   <SpawnableCollectionId>k__BackingField: 0
   <AssetPathHash>k__BackingField: 11187386986780566478
   SceneId: 0
   SerializedTransformProperties:
     Position: {x: 0, y: 0, z: 0}
-    Rotation: {x: 0, y: 0, z: 0, w: 0}
-    Scale: {x: 0, y: 0, z: 0}
-    IsValid: 0
+    Rotation: {x: 0, y: 0, z: 0, w: 1}
+    Scale: {x: 1.2, y: 1.2, z: 1.2}
+    IsValid: 1
 --- !u!1 &3608502446180789413
 GameObject:
   m_ObjectHideFlags: 0
