@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using FishNet.Object;
+using FishNet;
 
 public class BuildSupportManager : MonoBehaviour
 {
@@ -30,6 +31,10 @@ public class BuildSupportManager : MonoBehaviour
 
     public static void Register(BuildSupport support)
     {
+        if (InstanceFinder.ServerManager == null ||
+            !InstanceFinder.ServerManager.Started) return;
+        NetworkObject obj = support != null ? support.GetComponent<NetworkObject>() : null;
+        if (obj == null || !obj.IsSpawned || !obj.IsServerInitialized) return;
         if (!Application.isPlaying ||
             support == null ||
             !support.isActiveAndEnabled)
@@ -77,6 +82,8 @@ public class BuildSupportManager : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (InstanceFinder.ServerManager == null ||
+            !InstanceFinder.ServerManager.Started) return;
         if (Time.time < nextCollapseTime)
             return;
 
@@ -176,18 +183,14 @@ public class BuildSupportManager : MonoBehaviour
         NetworkObject networkObject =
             piece.GetComponent<NetworkObject>();
 
-        if (networkObject != null && networkObject.IsSpawned)
+        if (networkObject == null || !networkObject.IsSpawned ||
+            !networkObject.IsServerInitialized ||
+            piece.GetComponent<NetworkBuildPiece>() == null)
         {
-            Report(
-                GetPath(piece.transform) +
-                "\nネットワークSpawn済みです。" +
-                "このローカル削除版では処理できません。",
-                piece,
-                currentErrors);
-
+            Report("サーバーでSpawn済みのNetworkBuildPieceが必要です。",
+                piece, currentErrors);
             valid = false;
         }
-
         if (piece.groundLayer.value == 0)
         {
             Report(
@@ -266,7 +269,9 @@ public class BuildSupportManager : MonoBehaviour
     private void Recalculate()
     {
         pieces.RemoveWhere(
-            p => p == null || !p.isActiveAndEnabled);
+            p => p == null || !p.isActiveAndEnabled ||
+                 p.GetComponent<NetworkObject>() == null ||
+                 !p.GetComponent<NetworkObject>().IsSpawned);
 
         var nodes = new List<BuildSupport>(pieces);
 

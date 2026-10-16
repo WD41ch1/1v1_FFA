@@ -129,6 +129,8 @@ public class BuildWall : MonoBehaviour
 
         currentPreview =
             Instantiate(wallPreviewPrefab);
+        foreach (Collider col in currentPreview.GetComponentsInChildren<Collider>(true))
+            col.enabled = false;
     }
 
     /// <summary>
@@ -192,48 +194,54 @@ public class BuildWall : MonoBehaviour
     public void Build()
     {
         Physics.SyncTransforms();
-        bool hasCandidate = TryGetBuildPoint(
-            out Vector3 position,
-            out Quaternion rotation,
-            out bool canBuild
-        );
+        if (!TryGetBuildPoint(out Vector3 position,
+                out Quaternion rotation, out bool canBuild) || !canBuild)
+            return;
 
-        if (!hasCandidate || !canBuild)
+        NetworkBuildController network =
+            GetComponentInParent<NetworkBuildController>();
+        if (network == null && player != null)
+            network = player.GetComponentInParent<NetworkBuildController>();
+        if (network == null)
         {
+            Debug.LogError("PlayerにNetworkBuildControllerを追加してください。", this);
             return;
         }
-
-        string key =
-            GetBuildKey(position, rotation);
-
-        if (builtPositions.Contains(key))
-        {
-            return;
-        }
-
-        if (wallPrefab == null)
-        {
-            Debug.LogError(
-                "BuildWall：Wall Prefabが設定されていません。",
-                this
-            );
-
-            return;
-        }
-
-        // 位置・接続・重複・Prefabの確認がすべて通ってから消費する。
-        if (!TryPayMaterials())
-        {
-            return;
-        }
-
-        GameObject placed = Instantiate(wallPrefab, position, rotation);
-
-        builtPositions.Add(key);
-        BuildSupport.Attach(placed, groundLayer,
-            () => builtPositions.Remove(key));
+        network.RequestBuild(BuildingSystem.BuildType.Wall, position, rotation);
     }
 
+    // サーバーでは相手のカメラを使わず、送られた設置位置を検証。
+    public bool ServerCanPlace(
+    Vector3 position,
+    Quaternion rotation,
+    Transform playerRoot)
+    {
+        player = playerRoot;
+
+        bool connected = IsWallConnected(position, rotation);
+        bool overlapping = IsOverlappingWall(position, rotation);
+        bool blocked = IsBlockedByExistingWall(position);
+        bool behind = IsBehindPlayer(position);
+
+        bool allowed =
+            connected && !overlapping && !blocked && !behind;
+
+        if (!allowed)
+        {
+            Debug.LogWarning(
+                $"[建築診断・壁] " +
+                $"接続あり={connected}, " +
+                $"壁との重複={overlapping}, " +
+                $"手前の壁に遮られる={blocked}, " +
+                $"プレイヤーの後方={behind}\n" +
+                $"設置位置={position}, " +
+                $"Player位置={player.position}, " +
+                $"Player前方={player.forward}",
+                this);
+        }
+
+        return allowed;
+    }
     private bool TryGetMaterialInventory(out InventoryManager inventory)
     {
         inventory = null;
@@ -1171,5 +1179,6 @@ public class BuildWall : MonoBehaviour
             rotationY;
     }
 }
+
 
 

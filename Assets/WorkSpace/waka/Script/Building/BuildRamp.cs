@@ -142,6 +142,8 @@ public class BuildRamp : MonoBehaviour
         }
 
         currentPreview = Instantiate(rampPreviewPrefab);
+        foreach (Collider col in currentPreview.GetComponentsInChildren<Collider>(true))
+            col.enabled = false;
     }
 
     /// <summary>
@@ -198,47 +200,55 @@ public class BuildRamp : MonoBehaviour
     /// </summary>
     public void Build()
     {
-        bool hasCandidate = TryGetBuildPoint(
-            out Vector3 position,
-            out Quaternion rotation,
-            out bool canBuild
-        );
+        Physics.SyncTransforms();
+        if (!TryGetBuildPoint(out Vector3 position,
+                out Quaternion rotation, out bool canBuild) || !canBuild)
+            return;
 
-        if (!hasCandidate || !canBuild)
+        NetworkBuildController network =
+            GetComponentInParent<NetworkBuildController>();
+        if (network == null && player != null)
+            network = player.GetComponentInParent<NetworkBuildController>();
+        if (network == null)
         {
+            Debug.LogError("PlayerにNetworkBuildControllerを追加してください。", this);
             return;
         }
-
-        string key = GetBuildKey(position, rotation);
-
-        // 同じ位置・同じ向きには建築しない
-        if (builtPositions.Contains(key))
-        {
-            return;
-        }
-
-        if (rampPrefab == null)
-        {
-            Debug.LogError(
-                "BuildRamp：Ramp Prefabが設定されていません。",
-                this
-            );
-
-            return;
-        }
-
-        // 配置・接続・重複・Prefabの確認を通った後にだけ消費する。
-        if (!TryPayMaterials())
-        {
-            return;
-        }
-
-        GameObject placed = Instantiate(rampPrefab, position, rotation);
-        builtPositions.Add(key);
-        BuildSupport.Attach(placed, groundLayer,
-            () => builtPositions.Remove(key));
+        network.RequestBuild(BuildingSystem.BuildType.Ramp, position, rotation);
     }
 
+    // サーバーでは相手のカメラを使わず、送られた設置位置を検証。
+    public bool ServerCanPlace(
+     Vector3 position,
+     Quaternion rotation,
+     Transform playerRoot)
+    {
+        player = playerRoot;
+
+        bool connected = IsRampConnected(position, rotation);
+        bool overlapping = IsOverlappingRamp(position, rotation);
+        bool playerOverlap = IsPlayerOverlappingRamp(position);
+        bool behind = IsBehindPlayer(position);
+
+        bool allowed =
+            connected && !overlapping && !playerOverlap && !behind;
+
+        if (!allowed)
+        {
+            Debug.LogWarning(
+                $"[建築診断・階段] " +
+                $"接続あり={connected}, " +
+                $"階段との重複={overlapping}, " +
+                $"プレイヤーとの重なり={playerOverlap}, " +
+                $"プレイヤーの後方={behind}\n" +
+                $"設置位置={position}, " +
+                $"Player位置={player.position}, " +
+                $"Player前方={player.forward}",
+                this);
+        }
+
+        return allowed;
+    }
     private bool TryGetMaterialInventory(out InventoryManager inventory)
     {
         inventory = null;
@@ -1047,3 +1057,4 @@ public class BuildRamp : MonoBehaviour
             rotationY;
     }
 }
+

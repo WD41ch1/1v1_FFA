@@ -10,6 +10,9 @@ GameObject:
   m_Component:
   - component: {fileID: 27861426770473946}
   - component: {fileID: 6765450923207708281}
+  - component: {fileID: 896486843366297943}
+  - component: {fileID: -4003139448158290996}
+  - component: {fileID: 2278820668075211791}
   m_Layer: 8
   m_Name: Ramp Prefab
   m_TagString: Untagged
@@ -47,6 +50,98 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxHP: 100
   currentHP: 100
+--- !u!114 &896486843366297943
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7585568590100317355}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26b716c41e9b56b4baafaf13a523ba2e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <IsNested>k__BackingField: 0
+  WasActiveDuringEdit: 0
+  WasActiveDuringEdit_Set1: 1
+  <ComponentIndex>k__BackingField: 0
+  <PredictedSpawn>k__BackingField: {fileID: 0}
+  <PredictedOwner>k__BackingField: {fileID: 0}
+  NetworkBehaviours:
+  - {fileID: -4003139448158290996}
+  InitializedParentNetworkBehaviour: {fileID: 0}
+  InitializedNestedNetworkObjects:
+  - {fileID: 0}
+  RuntimeParentNetworkBehaviour: {fileID: 0}
+  RuntimeChildNetworkBehaviours: []
+  _isNetworked: 1
+  _isSpawnable: 1
+  _isGlobal: 0
+  _initializeOrder: 0
+  _preventDespawnOnDisconnect: 0
+  _defaultDespawnType: 0
+  _initializedTimestamp: -8584094898277576845
+  _localLevelOfDetailCalculationType: 0
+  _useLevelOfDetail: 0
+  _useRootLevelOfDetail: 1
+  NetworkObserver: {fileID: 0}
+  _enablePrediction: 0
+  _predictionType: 0
+  _localReconcileCorrectionType: 2
+  _graphicalObject: {fileID: 0}
+  _detachGraphicalObject: 0
+  _enableStateForwarding: 1
+  _networkTransform: {fileID: 0}
+  _ownerInterpolation: 1
+  _ownerSmoothedProperties: 255
+  _adaptiveInterpolation: 3
+  _spectatorSmoothedProperties: 255
+  _spectatorInterpolation: 2
+  _enableTeleport: 0
+  _teleportThreshold: 1
+  <PrefabId>k__BackingField: 11
+  <SpawnableCollectionId>k__BackingField: 0
+  <AssetPathHash>k__BackingField: 10296183296761697393
+  SceneId: 0
+  SerializedTransformProperties:
+    Position: {x: 0, y: 0, z: 0}
+    Rotation: {x: 0, y: 0, z: 0, w: 1}
+    Scale: {x: 1, y: 1, z: 1}
+    IsValid: 1
+--- !u!114 &-4003139448158290996
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7585568590100317355}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a6a39c46bf52104ba8efe3100bce3f7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _componentIndexCache: 0
+  _addedNetworkObject: {fileID: 896486843366297943}
+  _networkObjectCache: {fileID: 896486843366297943}
+--- !u!114 &2278820668075211791
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7585568590100317355}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: beb8eeb42f62fbd44a127674116c77c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 896486843366297943}
+  _networkObjectCache: {fileID: 0}
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 8
 --- !u!1001 &1868045120163234564
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -55,6 +150,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 27861426770473946}
     m_Modifications:
+    - target: {fileID: 136722094454588727, guid: 6f7fb26017a266244b9cdd84a64b4bd2, type: 3}
+      propertyPath: _networkObjectCache
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 3920982849283494010, guid: 6f7fb26017a266244b9cdd84a64b4bd2, type: 3}
+      propertyPath: WasActiveDuringEdit
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5872174901245915948, guid: 6f7fb26017a266244b9cdd84a64b4bd2, type: 3}
       propertyPath: m_LocalScale.z
       value: 5.66
@@ -107,7 +210,9 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 8
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 136722094454588727, guid: 6f7fb26017a266244b9cdd84a64b4bd2, type: 3}
+    - {fileID: 3920982849283494010, guid: 6f7fb26017a266244b9cdd84a64b4bd2, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:

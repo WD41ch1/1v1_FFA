@@ -138,6 +138,8 @@ public class BuildCone : MonoBehaviour
 
         currentPreview =
             Instantiate(conePreviewPrefab);
+        foreach (Collider col in currentPreview.GetComponentsInChildren<Collider>(true))
+            col.enabled = false;
 
         currentPreview.SetActive(true);
     }
@@ -193,45 +195,56 @@ public class BuildCone : MonoBehaviour
     /// </summary>
     public void Build()
     {
-        bool hasCandidate = TryGetBuildPoint(
-            out Vector3 position,
-            out Quaternion rotation,
-            out bool canBuild
-        );
+        Physics.SyncTransforms();
+        if (!TryGetBuildPoint(out Vector3 position,
+                out Quaternion rotation, out bool canBuild) || !canBuild)
+            return;
 
-        if (!hasCandidate || !canBuild)
+        NetworkBuildController network =
+            GetComponentInParent<NetworkBuildController>();
+        if (network == null && player != null)
+            network = player.GetComponentInParent<NetworkBuildController>();
+        if (network == null)
         {
+            Debug.LogError("PlayerにNetworkBuildControllerを追加してください。", this);
             return;
         }
-
-        if (conePrefab == null)
-        {
-            Debug.LogError(
-                "BuildCone: Cone Prefabが未設定です"
-            );
-            return;
-        }
-
-        string key = GetBuildKey(position);
-
-        if (builtPositions.Contains(key))
-        {
-            return;
-        }
-
-        // 配置・接続・重複・Prefabの確認を通った後にだけ消費する。
-        if (!TryPayMaterials())
-        {
-            return;
-        }
-
-        GameObject placed = Instantiate(conePrefab, position, rotation);
-
-        builtPositions.Add(key);
-        BuildSupport.Attach(placed, groundLayer,
-            () => builtPositions.Remove(key));
+        network.RequestBuild(BuildingSystem.BuildType.Cone, position, rotation);
     }
 
+    // サーバーでは相手のカメラを使わず、送られた設置位置を検証。
+    public bool ServerCanPlace(
+     Vector3 position,
+     Quaternion rotation,
+     Transform playerRoot)
+    {
+        player = playerRoot;
+
+        bool connected = IsConnected(position);
+        bool overlapping = IsOverlappingCone(position);
+        bool playerOverlap = IsOverlappingPlayer(position);
+        bool behind =
+            !IsSamePlayerGrid(position) && IsBehindPlayer(position);
+
+        bool allowed =
+            connected && !overlapping && !playerOverlap && !behind;
+
+        if (!allowed)
+        {
+            Debug.LogWarning(
+                $"[建築診断・屋根] " +
+                $"接続あり={connected}, " +
+                $"屋根との重複={overlapping}, " +
+                $"プレイヤーとの重なり={playerOverlap}, " +
+                $"プレイヤーの後方={behind}\n" +
+                $"設置位置={position}, " +
+                $"Player位置={player.position}, " +
+                $"Player前方={player.forward}",
+                this);
+        }
+
+        return allowed;
+    }
     private bool TryGetMaterialInventory(out InventoryManager inventory)
     {
         inventory = null;
@@ -844,3 +857,4 @@ public class BuildCone : MonoBehaviour
             gridZ;
     }
 }
+

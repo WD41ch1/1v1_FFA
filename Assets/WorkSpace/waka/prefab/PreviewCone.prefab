@@ -296,6 +296,7 @@ GameObject:
   - component: {fileID: 7389199358042187917}
   - component: {fileID: 6539197965117313924}
   - component: {fileID: 674298127965365621}
+  - component: {fileID: 7811232997290521172}
   m_Layer: 12
   m_Name: PreviewCone
   m_TagString: Untagged
@@ -462,7 +463,7 @@ MonoBehaviour:
   m_IsSelectable: 1
   m_SelectedFaces: 
   m_SelectedEdges: []
-  m_SelectedVertices: 04000000070000000000000001000000
+  m_SelectedVertices: 
 --- !u!114 &7423175997218978824
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -565,3 +566,18 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 0}
+--- !u!114 &7811232997290521172
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8685105314018210112}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a6a39c46bf52104ba8efe3100bce3f7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _componentIndexCache: 0
+  _addedNetworkObject: {fileID: 0}
+  _networkObjectCache: {fileID: 0}
