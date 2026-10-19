@@ -3,11 +3,9 @@ using FishNet.Object;
 using FishNet.Connection;
 using static GameConst;
 
-// PlayerのNetworkObject・InventoryManagerと
-// 同じGameObjectに付ける。
 public class NetworkBuildController : NetworkBehaviour
 {
-    [Header("Player内の建築スクリプト")]
+    [Header("建築スクリプト")]
     [SerializeField] private BuildWall wall;
     [SerializeField] private BuildRamp ramp;
     [SerializeField] private BuildFloor floor;
@@ -50,10 +48,6 @@ public class NetworkBuildController : NetworkBehaviour
         inventory = GetComponent<InventoryManager>();
     }
 
-    /// <summary>
-    /// 所有者の操作から建築を要求する。
-    /// 建材はローカル対戦テスト用に手元で予約消費する。
-    /// </summary>
     public void RequestBuild(
         BuildingSystem.BuildType type,
         Vector3 position,
@@ -69,23 +63,15 @@ public class NetworkBuildController : NetworkBehaviour
                 out BildingMatType material,
                 out int cost))
         {
-            Debug.LogWarning(
-                $"建築設定を確認してください。種類={type}",
-                this);
             return;
         }
 
-        if (inventory == null)
+        if (inventory == null ||
+            cost <= 0 ||
+            inventory.GetMat(material) < cost)
         {
-            Debug.LogWarning(
-                "NetworkBuildControllerと同じオブジェクトに" +
-                "InventoryManagerが必要です。",
-                this);
             return;
         }
-
-        if (cost <= 0 || inventory.GetMat(material) < cost)
-            return;
 
         if (!inventory.TryConsumeBildMat(
                 material,
@@ -116,9 +102,6 @@ public class NetworkBuildController : NetworkBehaviour
             rotation.eulerAngles.y);
     }
 
-    /// <summary>
-    /// サーバーで設置を確認し、完成品を生成する。
-    /// </summary>
     [ServerRpc]
     private void RequestBuildServerRpc(
         uint requestId,
@@ -126,7 +109,6 @@ public class NetworkBuildController : NetworkBehaviour
         Vector3 position,
         float yaw)
     {
-        // 同じ要求を二重に処理しない。
         if (hasServerRequest &&
             requestId <= lastServerRequestId)
         {
@@ -154,79 +136,43 @@ public class NetworkBuildController : NetworkBehaviour
                 out GameObject prefab,
                 out LayerMask ground,
                 out BildingMatType material,
-                out int cost))
-        {
-            BuildResultTargetRpc(
-                Owner,
-                requestId,
-                false,
-                $"建築スクリプトまたは完成Prefabが未設定です。種類={type}");
-            return;
-        }
-
-        if (!Finite(position.x) ||
+                out int cost) ||
+            !Finite(position.x) ||
             !Finite(position.y) ||
             !Finite(position.z) ||
-            !Finite(yaw))
-        {
-            BuildResultTargetRpc(
-                Owner,
-                requestId,
-                false,
-                "設置位置または回転の値が不正です。");
-            return;
-        }
-
-        if (Vector3.Distance(transform.position, position) >
+            !Finite(yaw) ||
+            Vector3.Distance(transform.position, position) >
             maxBuildDistance)
         {
             BuildResultTargetRpc(
                 Owner,
                 requestId,
                 false,
-                "建築可能な距離を超えています。");
+                "Prefab設定または建築距離を確認してください。");
             return;
         }
 
         NetworkObject prefabNetworkObject =
             prefab.GetComponent<NetworkObject>();
 
-        NetworkBuildPiece prefabBuildPiece =
-            prefab.GetComponent<NetworkBuildPiece>();
-
         if (prefabNetworkObject == null ||
-            prefabBuildPiece == null ||
+            prefab.GetComponent<NetworkBuildPiece>() == null ||
             ground.value == 0)
         {
-            string reason =
-                $"[建築設定診断] 種類={type}, Prefab={prefab.name}\n" +
-                $"NetworkObjectあり={prefabNetworkObject != null}\n" +
-                $"NetworkBuildPieceあり={prefabBuildPiece != null}\n" +
-                $"BuilderのGround Layer値={ground.value}\n" +
-                $"処理したPlayer={gameObject.name}";
-
-            Debug.LogWarning(reason, prefab);
-
             BuildResultTargetRpc(
                 Owner,
                 requestId,
                 false,
-                reason);
+                "完成PrefabにNetworkObject・NetworkBuildPieceと" +
+                "Ground Layerの設定が必要です。");
             return;
         }
 
-        // 屋根の45度などの回転を、90度刻みに丸めない。
-        // サーバー側のBuildCone設定を使う。
-        float placementYaw;
-
-        if (type == BuildingSystem.BuildType.Cone)
-        {
-            placementYaw = cone.coneRotationY;
-        }
-        else
-        {
-            placementYaw = Mathf.Round(yaw / 90f) * 90f;
-        }
+        // 屋根はBuildConeの角度を使用する。
+        float placementYaw =
+            type == BuildingSystem.BuildType.Cone
+                ? cone.coneRotationY
+                : Mathf.Round(yaw / 90f) * 90f;
 
         if (!Finite(placementYaw))
         {
@@ -234,7 +180,7 @@ public class NetworkBuildController : NetworkBehaviour
                 Owner,
                 requestId,
                 false,
-                "建築の回転設定が不正です。");
+                "回転設定が不正です。");
             return;
         }
 
@@ -246,24 +192,30 @@ public class NetworkBuildController : NetworkBehaviour
         if (NetworkBuildPiece.Occupied(
                 type,
                 position,
-                rotation))
+                rotation) ||
+            !CanPlace(type, position, rotation))
         {
             BuildResultTargetRpc(
                 Owner,
                 requestId,
                 false,
-                "同じ位置・向きに建築が登録されています。");
+                "サーバー側の設置条件を満たしません。");
             return;
         }
 
-        if (!CanPlace(type, position, rotation))
+        NetworkPlayerTeam builder =
+            GetComponent<NetworkPlayerTeam>();
+
+        if (builder == null ||
+            !builder.IsServerInitialized ||
+            string.IsNullOrEmpty(builder.PlayerId))
         {
             BuildResultTargetRpc(
                 Owner,
                 requestId,
                 false,
-                "設置判定で拒否されました。" +
-                "ホスト側Consoleの[建築診断]を確認してください。");
+                "PlayerルートのNetworkPlayerTeamと" +
+                "初期化状態を確認してください。");
             return;
         }
 
@@ -273,18 +225,15 @@ public class NetworkBuildController : NetworkBehaviour
         NetworkBuildPiece piece =
             placed.GetComponent<NetworkBuildPiece>();
 
-        piece.Configure(type, ground);
+        // 建築者と建築時点のチームを登録する。
+        piece.Configure(type, ground, builder);
 
-        // 所有者なしで生成する。
-        // 建築したPlayerが退出しても建築を残す。
+        // 建築自体のネットワーク所有者は付けない。
         Spawn(placed);
 
         Physics.SyncTransforms();
 
-        NetworkObject placedNetworkObject =
-            placed.GetComponent<NetworkObject>();
-
-        if (!placedNetworkObject.IsSpawned)
+        if (!placed.GetComponent<NetworkObject>().IsSpawned)
         {
             Destroy(placed);
 
@@ -292,7 +241,7 @@ public class NetworkBuildController : NetworkBehaviour
                 Owner,
                 requestId,
                 false,
-                "Spawn失敗。完成Prefabの登録を確認してください。");
+                "Spawn失敗。Prefab登録を確認してください。");
             return;
         }
 
@@ -303,10 +252,6 @@ public class NetworkBuildController : NetworkBehaviour
             "");
     }
 
-    /// <summary>
-    /// 建築結果を要求したプレイヤーへ通知する。
-    /// 拒否された場合は予約消費した建材を返す。
-    /// </summary>
     [TargetRpc]
     private void BuildResultTargetRpc(
         NetworkConnection connection,
@@ -338,8 +283,7 @@ public class NetworkBuildController : NetworkBehaviour
 
     public override void OnStopClient()
     {
-        // 接続断時はサーバー側の成否が不明なので、
-        // 自動返金しない。
+        // 接続断時はサーバーの成否が不明なので自動返金しない。
         pending = false;
         reservedAmount = 0;
 
@@ -352,9 +296,6 @@ public class NetworkBuildController : NetworkBehaviour
                !float.IsInfinity(value);
     }
 
-    /// <summary>
-    /// 各建築スクリプトの設置判定を呼ぶ。
-    /// </summary>
     private bool CanPlace(
         BuildingSystem.BuildType type,
         Vector3 position,
@@ -395,10 +336,6 @@ public class NetworkBuildController : NetworkBehaviour
         }
     }
 
-    /// <summary>
-    /// 各建築スクリプトから完成Prefab・地面Layer・
-    /// 建材の種類と必要数を取得する。
-    /// </summary>
     private bool TryGetDefinition(
         BuildingSystem.BuildType type,
         out GameObject prefab,

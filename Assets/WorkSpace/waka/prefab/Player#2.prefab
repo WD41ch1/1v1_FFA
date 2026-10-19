@@ -2501,6 +2501,7 @@ GameObject:
   - component: {fileID: 8602217940859383582}
   - component: {fileID: -4276482007876789280}
   - component: {fileID: 4706580476848323470}
+  - component: {fileID: 4584395192960155721}
   m_Layer: 0
   m_Name: Player#2
   m_TagString: Untagged
@@ -3312,6 +3313,21 @@ MonoBehaviour:
   cone: {fileID: 4235249019121294448}
   maxBuildDistance: 12
   minRequestInterval: 0.1
+--- !u!114 &4584395192960155721
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7999714468741671046}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4ca3e399c1e8edb41869b533c07321eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 3890100773366206426}
+  _networkObjectCache: {fileID: 0}
 --- !u!1 &8136727905988223057
 GameObject:
   m_ObjectHideFlags: 0
