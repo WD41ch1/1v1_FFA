@@ -16,7 +16,8 @@ MonoBehaviour:
   rarityBackGroundIcon: {fileID: 0}
   ItemName: TestSMG
   itemType: 0
-  itemPrefab: {fileID: 1095254202041702, guid: 01dd9738a44f9d3489f09c22f2fcb1b4, type: 3}
+  AppearancePrefab: {fileID: 1095254202041702, guid: 305b23dabd215f84097ffb98baab9d69, type: 3}
+  wearPrefab: {fileID: 1095254202041702, guid: 01dd9738a44f9d3489f09c22f2fcb1b4, type: 3}
   maxStack: 0
   weaponDamage: 12
   fireMode: 0

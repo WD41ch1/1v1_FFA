@@ -16,7 +16,8 @@ MonoBehaviour:
   rarityBackGroundIcon: {fileID: 0}
   ItemName: TestPistol
   itemType: 0
-  itemPrefab: {fileID: 3763604498974455608, guid: 2af581842b170e84d9538062242679a8, type: 3}
+  AppearancePrefab: {fileID: 3763604498974455608, guid: 372dab9382c36534ea6722db15fa0b4e, type: 3}
+  wearPrefab: {fileID: 3763604498974455608, guid: 2af581842b170e84d9538062242679a8, type: 3}
   maxStack: 0
   weaponDamage: 16
   fireMode: 2

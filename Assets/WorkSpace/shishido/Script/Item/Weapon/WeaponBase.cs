@@ -1,8 +1,10 @@
 using DG.Tweening;
 using FishNet.Example.ColliderRollbacks;
+using FishNet.Object;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.TextCore.Text;
 using static GameConst;
 
 public abstract class WeaponBase : ItemBase
@@ -17,6 +19,8 @@ public abstract class WeaponBase : ItemBase
     protected bool isReloading;
     //  現在の弾数
     //protected int currentAmmo;
+    private bool isFiring;
+
 
     //  ADSができるかどうかのフラグ(例えば空中にいるときはADSできない など)
     protected bool canADS;
@@ -39,6 +43,18 @@ public abstract class WeaponBase : ItemBase
         Reload();
     }
 
+    protected void FireRequest()
+    {
+        if (owner == null)
+            return;
+
+        // 自分が操作しているプレイヤー以外は射撃要求を送らない
+        if (!owner.IsOwner)
+            return;
+
+        owner.FireRequest();
+    }
+
     /// <summary>
     /// 射撃処理
     /// </summary>
@@ -49,61 +65,30 @@ public abstract class WeaponBase : ItemBase
     /// </summary>
     public abstract void Reload();
 
+
     public void StartFire()
     {
-        //  射撃
-        Fire();
+        if (isFiring)
+            return;
 
-        //  連射処理(フルオート)
+        isFiring = true;
+
+        FireRequest();
+
         if (weaponData.fireMode == FireMode.FullAuto)
         {
             InvokeRepeating(
-                nameof(Fire),
+                nameof(FireRequest),
                 weaponData.fireRate,
                 weaponData.fireRate
-                );
+            );
         }
     }
 
-    //  連射終了処理
     public void StopFire()
     {
-        CancelInvoke(nameof(Fire));
-    }
-
-    /// <summary>
-    /// カメラで狙ってるものを取得
-    /// </summary>
-    /// <returns></returns>
-    public Vector3 GetTarget()
-    {
-        RaycastHit target;
-        Vector3 targetPosition;
-
-        //  Ray(カメラ)を飛ばし当たったものを取得
-        bool isRayHit = owner.cameraController.GetCrosshairTarget(out target);
-
-        // 何かに当たった
-        if (isRayHit)
-        {
-            //  発射位置
-            Transform muzzlePoint = weaponView.muzzlePoint;
-
-            //  軌道計算
-            //targetPosition = (target.point - muzzlePoint.position).normalized;
-            targetPosition = target.point;
-        }
-        // 何もない
-        else
-        {
-            //  カメラの向いているほうを取得
-            Ray ray = owner.cameraController.GetCrosshairRay();
-
-            //  仮の目標地点を設定
-            targetPosition = ray.origin + ray.direction * 1000f;
-        }
-
-        return targetPosition;
+        isFiring = false;
+        CancelInvoke(nameof(FireRequest));
     }
 
     /// <summary>
@@ -144,6 +129,17 @@ public abstract class WeaponBase : ItemBase
         //camera.transform.DORotate(normalRotation, 0.2f);
     }
 
+
+    protected void AmmoCheker()
+    {
+        if (weaponData == null) return;
+
+        //  UIの更新要求
+        owner.inventoryManager.SlotUpdateRequest(
+            owner.equipmentManager.GetcurrentSlot(),
+            weaponData.itemType
+        );
+    }
     /// <summary>
     /// リロードコルーチン
     /// </summary>
@@ -181,16 +177,43 @@ public abstract class WeaponBase : ItemBase
         Destroy(projectile, 5.0f);
     }
 
-    protected void AmmoCheker()
-    {
-        if (weaponData == null) return;
+    #region Getter
 
-        //  UIの更新要求
-        owner.inventoryManager.SlotUpdateRequest(
-            owner.equipmentManager.GetcurrentSlot(),
-            weaponData.itemType
-        );
+    /// <summary>
+    /// カメラで狙ってるものを取得
+    /// </summary>
+    /// <returns></returns>
+    public Vector3 GetTarget()
+    {
+        RaycastHit target;
+        Vector3 targetPosition;
+
+        //  Ray(カメラ)を飛ばし当たったものを取得
+        bool isRayHit = owner.cameraController.GetCrosshairTarget(out target);
+
+        // 何かに当たった
+        if (isRayHit)
+        {
+            //  発射位置
+            Transform muzzlePoint = weaponView.muzzlePoint;
+
+            //  軌道計算
+            //targetPosition = (target.point - muzzlePoint.position).normalized;
+            targetPosition = target.point;
+        }
+        // 何もない
+        else
+        {
+            //  カメラの向いているほうを取得
+            Ray ray = owner.cameraController.GetCrosshairRay();
+
+            //  仮の目標地点を設定
+            targetPosition = ray.origin + ray.direction * 1000f;
+        }
+
+        return targetPosition;
     }
+
 
     public WeaponData GetWeaponData()
     {
@@ -206,4 +229,6 @@ public abstract class WeaponBase : ItemBase
     {
         return weaponState.currentAmmo;
     }
+
+    #endregion
 }

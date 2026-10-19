@@ -43,10 +43,6 @@ public class PlayerHealth : NetworkBehaviour
         float maxHealth, float maxShield,
         float health, float shield)
     {
-        //  Actoinの登録
-        //  ※SyncVar軽油なので、値が変わると自動で更新される
-        currentHealth.OnChange += HealthChanged;
-        currentShield.OnChange += ShieldChanged;
 
         //  最大値の設定
         MaxHealth = maxHealth;
@@ -68,6 +64,24 @@ public class PlayerHealth : NetworkBehaviour
        myPlayer = _myPlayer;
     }
 
+    public override void OnStartNetwork()
+    {
+        base.OnStartNetwork();
+
+        //  Actoinの登録
+        //  ※SyncVar軽油なので、値が変わると自動で更新される
+        currentHealth.OnChange += HealthChanged;
+        currentShield.OnChange += ShieldChanged;
+    }
+
+    public override void OnStopNetwork()
+    {
+        currentHealth.OnChange -= HealthChanged;
+        currentShield.OnChange -= ShieldChanged;
+
+        base.OnStopNetwork();
+    }
+
     #endregion
 
     #region 値の増減
@@ -77,6 +91,7 @@ public class PlayerHealth : NetworkBehaviour
     /// </summary>
     /// <param name="damageInfo"></param>
     /// <returns></returns>
+    [Server]
     public DamageResult TakeDamage(DamageInfo damageInfo)
     {
         DamageResult result = new DamageResult();
@@ -127,28 +142,51 @@ public class PlayerHealth : NetworkBehaviour
     }
 
     /// <summary>
-    /// HPの回復処理
+    /// HPの回復処理(server側)
     /// </summary>
     /// <param name="amount"></param>
+    [Server]
     public void Heal(float amount, float limit)
     {
         // 回復
         currentHealth.Value = Mathf.Min(currentHealth.Value + amount, limit);
-
     }
 
     /// <summary>
-    /// シールドの回復処理
+    /// シールドの回復処理(server側)
     /// </summary>
     /// <param name="amount"></param>
+    [Server]
     public void AddShield(float amount, float limit)
     {
         //  シールド所持フラグをあげる
         if (currentShield.Value <= 0 && !haveShield) haveShield = true;
         // 回復
         currentShield.Value = Mathf.Min(currentShield.Value + amount, limit);
-
     }
+
+    /// <summary>
+    /// HPの回復処理(Cliant側)
+    /// </summary>
+    /// <param name="amount"></param>
+    /// <param name="limit"></param>
+    [ServerRpc]
+    public void RequestHeal(float amount, float limit)
+    {
+        Heal(amount, limit);
+    }
+
+    /// <summary>
+    /// シールドの回復処理(Cliant側)
+    /// </summary>
+    /// <param name="amount"></param>
+    /// <param name="limit"></param>
+    [ServerRpc]
+    public void RequestAddShield(float amount, float limit)
+    {
+        AddShield(amount, limit);
+    }
+
 
     public void SetHealth(float amount)
     {
@@ -158,16 +196,22 @@ public class PlayerHealth : NetworkBehaviour
     {
     }
 
+
     /// <summary>
     /// 死亡処理
     /// </summary>
+    [ServerRpc]
     private void Die()
     {
         Debug.Log($"{lastAttacker?.name}に倒された");
 
-        this.gameObject.SetActive(false);
 
-        //Destroy(this.gameObject);
+        //  ダウンアニメーションor死亡アニメーション再生
+
+
+        //  シーンから消す
+        this.gameObject.SetActive(false);
+        //Despawn();
     }
 
     #endregion

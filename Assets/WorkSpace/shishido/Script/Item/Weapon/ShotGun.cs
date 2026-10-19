@@ -1,8 +1,5 @@
-using GameKit.Dependencies.Utilities.ObjectPooling.Examples;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using static UnityEngine.GraphicsBuffer;
 
 public class ShotGun : WeaponBase
 {

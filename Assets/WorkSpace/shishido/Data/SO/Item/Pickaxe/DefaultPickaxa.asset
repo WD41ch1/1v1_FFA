@@ -12,9 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b9e8ac2e40cc9944c9ab615f2b3be8cc, type: 3}
   m_Name: DefaultPickaxa
   m_EditorClassIdentifier: 
-  icon: {fileID: 0}
+  itemIcon: {fileID: 0}
+  rarityBackGroundIcon: {fileID: 0}
   ItemName: "\u30C4\u30EB\u30CF\u30B7"
+  itemType: 0
   itemPrefab: {fileID: 923540029661830127, guid: 8b00242da992b8349abaeb8d4e72e30a, type: 3}
+  wearPrefab: {fileID: 923540029661830127, guid: 8b00242da992b8349abaeb8d4e72e30a, type: 3}
   maxStack: 0
   weaponDamage: 20
   shakeSpeed: 0

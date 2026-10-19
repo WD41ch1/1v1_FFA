@@ -3,7 +3,7 @@ using UnityEngine.TextCore.Text;
 
 public interface IPickupable
 {
-    void Pickup(PlayerManager character);
+    void RequestPickup(PlayerManager character);
 
     Transform GetTransform();
 }

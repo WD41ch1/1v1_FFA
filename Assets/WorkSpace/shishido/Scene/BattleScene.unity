@@ -397,6 +397,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1995662026}
     m_Modifications:
+    - target: {fileID: -1475184117220953234, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
+      propertyPath: SceneId
+      value: 4292798975
+      objectReference: {fileID: 0}
+    - target: {fileID: -1475184117220953234, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
+      propertyPath: WasActiveDuringEdit
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 625260886240656399, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
       propertyPath: m_Name
       value: GunItem (2)
@@ -462,6 +470,18 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5359703045937445944, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
+      propertyPath: WasActiveDuringEdit
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7052916900198836612, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
+      propertyPath: SceneId
+      value: 3905780715
+      objectReference: {fileID: 0}
+    - target: {fileID: 7052916900198836612, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
+      propertyPath: _isGlobal
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7052916900198836612, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
       propertyPath: WasActiveDuringEdit
       value: 1
       objectReference: {fileID: 0}
@@ -568,6 +588,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1995662026}
     m_Modifications:
+    - target: {fileID: -1475184117220953234, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
+      propertyPath: SceneId
+      value: 2080210927
+      objectReference: {fileID: 0}
+    - target: {fileID: -1475184117220953234, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
+      propertyPath: WasActiveDuringEdit
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 625260886240656399, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
       propertyPath: m_Name
       value: GunItem (5)
@@ -633,6 +661,18 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5359703045937445944, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
+      propertyPath: WasActiveDuringEdit
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7052916900198836612, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
+      propertyPath: SceneId
+      value: 2110778879
+      objectReference: {fileID: 0}
+    - target: {fileID: 7052916900198836612, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
+      propertyPath: _isGlobal
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7052916900198836612, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
       propertyPath: WasActiveDuringEdit
       value: 1
       objectReference: {fileID: 0}
@@ -707,6 +747,18 @@ PrefabInstance:
     - target: {fileID: 1053992750227708667, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3284015065091719492, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
+      propertyPath: SceneId
+      value: 3923732987
+      objectReference: {fileID: 0}
+    - target: {fileID: 3284015065091719492, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
+      propertyPath: _isGlobal
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3284015065091719492, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
+      propertyPath: WasActiveDuringEdit
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3466613928419697683, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
       propertyPath: SceneId
@@ -785,6 +837,18 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3284015065091719492, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
+      propertyPath: SceneId
+      value: 3922557947
+      objectReference: {fileID: 0}
+    - target: {fileID: 3284015065091719492, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
+      propertyPath: _isGlobal
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3284015065091719492, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
+      propertyPath: WasActiveDuringEdit
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3466613928419697683, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
       propertyPath: SceneId
       value: 1778216431
@@ -861,6 +925,18 @@ PrefabInstance:
     - target: {fileID: 1053992750227708667, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3284015065091719492, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
+      propertyPath: SceneId
+      value: 4225723903
+      objectReference: {fileID: 0}
+    - target: {fileID: 3284015065091719492, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
+      propertyPath: _isGlobal
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3284015065091719492, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
+      propertyPath: WasActiveDuringEdit
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3466613928419697683, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
       propertyPath: SceneId
@@ -997,6 +1073,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1995662026}
     m_Modifications:
+    - target: {fileID: -1475184117220953234, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
+      propertyPath: SceneId
+      value: 1760362475
+      objectReference: {fileID: 0}
+    - target: {fileID: -1475184117220953234, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
+      propertyPath: WasActiveDuringEdit
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 625260886240656399, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
       propertyPath: m_Name
       value: GunItem (3)
@@ -1058,6 +1142,18 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5359703045937445944, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
+      propertyPath: WasActiveDuringEdit
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7052916900198836612, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
+      propertyPath: SceneId
+      value: 4025478127
+      objectReference: {fileID: 0}
+    - target: {fileID: 7052916900198836612, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
+      propertyPath: _isGlobal
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7052916900198836612, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
       propertyPath: WasActiveDuringEdit
       value: 1
       objectReference: {fileID: 0}
@@ -1280,6 +1376,18 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3284015065091719492, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
+      propertyPath: SceneId
+      value: 2096032255
+      objectReference: {fileID: 0}
+    - target: {fileID: 3284015065091719492, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
+      propertyPath: _isGlobal
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3284015065091719492, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
+      propertyPath: WasActiveDuringEdit
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3466613928419697683, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
       propertyPath: SceneId
       value: 2129587199
@@ -1437,6 +1545,18 @@ PrefabInstance:
     - target: {fileID: 1053992750227708667, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3284015065091719492, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
+      propertyPath: SceneId
+      value: 3957091307
+      objectReference: {fileID: 0}
+    - target: {fileID: 3284015065091719492, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
+      propertyPath: _isGlobal
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3284015065091719492, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
+      propertyPath: WasActiveDuringEdit
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3466613928419697683, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
       propertyPath: SceneId
@@ -1812,6 +1932,18 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3284015065091719492, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
+      propertyPath: SceneId
+      value: 4023319019
+      objectReference: {fileID: 0}
+    - target: {fileID: 3284015065091719492, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
+      propertyPath: _isGlobal
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3284015065091719492, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
+      propertyPath: WasActiveDuringEdit
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3466613928419697683, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
       propertyPath: SceneId
       value: 3959286779
@@ -1913,6 +2045,18 @@ PrefabInstance:
     - target: {fileID: 1053992750227708667, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3284015065091719492, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
+      propertyPath: SceneId
+      value: 2110713855
+      objectReference: {fileID: 0}
+    - target: {fileID: 3284015065091719492, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
+      propertyPath: _isGlobal
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3284015065091719492, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
+      propertyPath: WasActiveDuringEdit
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3466613928419697683, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
       propertyPath: SceneId
@@ -2046,6 +2190,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1995662026}
     m_Modifications:
+    - target: {fileID: -1475184117220953234, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
+      propertyPath: SceneId
+      value: 1878917099
+      objectReference: {fileID: 0}
+    - target: {fileID: -1475184117220953234, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
+      propertyPath: WasActiveDuringEdit
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 625260886240656399, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
       propertyPath: m_Name
       value: GunItem
@@ -2110,6 +2262,18 @@ PrefabInstance:
       propertyPath: WasActiveDuringEdit
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 7052916900198836612, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
+      propertyPath: SceneId
+      value: 1760456703
+      objectReference: {fileID: 0}
+    - target: {fileID: 7052916900198836612, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
+      propertyPath: _isGlobal
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7052916900198836612, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
+      propertyPath: WasActiveDuringEdit
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2123,6 +2287,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1995662026}
     m_Modifications:
+    - target: {fileID: -1475184117220953234, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
+      propertyPath: SceneId
+      value: 1776250363
+      objectReference: {fileID: 0}
+    - target: {fileID: -1475184117220953234, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
+      propertyPath: WasActiveDuringEdit
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 625260886240656399, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
       propertyPath: m_Name
       value: GunItem (1)
@@ -2191,6 +2363,18 @@ PrefabInstance:
       propertyPath: WasActiveDuringEdit
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 7052916900198836612, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
+      propertyPath: SceneId
+      value: 4242467311
+      objectReference: {fileID: 0}
+    - target: {fileID: 7052916900198836612, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
+      propertyPath: _isGlobal
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7052916900198836612, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
+      propertyPath: WasActiveDuringEdit
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2252,6 +2436,18 @@ PrefabInstance:
     - target: {fileID: 1053992750227708667, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3284015065091719492, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
+      propertyPath: SceneId
+      value: 4224711679
+      objectReference: {fileID: 0}
+    - target: {fileID: 3284015065091719492, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
+      propertyPath: _isGlobal
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3284015065091719492, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
+      propertyPath: WasActiveDuringEdit
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3466613928419697683, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
       propertyPath: SceneId
@@ -2502,6 +2698,18 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3284015065091719492, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
+      propertyPath: SceneId
+      value: 4261346303
+      objectReference: {fileID: 0}
+    - target: {fileID: 3284015065091719492, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
+      propertyPath: _isGlobal
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3284015065091719492, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
+      propertyPath: WasActiveDuringEdit
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3466613928419697683, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
       propertyPath: SceneId
       value: 3905781755
@@ -2675,6 +2883,18 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3284015065091719492, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
+      propertyPath: SceneId
+      value: 3906858991
+      objectReference: {fileID: 0}
+    - target: {fileID: 3284015065091719492, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
+      propertyPath: _isGlobal
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3284015065091719492, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
+      propertyPath: WasActiveDuringEdit
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3466613928419697683, guid: 92788cd23f92b124f810ae2326e72185, type: 3}
       propertyPath: SceneId
       value: 4194171391
@@ -2708,6 +2928,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1995662026}
     m_Modifications:
+    - target: {fileID: -1475184117220953234, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
+      propertyPath: SceneId
+      value: 3908038655
+      objectReference: {fileID: 0}
+    - target: {fileID: -1475184117220953234, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
+      propertyPath: WasActiveDuringEdit
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 625260886240656399, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
       propertyPath: m_Name
       value: GunItem (4)
@@ -2773,6 +3001,18 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5359703045937445944, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
+      propertyPath: WasActiveDuringEdit
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7052916900198836612, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
+      propertyPath: SceneId
+      value: 3924720127
+      objectReference: {fileID: 0}
+    - target: {fileID: 7052916900198836612, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
+      propertyPath: _isGlobal
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7052916900198836612, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
       propertyPath: WasActiveDuringEdit
       value: 1
       objectReference: {fileID: 0}

@@ -16,7 +16,8 @@ MonoBehaviour:
   rarityBackGroundIcon: {fileID: 0}
   ItemName: "\u30DF\u30CB\u30DD\u30FC\u30B7\u30E7\u30F3"
   itemType: 1
-  itemPrefab: {fileID: 3682867802421972290, guid: 08485b605a5df154d9a9df116ba93936, type: 3}
+  AppearancePrefab: {fileID: 3682867802421972290, guid: fc6cc7a0402095b4b886bb82240223a7, type: 3}
+  wearPrefab: {fileID: 3682867802421972290, guid: 08485b605a5df154d9a9df116ba93936, type: 3}
   maxStack: 6
   healingValue: 25
   maxHealingAmount: 50

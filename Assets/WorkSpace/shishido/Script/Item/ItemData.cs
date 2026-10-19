@@ -28,8 +28,11 @@ public class ItemData : ScriptableObject
     [Header("アイテムのタイプ")]
     public BerItemType itemType;
 
-    [Header("アイテムの見た目")]
-    public GameObject itemPrefab;
+    [Header("アイテムの見た目Prefab")]
+    public GameObject AppearancePrefab;
+
+    [Header("手に付ける用Prefab")]
+    public GameObject wearPrefab;
 
     [Header("1スロットに重ねられる個数")]
     public int maxStack;

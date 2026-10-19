@@ -46,7 +46,7 @@ public class HealthPotion : HealingItemBase
         yield return new WaitForSeconds(reloadTime);
 
         //  使用者にHP追加
-        owner.playerHealth.Heal(
+        owner.playerHealth.RequestHeal(
             healingData.healingValue,
             healingData.maxHealingAmount
             );

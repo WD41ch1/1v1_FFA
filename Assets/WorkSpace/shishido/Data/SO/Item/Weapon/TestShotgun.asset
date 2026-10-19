@@ -16,7 +16,8 @@ MonoBehaviour:
   rarityBackGroundIcon: {fileID: 0}
   ItemName: 
   itemType: 0
-  itemPrefab: {fileID: 1236257789494122, guid: 8c63d0adac1978a49aef0e8634e19b0b, type: 3}
+  AppearancePrefab: {fileID: 1236257789494122, guid: df7f97ea49620774184dfc3fc3bfd157, type: 3}
+  wearPrefab: {fileID: 1236257789494122, guid: 8c63d0adac1978a49aef0e8634e19b0b, type: 3}
   maxStack: 0
   weaponDamage: 9
   fireMode: 2

@@ -1,3 +1,4 @@
+using FishNet;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
 using System;
@@ -45,37 +46,66 @@ public class EquipmentManager : NetworkBehaviour
 
     #endregion
 
+    #region override
+
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+
+        currentSlot.OnChange += OnChangeEquipItem;
+    }
+
+    public override void OnStopClient()
+    {
+        base.OnStopClient();
+
+        currentSlot.OnChange -= OnChangeEquipItem;
+    }
+
+    public void OnChangeEquipItem(
+        int prev,
+        int next,
+        bool asServer
+        )
+    {
+        //  UIに通知
+        OnEquipChanged.Invoke(next);
+    }
+
+    #endregion
+
 
     /// <summary>
     /// アイテムの装備
     /// </summary>
     /// <param name="owner"></param>
     /// <param name="slotNum"></param>
-    public void Equip(PlayerManager owner, int slotNum)
+    public void Equip(int slotNum)
     {
         if (!IsOwner) return;
+
+        if (myPlayer == null) return;
 
         ItemData data;
         //  装備したいアイテム情報を取得
         if (slotNum == PICKEL_SLOT)
-            data = owner.inventoryManager.pickel;
+            data = myPlayer.inventoryManager.pickel;
         else
-            data = owner.inventoryManager.GetItem(slotNum);
+            data = myPlayer.inventoryManager.GetItem(slotNum);
 
         if (data == null) return;
 
-        //  指定しているスロット
-        currentSlot.Value = slotNum;
         //  対応スロットのWeaponState取得(武器関連以外はNULLになる)
-        ItemState state 
-            = owner.inventoryManager.GetItemState(currentSlot.Value);
+        ItemState state
+            = myPlayer.inventoryManager.GetItemState(slotNum);
 
         if (state == null) return;
 
-        //  UIに通知
-        OnEquipChanged.Invoke(currentSlot.Value);
         //  見た目アイテムの生成
-        CreateEquipItem(owner, data, state);
+        CreateEquipItem(myPlayer, data, state);
+
+        //  指定しているスロット
+        currentSlot.Value = slotNum;
     }
 
     /// <summary>
@@ -92,7 +122,8 @@ public class EquipmentManager : NetworkBehaviour
             UnEquip();
 
         //  アイテムの生成
-        createItem = Instantiate(data.itemPrefab, itemSocket);
+        createItem = Instantiate(data.AppearancePrefab, itemSocket);
+
         //  生成したアイテムのItemBaseを取得
         currentItem = createItem.GetComponent<ItemBase>();
         //  装備アイテムの初期化
@@ -130,7 +161,7 @@ public class EquipmentManager : NetworkBehaviour
 
     public WeaponBase GetcurrentWeapon()
     {
-        if(currentItem is WeaponBase weapon)
+        if (currentItem is WeaponBase weapon)
             return weapon;
         else
             return null;
@@ -140,17 +171,19 @@ public class EquipmentManager : NetworkBehaviour
     /// 次のスロットアイテムを装備
     /// </summary>
     /// <param name="owner"></param>
-    public void NextItemEquip(PlayerManager owner)
+    public void NextItemEquip()
     {
+        if (myPlayer == null) return;
+
         int index = currentSlot.Value;
 
         for (int i = 0; i < ITEM_SLOT_MAX; i++)
         {
             index = (index + 1) % ITEM_SLOT_MAX;
 
-            if (owner.inventoryManager.GetItem(index) != null)
+            if (myPlayer.inventoryManager.GetItem(index) != null)
             {
-                Equip(owner, index);
+                Equip(index);
                 return;
             }
         }
@@ -160,17 +193,19 @@ public class EquipmentManager : NetworkBehaviour
     /// 前のスロットアイテムを装備
     /// </summary>
     /// <param name="owner"></param>
-    public void PreviousItemEquip(PlayerManager owner)
+    public void PreviousItemEquip()
     {
+        if (myPlayer == null) return;
+
         int index = currentSlot.Value;
 
         for (int i = ITEM_SLOT_MAX; 0 <= i; i--)
         {
             index = (index - 1 + ITEM_SLOT_MAX) % ITEM_SLOT_MAX;
 
-            if (owner.inventoryManager.GetItem(index) != null)
+            if (myPlayer.inventoryManager.GetItem(index) != null)
             {
-                Equip(owner, index);
+                Equip(index);
                 return;
             }
         }

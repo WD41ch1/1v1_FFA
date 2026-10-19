@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using static GameConst;
 
-public class MaterialPickup : NetworkBehaviour, IPickupable
+public class MaterialPickup : PickupBase
 {
     [SerializeField]
     private BildingMatType bildingMatType;
@@ -17,23 +17,18 @@ public class MaterialPickup : NetworkBehaviour, IPickupable
     /// </summary>
     /// <param name="type"></param>
     /// <param name="_amount"></param>
-    public void Initialize(BildingMatType type, int _amount)
+    public override void Initialize(BildingMatType type, int _amount)
     {
         bildingMatType = type;
         amount = _amount;
     }
 
-    public Transform GetTransform()
-    {
-        return transform;
-    }
-
-    public void Pickup(PlayerManager character)
+    public override void AddInventory(PlayerManager character)
     {
         if (character.inventoryManager.GetMat(bildingMatType) >= MAX_BILDMAT)
             return;
 
         character.inventoryManager.AddBildMat(bildingMatType, amount);
-        Despawn();
+        
     }
 }

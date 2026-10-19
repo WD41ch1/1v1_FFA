@@ -60,7 +60,7 @@ public class PlayerManager : NetworkBehaviour
     public EquipmentManager equipmentManager;
     public InventoryManager inventoryManager;
 
-    [Header("UI")]      
+    [Header("UI")]
     // 全体処理用変数
     public IGuiInitialize characterGUI;
     //  Player側のGUIManager
@@ -156,6 +156,13 @@ public class PlayerManager : NetworkBehaviour
         {
             case PlayerType.Player:
                 GameObject go = Instantiate(canvasPrefab);
+                GameDebug.Log(
+                    $"[CreateGUI]IsServerInitialized:{IsServerInitialized}," +
+                    $"生成したCanvas: {go.name}," +
+                    $"CanvasのPrefab: {canvasPrefab.name}," +
+                    $"CanvasのActive: {go.activeInHierarchy}"
+                    );
+
                 characterGUI = go.GetComponentInChildren<GUIManager>();
                 break;
             case PlayerType.Bot:
@@ -163,7 +170,10 @@ public class PlayerManager : NetworkBehaviour
                 break;
         }
 
-        characterGUI.RegisterPlayer(this);
+        if (characterGUI == null)
+            GameDebug.Warning("GUIManagerがNULLです！");
+
+        characterGUI?.RegisterPlayer(this);
     }
 
     #endregion
@@ -198,16 +208,51 @@ public class PlayerManager : NetworkBehaviour
     void Start()
     {
 #if UNITY_EDITOR
-        Debug.Log("Start");
         //  ローカルデバッグ時のカメラ生成
         if (isLocalDebug)
         {
+            Debug.Log("Start");
+
             CreateMyCamera();
             //  初期化
             Initialize();
         }
 #endif
     }
+
+    #region Itemの使用処理関連
+
+    public void FireRequest()
+    {
+        if (!IsOwner)
+            return;
+
+
+        if (IsServerInitialized)
+        {
+            FireInternal();
+        }
+        else if (IsClientInitialized)
+        {
+            FireServerRpc();
+        }
+
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void FireServerRpc()
+    {
+        FireInternal();
+    }
+
+    [Server]
+    private void FireInternal()
+    {
+        //equipmentManager.GetcurrentItem() ? Fire();
+    }
+
+
+    #endregion
 
     /// <summary>
     /// 自身のカメラを生成

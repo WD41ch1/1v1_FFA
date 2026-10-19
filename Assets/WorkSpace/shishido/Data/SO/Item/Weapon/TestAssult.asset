@@ -16,9 +16,11 @@ MonoBehaviour:
   rarityBackGroundIcon: {fileID: 0}
   ItemName: TestAR
   itemType: 0
-  itemPrefab: {fileID: 6648396557018715953, guid: aa48a5f6b4dae674ea4fb973ed1c9444, type: 3}
+  AppearancePrefab: {fileID: 6648396557018715953, guid: a4479a76cc5a5db4eb44043a4d1a1396, type: 3}
+  wearPrefab: {fileID: 6648396557018715953, guid: aa48a5f6b4dae674ea4fb973ed1c9444, type: 3}
   maxStack: 1
   weaponDamage: 33
+  fireMode: 0
   fireRate: 0.5
   reloadTime: 3
   ammoType: 1
