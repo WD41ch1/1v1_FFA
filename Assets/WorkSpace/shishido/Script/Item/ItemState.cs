@@ -1,14 +1,20 @@
 
 using UnityEngine;
 
-/// <summary>
+[System.Serializable]
+public class ItemState
+{
+#if true
+
+    // 今後、全アイテム共通の状態を追加する
+
+#else
 /// アイテムの状態を管理しているクラス
 /// [武器]　→　マガジンに入っている残弾数
 /// [回復]  →　現在持っているスタック数
 /// [投げもの]  →　なし (おそらくスタック数になる予定)
-/// </summary>
-public class ItemState
-{
+
+
     //  使用しているスロット番号
     public int useSlotNum;
 
@@ -47,4 +53,5 @@ public class ItemState
 
         Debug.Log($"変更前:{prevNum},変更後:{useSlotNum}");
     }
+#endif
 }

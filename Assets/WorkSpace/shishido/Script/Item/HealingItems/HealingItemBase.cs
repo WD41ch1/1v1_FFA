@@ -7,7 +7,7 @@ public abstract class HealingItemBase : ItemBase
 {
     protected HealingItemData healingData;
 
-    protected ItemState healingState;
+    protected HealingItemState healingState;
 
     protected bool isHealing;
 
@@ -37,7 +37,7 @@ public abstract class HealingItemBase : ItemBase
     {
         if (healingData == null) return;
 
-        healingState.currentStack--;
+        itemState.stackCount--;
 
         //  UIの更新要求
         owner.inventoryManager.SlotUpdateRequest(
@@ -46,9 +46,9 @@ public abstract class HealingItemBase : ItemBase
         );
 
         //  インベントリから自身のアイテム情報を削除
-        if (healingState.currentStack <= 0)
+        if (itemState.stackCount <= 0)
         {
-            owner.inventoryManager.RemoveItem(healingState.useSlotNum);
+            //owner.inventoryManager.RemoveItem(healingState.useSlotNum);
         }
 
     }

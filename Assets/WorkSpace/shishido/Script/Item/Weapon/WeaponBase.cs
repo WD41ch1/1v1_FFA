@@ -13,7 +13,7 @@ public abstract class WeaponBase : ItemBase
 
     protected WeaponView weaponView;
 
-    protected ItemState weaponState;
+    protected WeaponState weaponState;
 
     //  リロード中かいなか
     protected bool isReloading;
@@ -228,6 +228,41 @@ public abstract class WeaponBase : ItemBase
     public int GetcurrentAmmo()
     {
         return weaponState.currentAmmo;
+    }
+
+    #endregion
+
+    #region checker
+
+    public bool CheckWeaponState(InventoryItem item, out WeaponState state)
+    {
+        state = null;
+
+        if (item == null)
+        {
+            GameDebug.Warning("InventoryItem が null");
+            return false;
+        }
+
+        if (item.state == null)
+        {
+            GameDebug.Warning("state が null");
+            return false;
+        }
+
+        GameDebug.Log($"stateの実際の型: {item.state.GetType().FullName}");
+        GameDebug.Log($"WeaponStateか: {item.state is WeaponState}");
+
+        WeaponState weaponState = item.weaponState;
+
+        if (weaponState == null)
+        {
+            GameDebug.Warning("WeaponStateとして取得できませんでした");
+            return false;
+        }
+
+        state = weaponState;
+        return true;
     }
 
     #endregion

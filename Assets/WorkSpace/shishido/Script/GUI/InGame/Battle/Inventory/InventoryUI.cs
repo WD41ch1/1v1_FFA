@@ -197,7 +197,7 @@ public class InventoryUI : UIBase, IDropHandler
             case BerItemType.Weapon:
                 if (data is WeaponData weapon)
                 {
-                    itemAmont = weapon.maxAmmo;
+                    itemAmont = weapon.magazineSize;
                 }
 
                 break;

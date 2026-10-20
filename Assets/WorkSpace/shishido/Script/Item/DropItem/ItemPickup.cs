@@ -1,7 +1,3 @@
-using FishNet.Object;
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using static GameConst;
 
@@ -26,9 +22,12 @@ public class ItemPickup : PickupBase
         SetAppearance();
     }
 
-    public override void AddInventory(PlayerManager character)
+    public override bool AddInventory(PlayerManager character)
     {
-        character.inventoryManager.AddItem(itemData, itemState);
+        if(character == null)
+            return false;
+
+        return character.inventoryManager.AddItem(itemData, itemState);
     }
 
     /// <summary>

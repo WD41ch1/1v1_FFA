@@ -10,24 +10,41 @@ public class ShotGun : WeaponBase
     //  撃ったか
     private bool isShooting;
 
-    public override void Initialize(
+    public override bool Initialize(
         PlayerManager _owner,
-        ItemData itemData,
-        ItemState state = null)
+        ItemData _itemData,
+        InventoryItem _itemState)
     {
-        if (itemData is WeaponData)
+        if (_owner == null || _itemData == null || _itemState == null)
+            return false;
+
+        weaponView = GetComponent<WeaponView>();
+
+        if (weaponView == null)
+            return false;
+
+        if (_itemData is WeaponData)
         {
-            weaponData = (WeaponData)itemData;
+            weaponData = (WeaponData)_itemData;
+        }
+        else
+        {
+            // 失敗：WeaponDataではない、またはnull
+            Debug.LogWarning("WeaponDataへの変換に失敗しました");
+            return false;
         }
 
         //  使用者情報
         this.owner = _owner;
 
-        weaponView = GetComponent<WeaponView>();
+        itemState = _itemState;
 
-        weaponState = state;
+        if (!CheckWeaponState(itemState, out weaponState))
+            return false;
 
         spreadAngle = weaponData.fireAccuracy;
+
+        return true;
     }
 
     public override void Fire()
@@ -75,7 +92,7 @@ public class ShotGun : WeaponBase
             projectile.GetComponent<ProjectileBase>()?
             .Initialize(owner, this, Vector3.zero);
 
-            Destroy( projectile ,5f);
+            Destroy(projectile, 5f);
         }
 
         //  弾数消費
@@ -93,17 +110,17 @@ public class ShotGun : WeaponBase
         if (isReloading) return;
 
         // 満タンなら
-        if (weaponState.currentAmmo >= weaponData.maxAmmo)
+        if (weaponState.currentAmmo >= weaponData.magazineSize)
             return;
 
-        StartCoroutine(ReloadAnimation(weaponData.reloadTime,0));
+        StartCoroutine(ReloadAnimation(weaponData.reloadTime, 0));
     }
 
     protected override IEnumerator ReloadAnimation(float reloadTime, int _approvalValue)
     {
         isReloading = true;
 
-        while (weaponState.currentAmmo < weaponData.maxAmmo)
+        while (weaponState.currentAmmo < weaponData.magazineSize)
         {
             // 射撃されたらリロード中断
             //if (isShooting)
@@ -128,8 +145,8 @@ public class ShotGun : WeaponBase
             weaponState.currentAmmo += approvalValue;
 
             // 上限チェック
-            if (weaponState.currentAmmo > weaponData.maxAmmo)
-                weaponState.currentAmmo = weaponData.maxAmmo;
+            if (weaponState.currentAmmo > weaponData.magazineSize)
+                weaponState.currentAmmo = weaponData.magazineSize;
         }
 
         isReloading = false;

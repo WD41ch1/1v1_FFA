@@ -28,13 +28,19 @@ public class ItemData : ScriptableObject
     [Header("アイテムのタイプ")]
     public BerItemType itemType;
 
-    [Header("アイテムの見た目Prefab")]
+    [Header("Prefab")]
     public GameObject AppearancePrefab;
-
-    [Header("手に付ける用Prefab")]
     public GameObject wearPrefab;
 
-    [Header("1スロットに重ねられる個数")]
-    public int maxStack;
+    [Header("スタック")]
+    [Min(1)]
+    public int maxStack = 1;
+
+    /// <summary>
+    /// このアイテムが1枠に所持できる最大数。
+    /// 派生クラスで上書き可能。
+    /// </summary>
+    public virtual int MaxStack =>
+        Mathf.Max(1, maxStack);
 
 }

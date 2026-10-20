@@ -23,7 +23,7 @@ public class WeaponData : ItemData
     [Header("使用する弾")] 
     public AmmoType ammoType;
     [Header("マガジン数")] 
-    public int maxAmmo;
+    public int magazineSize;
     [Header("弾速")] 
     public float ammoSpeed;
 
@@ -54,4 +54,11 @@ public class WeaponData : ItemData
     public float bodyMultiplier = 1.0f;
     [Header("レッグ倍率")] 
     public float legMultiplier = 0.8f;
+
+    /// <summary>
+    /// 武器は必ず1枠につき1個。
+    /// Inspector の maxStack が2以上でも、
+    /// インベントリ側では1として扱う。
+    /// </summary>
+    public override int MaxStack => 1;
 }

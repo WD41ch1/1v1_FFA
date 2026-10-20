@@ -5,21 +5,29 @@ using static UnityEngine.UI.GridLayoutGroup;
 
 public class miniPotion : HealingItemBase
 {
-    public override void Initialize(
-        PlayerManager _owner,
-        ItemData itemData,
-        ItemState state = null)
+    public override bool Initialize(
+        PlayerManager _owner, 
+        ItemData _itemData, 
+        InventoryItem _itemState = null)
     {
-        if (itemData is HealingItemData)
+        if (_owner == null || _itemData == null || _itemState == null)
+            return false;
+
+        if (_itemData is HealingItemData)
         {
-            healingData = (HealingItemData)itemData;
+            healingData = (HealingItemData)_itemData;
+        }
+        else
+        {
+            return false;
         }
 
         //  使用者情報
         this.owner = _owner;
 
-        healingState = state;
+        //itemState = _itemState;
 
+        return true;    
     }
 
     /// <summary>
@@ -54,12 +62,12 @@ public class miniPotion : HealingItemBase
 
         isHealing = false;
 
-        Debug.Log(
-            $"使用Slot: {owner.equipmentManager.GetcurrentSlot()} " +
-            $"StateSlot: {healingState.useSlotNum} " +
-            $"Stack: {healingState.currentStack} " +
-            $"StateID: {healingState.GetHashCode()}"
-        );
+        //Debug.Log(
+        //    $"使用Slot: {owner.equipmentManager.GetcurrentSlot()} " +
+        //    $"StateSlot: {healingState.useSlotNum} " +
+        //    $"Stack: {healingState.currentStack} " +
+        //    $"StateID: {healingState.GetHashCode()}"
+        //);
 
         StackCheker();
     }

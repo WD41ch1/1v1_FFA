@@ -23,12 +23,14 @@ public class MaterialPickup : PickupBase
         amount = _amount;
     }
 
-    public override void AddInventory(PlayerManager character)
+    public override bool AddInventory(PlayerManager character)
     {
         if (character.inventoryManager.GetMat(bildingMatType) >= MAX_BILDMAT)
-            return;
+            return false;
 
-        character.inventoryManager.AddBildMat(bildingMatType, amount);
-        
+        bool isAddBildMat = 
+            character.inventoryManager.AddBildMat(bildingMatType, amount);
+
+        return isAddBildMat;
     }
 }

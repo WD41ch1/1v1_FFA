@@ -80,11 +80,11 @@ public class EquipmentManager : NetworkBehaviour
     /// </summary>
     /// <param name="owner"></param>
     /// <param name="slotNum"></param>
-    public void Equip(int slotNum)
+    public bool Equip(int slotNum)
     {
-        if (!IsOwner) return;
+        if (!IsOwner) return false;
 
-        if (myPlayer == null) return;
+        if (myPlayer == null) return false;
 
         ItemData data;
         //  装備したいアイテム情報を取得
@@ -93,41 +93,60 @@ public class EquipmentManager : NetworkBehaviour
         else
             data = myPlayer.inventoryManager.GetItem(slotNum);
 
-        if (data == null) return;
+        if (data == null) return false;
 
         //  対応スロットのWeaponState取得(武器関連以外はNULLになる)
-        ItemState state
-            = myPlayer.inventoryManager.GetItemState(slotNum);
+        InventoryItem state
+            = myPlayer.inventoryManager.GetInvetoryItem(slotNum);
 
-        if (state == null) return;
+        if (state == null) return false;
 
         //  見た目アイテムの生成
-        CreateEquipItem(myPlayer, data, state);
+        if (!CreateEquipItem(myPlayer, data, state))
+            return false;
 
         //  指定しているスロット
         currentSlot.Value = slotNum;
+
+        return true;
     }
 
     /// <summary>
     /// 装備アイテムの生成
     /// </summary>
-    private void CreateEquipItem(PlayerManager owner, ItemData data, ItemState state)
+    private bool CreateEquipItem(PlayerManager owner, ItemData data, InventoryItem state)
     {
         //  生成場所があるか
-        if (itemSocket == null || data == null)
-            return;
+        if (itemSocket == null || data == null || state == null)
+            return false;
 
         //  すでに何か装備していたら
         if (currentItem != null)
             UnEquip();
 
         //  アイテムの生成
-        createItem = Instantiate(data.AppearancePrefab, itemSocket);
+        createItem = Instantiate(data.wearPrefab, itemSocket);
+
+        //  アイテムが生成できなかった
+        if(createItem == null)
+            return false;
 
         //  生成したアイテムのItemBaseを取得
         currentItem = createItem.GetComponent<ItemBase>();
+
+        if(currentItem == null)
+        {
+            GameDebug.Warning("currentItemが取得できません");
+            return false;
+        }
+
         //  装備アイテムの初期化
-        currentItem.Initialize(owner, data, state);
+        bool success
+            = currentItem.Initialize(owner, data, state);
+
+        GameDebug.Log($"アイテム生成初期：[{success}]");
+
+        return success;
     }
 
     /// <summary>

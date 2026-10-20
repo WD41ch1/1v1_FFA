@@ -4,8 +4,11 @@ using UnityEngine;
 
 public class WeaponView : MonoBehaviour
 {
+    [Header("アイテムの見た目Prefab")]
+    public GameObject AppearancePrefab;
+
     public Animator animator;
-    
+
     [Header("Point")]//  エフェクト(マズルフラッシュ)、弾の生成位置、レイキャスト開始位置など
     public Transform muzzlePoint;
     //  薬莢などの生成位置

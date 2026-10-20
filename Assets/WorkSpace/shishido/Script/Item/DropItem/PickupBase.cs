@@ -1,3 +1,4 @@
+using FishNet.Connection;
 using FishNet.Object;
 using UnityEngine;
 using static GameConst;
@@ -11,52 +12,82 @@ public abstract class PickupBase : NetworkBehaviour, IPickupable
     //  Item
     public virtual void Initialize(ItemData data, ItemState state) { }
 
+    public Transform GetTransform() { return transform; }
+
+    // 同じアイテムへの取得要求重複そしフラグ
+    private bool isBeingPickedUp;
 
     public void RequestPickup(PlayerManager character)
     {
-        GameDebug.Log($"{gameObject.name}の[RequestPickup]が呼ばれました");
-        Pickup(character);
-    }
-
-    public Transform GetTransform() { return transform; }
-
-
-    public void Pickup(PlayerManager character)
-    {
-        //  各アイテムのインベントリ追加
-        AddInventory(character);
+        if (character == null)
+            return;
 
         if (IsServerInitialized)
         {
-            DespawnInternal(character);
+            TryPickupOnServer(character);
         }
         else if (IsClientInitialized)
         {
-            DespawnServerRpc(character);
+            RequestPickupServerRpc(character);
         }
     }
-    public abstract void AddInventory(PlayerManager character);
 
     [ServerRpc(RequireOwnership = false)]
-    private void DespawnServerRpc(PlayerManager character)
+    private void RequestPickupServerRpc(
+        PlayerManager character,
+        NetworkConnection sender = null)
     {
-        DespawnInternal(character);
+        if (character == null || sender == null)
+            return;
+
+        // 要求したクライアントが、このキャラクターの所有者か確認
+        if (character.Owner != sender)
+        {
+            GameDebug.Warning(
+                "[PickupBase] 要求者とキャラクターの所有者が一致しません");
+            return;
+        }
+
+        TryPickupOnServer(character);
     }
 
     [Server]
-    private void DespawnInternal(PlayerManager character)
+    private void TryPickupOnServer(PlayerManager character)
     {
-        if (!CheckDespawnCondition())
+        if (character == null)
+        {
+            GameDebug.Warning("[Pickup] character が null");
             return;
-        // Despawn
-        Despawn();
+        }
 
+        if (!CheckCondition())
+        {
+            GameDebug.Warning("[Pickup] CheckCondition に失敗");
+            return;
+        }
+
+        GameDebug.Log(
+            $"[Pickup] 取得処理開始: " +
+            $"Player={character.name}, " +
+            $"IsServer={IsServerInitialized}");
+
+        bool success = AddInventory(character);
+
+        GameDebug.Log(
+            $"[Pickup] AddInventory 結果: {success}");
+
+        if (!success)
+            return;
+
+        GameDebug.Log("[Pickup] 追加成功。Despawnを実行");
+
+        Despawn();
     }
 
     /// <summary>
     /// Despawn前の状態チェック
     /// </summary>
-    private bool CheckDespawnCondition()
+    private bool CheckCondition()
     {
         // Server側で初期化されているか
         if (!IsServerInitialized)
@@ -74,6 +105,8 @@ public abstract class PickupBase : NetworkBehaviour, IPickupable
 
         return true;
     }
+
+    public abstract bool AddInventory(PlayerManager character);
 
     #region 見た目の処理
 
