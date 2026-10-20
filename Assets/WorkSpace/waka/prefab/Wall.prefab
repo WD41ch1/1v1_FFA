@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 6826113611838482170}
   - component: {fileID: 2550444828961590937}
   - component: {fileID: 8604093040107998719}
+  - component: {fileID: 3780586814237973145}
   m_Layer: 9
   m_Name: Wall
   m_TagString: Untagged
@@ -126,7 +127,7 @@ MonoBehaviour:
   height: 1
   thickness: 1
   wallMaterial: {fileID: 2100000, guid: fd548a6fb7828e04c86b55b33312edf9, type: 2}
-  gridMaterial: {fileID: 0}
+  gridMaterial: {fileID: 2100000, guid: 7aef110e2f081ae40b55b1de9703410b, type: 2}
   patterns:
   - name: Window
     removedCells: 04000000
@@ -247,3 +248,24 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 8
+  logEditPermission: 1
+--- !u!114 &3780586814237973145
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 21281137193718817}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 699d9ab0f482d6b4b9d4e4e0eb322c8f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 2550444828961590937}
+  _networkObjectCache: {fileID: 0}
+  maxEditDistance: 8
+  obstructionMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  minimumInterval: 0.1

@@ -301,6 +301,7 @@ GameObject:
   - component: {fileID: 5310279158523767299}
   - component: {fileID: 8805086549259203291}
   - component: {fileID: 2757555506541501621}
+  - component: {fileID: 1239963599619797605}
   m_Layer: 12
   m_Name: Cone
   m_TagString: Untagged
@@ -589,7 +590,7 @@ MonoBehaviour:
   gridRotationY: -45
   faceCameraOnEdit: 0
   preserveResultPrefabSize: 1
-  gridMaterial: {fileID: 0}
+  gridMaterial: {fileID: 2100000, guid: 7aef110e2f081ae40b55b1de9703410b, type: 2}
   patterns:
   - name: "\u6B63\u9762\u968E\u6BB5"
     selectedCells: 0200000003000000
@@ -709,3 +710,24 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 8
+  logEditPermission: 1
+--- !u!114 &1239963599619797605
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6232721762845926028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 699d9ab0f482d6b4b9d4e4e0eb322c8f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 5310279158523767299}
+  _networkObjectCache: {fileID: 0}
+  maxEditDistance: 8
+  obstructionMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  minimumInterval: 0.1

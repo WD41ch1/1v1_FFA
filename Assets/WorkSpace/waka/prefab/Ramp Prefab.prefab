@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 896486843366297943}
   - component: {fileID: -4003139448158290996}
   - component: {fileID: 2278820668075211791}
+  - component: {fileID: -4817638977283060027}
   m_Layer: 8
   m_Name: Ramp Prefab
   m_TagString: Untagged
@@ -70,9 +71,9 @@ MonoBehaviour:
   <PredictedOwner>k__BackingField: {fileID: 0}
   NetworkBehaviours:
   - {fileID: -4003139448158290996}
+  - {fileID: 2278820668075211791}
   InitializedParentNetworkBehaviour: {fileID: 0}
-  InitializedNestedNetworkObjects:
-  - {fileID: 0}
+  InitializedNestedNetworkObjects: []
   RuntimeParentNetworkBehaviour: {fileID: 0}
   RuntimeChildNetworkBehaviours: []
   _isNetworked: 1
@@ -81,7 +82,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584094898277576845
+  _initializedTimestamp: -8584091337928354963
   _localLevelOfDetailCalculationType: 0
   _useLevelOfDetail: 0
   _useRootLevelOfDetail: 1
@@ -100,7 +101,7 @@ MonoBehaviour:
   _spectatorInterpolation: 2
   _enableTeleport: 0
   _teleportThreshold: 1
-  <PrefabId>k__BackingField: 11
+  <PrefabId>k__BackingField: 12
   <SpawnableCollectionId>k__BackingField: 0
   <AssetPathHash>k__BackingField: 10296183296761697393
   SceneId: 0
@@ -136,12 +137,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: beb8eeb42f62fbd44a127674116c77c2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _componentIndexCache: 255
+  _componentIndexCache: 1
   _addedNetworkObject: {fileID: 896486843366297943}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 896486843366297943}
   groundLayer:
     serializedVersion: 2
     m_Bits: 8
+  logEditPermission: 1
+--- !u!114 &-4817638977283060027
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7585568590100317355}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 699d9ab0f482d6b4b9d4e4e0eb322c8f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 896486843366297943}
+  _networkObjectCache: {fileID: 0}
+  maxEditDistance: 8
+  obstructionMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  minimumInterval: 0.1
 --- !u!1001 &1868045120163234564
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -252,7 +274,7 @@ MonoBehaviour:
   preserveResultPrefabSize: 1
   keepDirectionOnReset: 1
   resetSlopeTarget: {fileID: 0}
-  gridMaterial: {fileID: 0}
+  gridMaterial: {fileID: 2100000, guid: 7aef110e2f081ae40b55b1de9703410b, type: 2}
   patterns:
   - name: "\u5DE6\u624B\u524D\u304B\u3089\u306E\u968E\u6BB5"
     selectedCells: 060000000300000000000000
