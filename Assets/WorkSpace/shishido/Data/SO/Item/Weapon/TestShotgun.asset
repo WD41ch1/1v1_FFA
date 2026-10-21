@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 01862edc10ef3ba4aa48712915f51aab, type: 3}
   m_Name: TestShotgun
   m_EditorClassIdentifier: 
+  itemId: 1003
   itemIcon: {fileID: 21300000, guid: 501740e93da556747aecfd85063d9b87, type: 3}
   rarityBackGroundIcon: {fileID: 0}
   ItemName: 
@@ -21,10 +22,10 @@ MonoBehaviour:
   maxStack: 0
   weaponDamage: 9
   fireMode: 2
-  fireRate: 0
+  fireRate: 5
   reloadTime: 0.5
   ammoType: 3
-  maxAmmo: 5
+  magazineSize: 0
   ammoSpeed: 40
   fireAccuracy: 5
   recoilValue: 0

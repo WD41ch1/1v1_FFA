@@ -14,6 +14,8 @@ public enum WeaponAnimationType
 [CreateAssetMenu]
 public class ItemData : ScriptableObject
 {
+    public int itemId;
+
     [Header("--inventory表示アイコン--")]
     [Header("inventory表示アイコン")]
     public Sprite itemIcon;

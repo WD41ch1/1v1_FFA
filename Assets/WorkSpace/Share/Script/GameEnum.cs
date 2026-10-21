@@ -31,9 +31,9 @@ public enum ItemType
 /// </summary>
 public enum BerItemType
 {
-    Weapon,         //  武器系
-    Healing,        //  回復系
-    Throwing,       //  投擲物
+    Weapon = 0,         //  武器系
+    Healing = 1,        //  回復系
+    Throwing = 2,       //  投擲物
 }
 
 /// <summary>
@@ -41,9 +41,9 @@ public enum BerItemType
 /// </summary>
 public enum FireMode
 {
-    FullAuto,   // フルオート
-    Burst,      // バースト
-    SemiAuto    // 単発
+    FullAuto = 0,   // フルオート
+    Burst = 1,      // バースト
+    SemiAuto = 2    // 単発
 }
 
 /// <summary>
@@ -51,10 +51,10 @@ public enum FireMode
 /// </summary>
 public enum AmmoType
 {
-    SmallAmmo,          //  小
-    MiddleAmmo,         //  中
-    BigAmmo,            //  大
-    ShotgunAmmo,        //  散弾
+    SmallAmmo = 0,          //  小
+    MiddleAmmo = 1,         //  中
+    BigAmmo = 2,            //  大
+    ShotgunAmmo = 3,        //  散弾
 }
 
 /// <summary>

@@ -41,8 +41,32 @@ public class ItemPickup : PickupBase
         if (appearanceOBJ != null)
             Destroy(appearanceOBJ);
 
+#if true
+
+        AppearanceModelData modelData = null;
+
+        if (!ItemModelManager.Instance.TryGetModelData(itemData.itemId, out modelData))
+        {
+            Despawn(this);
+            return ;
+        }
+
+        GameObject prefab = modelData.AppearancePrefab;
+        if (prefab == null)
+        {
+            Despawn(this);
+            return;
+        }
+
+
+        appearanceOBJ = prefab;
+
+#else
+
         //  見た目オブジェクトの生成
         appearanceOBJ = Instantiate(itemData.AppearancePrefab, transform);
+#endif
+
     }
 
 

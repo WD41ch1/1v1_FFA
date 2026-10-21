@@ -101,12 +101,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   animator: {fileID: 0}
-  muzzlePoint: {fileID: 9091181278638824519}
+  muzzlePoint: {fileID: 4851364115034366836, guid: 2af581842b170e84d9538062242679a8, type: 3}
   shellPoint: {fileID: 0}
-  adsPoint: {fileID: 0}
+  adsPoint: {fileID: 8939410225081786069, guid: 2af581842b170e84d9538062242679a8, type: 3}
   muzzleFlashPrefab: {fileID: 0}
   hitEffectPrefab: {fileID: 0}
-  projectilePrefab: {fileID: 7411188235904062972, guid: 23144aaa9e4f45544bd3e6e27e3e75b0, type: 3}
+  projectilePrefab: {fileID: 5111063274538450963, guid: d6af723573a39994b9011fa5c0f4db63, type: 3}
 --- !u!114 &2421428564475118692
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -119,9 +119,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9332a675d68790a4c8923058ba438881, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _componentIndexCache: 0
-  _addedNetworkObject: {fileID: 0}
-  _networkObjectCache: {fileID: 0}
 --- !u!1 &1326079549577358
 GameObject:
   m_ObjectHideFlags: 0

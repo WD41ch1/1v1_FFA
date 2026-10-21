@@ -184,14 +184,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8dd50cc5d39bc0b4baef94b692e48879, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  AppearancePrefab: {fileID: 0}
   animator: {fileID: 0}
-  muzzlePoint: {fileID: 0}
+  muzzlePoint: {fileID: 1806276133502680175, guid: 01dd9738a44f9d3489f09c22f2fcb1b4, type: 3}
   shellPoint: {fileID: 0}
   adsPoint: {fileID: 0}
   muzzleFlashPrefab: {fileID: 0}
   hitEffectPrefab: {fileID: 0}
-  projectilePrefab: {fileID: 0}
+  projectilePrefab: {fileID: 5111063274538450963, guid: d6af723573a39994b9011fa5c0f4db63, type: 3}
 --- !u!1 &1382682361031114
 GameObject:
   m_ObjectHideFlags: 0

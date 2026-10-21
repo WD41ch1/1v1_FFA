@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 01862edc10ef3ba4aa48712915f51aab, type: 3}
   m_Name: TestSubmachineGun
   m_EditorClassIdentifier: 
+  itemId: 1004
   itemIcon: {fileID: 21300000, guid: bfbefe26c93bbf54c87456c507eb2f69, type: 3}
   rarityBackGroundIcon: {fileID: 0}
   ItemName: TestSMG
@@ -24,7 +25,7 @@ MonoBehaviour:
   fireRate: 0.05
   reloadTime: 1.5
   ammoType: 0
-  maxAmmo: 30
+  magazineSize: 30
   ammoSpeed: 50
   fireAccuracy: 0
   recoilValue: 0

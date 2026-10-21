@@ -116,6 +116,42 @@ public class EquipmentManager : NetworkBehaviour
     /// </summary>
     private bool CreateEquipItem(PlayerManager owner, ItemData data, InventoryItem state)
     {
+
+#if true
+        //  生成場所があるか
+        if (itemSocket == null || data == null || state == null)
+            return false;
+
+        //  すでに何か装備していたら
+        if (currentItem != null)
+            UnEquip();
+
+        AppearanceModelData modelData = null;
+
+        if (!ItemModelManager.Instance.TryGetModelData(data.itemId, out modelData))
+            return false;
+
+        GameObject prefab = modelData.AppearancePrefab;
+        if (prefab == null) return false;
+
+        //  アイテムの生成
+        createItem = Instantiate(prefab, itemSocket);
+
+        //  アイテムが生成できなかった
+        if (createItem == null)
+            return false;
+
+        //  装備アイテムの初期化
+        bool success = true;
+           
+
+        GameDebug.Log($"アイテム生成初期：[{success}]");
+
+        return success;
+
+
+#else
+
         //  生成場所があるか
         if (itemSocket == null || data == null || state == null)
             return false;
@@ -147,6 +183,7 @@ public class EquipmentManager : NetworkBehaviour
         GameDebug.Log($"アイテム生成初期：[{success}]");
 
         return success;
+#endif
     }
 
     /// <summary>
