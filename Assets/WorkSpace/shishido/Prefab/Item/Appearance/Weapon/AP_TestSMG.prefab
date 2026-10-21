@@ -94,6 +94,7 @@ GameObject:
   - component: {fileID: 4907130060635364}
   - component: {fileID: 33804178515757422}
   - component: {fileID: 23702528113249380}
+  - component: {fileID: 5887931563135523073}
   m_Layer: 0
   m_Name: AP_TestSMG
   m_TagString: Untagged
@@ -171,6 +172,26 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &5887931563135523073
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1095254202041702}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8dd50cc5d39bc0b4baef94b692e48879, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  AppearancePrefab: {fileID: 0}
+  animator: {fileID: 0}
+  muzzlePoint: {fileID: 0}
+  shellPoint: {fileID: 0}
+  adsPoint: {fileID: 0}
+  muzzleFlashPrefab: {fileID: 0}
+  hitEffectPrefab: {fileID: 0}
+  projectilePrefab: {fileID: 0}
 --- !u!1 &1382682361031114
 GameObject:
   m_ObjectHideFlags: 0

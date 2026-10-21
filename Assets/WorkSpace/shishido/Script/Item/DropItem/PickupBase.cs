@@ -5,6 +5,8 @@ using static GameConst;
 
 public abstract class PickupBase : NetworkBehaviour, IPickupable
 {
+    protected GameObject appearanceOBJ;
+
     // Ammo
     public virtual void Initialize(AmmoType type, int _amount) { }
     //  BildingMat

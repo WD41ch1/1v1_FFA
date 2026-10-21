@@ -37,8 +37,12 @@ public class ItemPickup : PickupBase
     {
         if (itemData == null) return;
 
+        //  すでに生成されているなら
+        if (appearanceOBJ != null)
+            Destroy(appearanceOBJ);
+
         //  見た目オブジェクトの生成
-        Instantiate(itemData.AppearancePrefab, transform);
+        appearanceOBJ = Instantiate(itemData.AppearancePrefab, transform);
     }
 
 

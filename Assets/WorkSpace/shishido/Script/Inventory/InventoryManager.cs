@@ -1,3 +1,4 @@
+using FishNet;
 using NaughtyAttributes;
 using System;
 using System.Collections.Generic;
@@ -363,26 +364,54 @@ public class InventoryManager : MonoBehaviour
     }
 
     /// <summary>
-    /// アイテムの捨てる処理
+    /// アイテムをドロップする
     /// </summary>
-    public bool ItemDroping(int number, ItemData dropData)
+    public bool ItemDroping(
+        int number,
+        ItemData dropData,
+        ItemState state = null)
     {
-        GameObject obj;
+        // アイテムデータのチェック
+        if (dropData == null)
+        {
+            GameDebug.Warning(
+                "[InventoryManager] ドロップする ItemData が null です。");
+            return false;
+        }
 
-        ItemState state = GetItemState(number);
-        RemoveItem(number);
+        // ドロップ対象の状態を取得
+        ItemState sourceState = state ?? GetItemState(number);
 
-        //  ドロップオブジェクトを生成
-        obj = Instantiate(
+        // 状態をコピー
+        ItemState dropState = CopyItemState(sourceState);
+
+        // ドロップオブジェクトを生成
+        GameObject obj = Instantiate(
             ItemdropObj,
             transform.position + transform.forward * 5f,
             Quaternion.identity);
 
-        //  ドロップアイテム(オブジェクト)の初期化
+        // ItemPickupの初期化
         ItemPickup item = obj.GetComponent<ItemPickup>();
-        item.Initialize(dropData, state);
 
-        //  通知
+        if (item == null)
+        {
+            Destroy(obj);
+
+            GameDebug.Warning(
+                "[InventoryManager] ItemPickup が見つかりません。");
+            return false;
+        }
+
+        item.Initialize(dropData, dropState);
+
+        // ネットワーク上にスポーン
+        InstanceFinder.ServerManager.Spawn(obj);
+
+        // インベントリからアイテムを削除
+        RemoveItem(number);
+
+        // UIなどへ通知
         OnChangeInventoryItem?.Invoke(
             number,
             dropData,
@@ -391,34 +420,16 @@ public class InventoryManager : MonoBehaviour
         return true;
     }
 
-    /// <summary>
-    /// アイテムの捨てる処理(ステートを新たに設定)
-    /// </summary>
-    public bool ItemDroping(int number, ItemData dropData, ItemState _state)
+    private ItemState CopyItemState(ItemState source)
     {
-        GameObject obj;
+        if (source == null)
+            return null;
 
-        ItemState state = _state;
-        //  インベントリ内部のアイテムデータを削除
-        RemoveItem(number);
+        if (source is WeaponState weaponState)
+            return new WeaponState(weaponState);
 
-        //  ドロップオブジェクトを生成
-        obj = Instantiate(
-            ItemdropObj,
-            transform.position + transform.forward * 5f,
-            Quaternion.identity);
-
-        //  ドロップアイテム(オブジェクト)の初期化
-        ItemPickup item = obj.GetComponent<ItemPickup>();
-        item.Initialize(dropData, state);
-
-        //  通知
-        OnChangeInventoryItem?.Invoke(
-            number,
-            dropData,
-            ResourceChangeType.Removed);
-
-        return true;
+        // 通常の ItemState は、現時点ではコピー方法が不明
+        return source;
     }
 
     public ItemData GetItem(int slotNumber)

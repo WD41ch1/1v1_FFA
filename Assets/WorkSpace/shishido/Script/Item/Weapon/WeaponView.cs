@@ -4,8 +4,6 @@ using UnityEngine;
 
 public class WeaponView : MonoBehaviour
 {
-    [Header("アイテムの見た目Prefab")]
-    public GameObject AppearancePrefab;
 
     public Animator animator;
 
