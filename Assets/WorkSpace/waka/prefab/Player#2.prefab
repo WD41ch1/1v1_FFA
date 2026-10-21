@@ -2502,6 +2502,7 @@ GameObject:
   - component: {fileID: -4276482007876789280}
   - component: {fileID: 4706580476848323470}
   - component: {fileID: 4584395192960155721}
+  - component: {fileID: 6857711227472991078}
   m_Layer: 0
   m_Name: Player#2
   m_TagString: Untagged
@@ -3328,6 +3329,29 @@ MonoBehaviour:
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 3890100773366206426}
   _networkObjectCache: {fileID: 0}
+--- !u!114 &6857711227472991078
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7999714468741671046}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d00ab5a06324b8841a4e98248784788b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 3890100773366206426}
+  _networkObjectCache: {fileID: 0}
+  animator: {fileID: 763599559602741837}
+  layerName: UpperBody
+  pistolState: PistolAim
+  assaultState: HumanF@AssaultRifle_Aim01
+  pickaxeState: PickaxeHold
+  transitionTime: 0.15
+  sendRate: 15
+  remoteSmoothTime: 0.08
 --- !u!1 &8136727905988223057
 GameObject:
   m_ObjectHideFlags: 0
