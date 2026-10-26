@@ -28,6 +28,8 @@ public class EquipmentManager : NetworkBehaviour
     //  生成したアイテム
     private GameObject createItem;
 
+    private ItemView currentItemView;
+
     //  装備通知処理
     public event Action<int> OnEquipChanged;
 
@@ -123,12 +125,13 @@ public class EquipmentManager : NetworkBehaviour
             return false;
 
         //  すでに何か装備していたら
-        if (currentItem != null)
+        if (currentItem != null || createItem != null)
             UnEquip();
 
         AppearanceModelData modelData = null;
 
-        if (!ItemModelManager.Instance.TryGetModelData(data.itemId, out modelData))
+        if (createItem != null ||
+            !ItemDataManager.Instance.TryGetModelData(data.itemId, out modelData))
             return false;
 
         GameObject prefab = modelData.AppearancePrefab;
@@ -137,18 +140,33 @@ public class EquipmentManager : NetworkBehaviour
         //  アイテムの生成
         createItem = Instantiate(prefab, itemSocket);
 
-        //  アイテムが生成できなかった
+        //  アイテムmodelが生成できなかった
         if (createItem == null)
             return false;
 
-        //  装備アイテムの初期化
-        bool success = true;
-           
+        currentItemView = createItem.GetComponent<ItemView>();
+        if (currentItemView == null) return false;
 
-        GameDebug.Log($"アイテム生成初期：[{success}]");
+        ItemProcessData processData = null;
+
+        if (!ItemDataManager.Instance.TryGetProcessData(data.itemId, out processData))
+            return false;
+
+        if (processData.processPrefab == null) return false;
+
+        // Playerの子として処理クラスを生成
+        currentItem = Instantiate(processData.processPrefab, transform);
+
+        if (currentItem == null) return false;
+
+        Spawn(currentItem);
+
+        // 武器の使用者・性能データ・所持状態を初期化
+        bool success = currentItem.Initialize(owner, data, currentItemView, state);
+
+        GameDebug.Log($"アイテム生成初期化：[{success}]");
 
         return success;
-
 
 #else
 
@@ -191,10 +209,44 @@ public class EquipmentManager : NetworkBehaviour
     /// </summary>
     public void UnEquip()
     {
-        if (createItem == null) return;
+        if (createItem != null)
+        {
+            Destroy(createItem.gameObject);
+            createItem = null;
+        }
 
-        Destroy(createItem);
-        createItem = null;
+        if (currentItem != null)
+        {
+            RemoveCurrentItem();
+        }
+        currentItemView = null;
+
+    }
+
+    /// <summary>
+    /// 現在装備している武器を破棄する
+    /// サーバー側で実行する
+    /// </summary>
+    [Server]
+    private void RemoveCurrentItem()
+    {
+        if (currentItem == null)
+            return;
+
+        NetworkObject networkObject =
+            currentItem.GetComponent<NetworkObject>();
+
+        if (networkObject != null &&
+            networkObject.IsSpawned)
+        {
+            networkObject.Despawn();
+        }
+        else
+        {
+            Debug.LogWarning(
+                "武器がNetworkObjectとしてSpawnされていません。");
+        }
+
         currentItem = null;
     }
 

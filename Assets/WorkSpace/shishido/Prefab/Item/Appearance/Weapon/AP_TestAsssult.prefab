@@ -40,7 +40,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5844286179386119151}
-  - component: {fileID: 132834915973845775}
+  - component: {fileID: 6746604637827077098}
   m_Layer: 0
   m_Name: AP_TestAsssult
   m_TagString: Untagged
@@ -64,7 +64,7 @@ Transform:
   - {fileID: 736034828715390337}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
---- !u!114 &132834915973845775
+--- !u!114 &6746604637827077098
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -73,13 +73,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 6648396557018715953}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8dd50cc5d39bc0b4baef94b692e48879, type: 3}
+  m_Script: {fileID: 11500000, guid: 7fbfce747a739b044b99129840d60ce1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   animator: {fileID: 0}
-  muzzlePoint: {fileID: 763606483536257226, guid: aa48a5f6b4dae674ea4fb973ed1c9444, type: 3}
-  shellPoint: {fileID: 5675259757439324171, guid: aa48a5f6b4dae674ea4fb973ed1c9444, type: 3}
-  adsPoint: {fileID: 6963688038588801417, guid: aa48a5f6b4dae674ea4fb973ed1c9444, type: 3}
+  muzzlePoint: {fileID: 763606483536257226}
+  shellPoint: {fileID: 763606483536257226}
+  adsPoint: {fileID: 7305038153009359896}
   muzzleFlashPrefab: {fileID: 0}
   hitEffectPrefab: {fileID: 0}
   projectilePrefab: {fileID: 5111063274538450963, guid: d6af723573a39994b9011fa5c0f4db63, type: 3}
@@ -135,6 +135,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -1291714892718091649, guid: 58566b89388137941a5875a7e21f415e, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.009689067
+      objectReference: {fileID: 0}
+    - target: {fileID: -1291714892718091649, guid: 58566b89388137941a5875a7e21f415e, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.10631928
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 58566b89388137941a5875a7e21f415e, type: 3}
       propertyPath: m_Name
       value: Rifle 1
@@ -150,5 +158,15 @@ PrefabInstance:
 --- !u!4 &736034828715390337 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 58566b89388137941a5875a7e21f415e, type: 3}
+  m_PrefabInstance: {fileID: 989756983732605546}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &763606483536257226 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8708639282089872736, guid: 58566b89388137941a5875a7e21f415e, type: 3}
+  m_PrefabInstance: {fileID: 989756983732605546}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &7305038153009359896 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -1667202930860327310, guid: 58566b89388137941a5875a7e21f415e, type: 3}
   m_PrefabInstance: {fileID: 989756983732605546}
   m_PrefabAsset: {fileID: 0}

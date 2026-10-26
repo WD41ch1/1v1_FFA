@@ -68,10 +68,18 @@ public class PlayerHealth : NetworkBehaviour
     {
         base.OnStartNetwork();
 
+    }
+
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+
         //  Actoinの登録
         //  ※SyncVar軽油なので、値が変わると自動で更新される
         currentHealth.OnChange += HealthChanged;
         currentShield.OnChange += ShieldChanged;
+
+        UIUpdateRequest();
     }
 
     public override void OnStopNetwork()

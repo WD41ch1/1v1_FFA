@@ -2,9 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ItemModelManager : MonoBehaviour
+public class ItemDataManager : MonoBehaviour
 {
-    public static ItemModelManager Instance { get; private set; }
+    public static ItemDataManager Instance { get; private set; }
 
     [Header("アイテムの見た目データ")]
     [SerializeField]
@@ -12,6 +12,13 @@ public class ItemModelManager : MonoBehaviour
 
     // IDから見た目データを取得するための辞書
     private Dictionary<int, AppearanceModelData> modelDataDictionary = new();
+
+    [Header("アイテムの内部処理データ")]
+    [SerializeField]
+    private List<ItemProcessData> processDataList = new();
+
+    // IDから見た目データを取得するための辞書
+    private Dictionary<int, ItemProcessData> processlDataDictionary = new();
 
     private void Awake()
     {
@@ -31,29 +38,53 @@ public class ItemModelManager : MonoBehaviour
         BuildDictionary();
     }
 
+
     private void BuildDictionary()
     {
         modelDataDictionary.Clear();
+        processlDataDictionary.Clear();
 
         foreach (AppearanceModelData data in modelDataList)
         {
             if (data == null)
             {
-                Debug.LogWarning(
+                GameDebug.Warning(
                     "ItemModelManager: ItemModelDataが未登録です。");
                 continue;
             }
 
             if (modelDataDictionary.ContainsKey(data.itemId))
             {
-                Debug.LogError(
-                    $"ItemModelDataのIDが重複しています: {data.itemId}");
+                GameDebug.Error(
+                    $"ItemModelManager: ItemModelDataのIDが重複しています: {data.itemId}");
                 continue;
             }
 
             modelDataDictionary.Add(data.itemId, data);
         }
+
+        foreach (ItemProcessData data in processDataList)
+        {
+            if (data == null || data.processPrefab == null)
+            {
+                GameDebug.Warning(
+                    "ItemModelManager: ItemProcessDataもしくはPrefabが未登録です。");
+                continue;
+            }
+
+            if (processlDataDictionary.ContainsKey(data.itemId))
+            {
+                GameDebug.Error(
+                    $"ItemModelManager: ItemProcessDataのIDが重複しています: {data.itemId}");
+                continue;
+            }
+
+            processlDataDictionary.Add(data.itemId, data);
+        }
     }
+
+    #region ItemModel
+
 
     /// <summary>
     /// IDから見た目データを取得
@@ -65,6 +96,23 @@ public class ItemModelManager : MonoBehaviour
         return modelDataDictionary.TryGetValue(
             itemId, out modelData);
     }
+
+    #endregion
+
+    #region ItemProcess
+
+    /// <summary>
+    /// IDから内部データを取得
+    /// </summary>
+    public bool TryGetProcessData(
+        int itemId,
+        out ItemProcessData modelData)
+    {
+        return processlDataDictionary.TryGetValue(
+            itemId, out modelData);
+    }
+
+    #endregion
 
     private void OnDestroy()
     {

@@ -238,6 +238,8 @@ public class InventoryUI : UIBase, IDropHandler
         List<IS_Item> list
        )
     {
+        if (list[slotNum] == null) return;
+
         //  入っているデータを削除
         list[slotNum].DeleteData();
 

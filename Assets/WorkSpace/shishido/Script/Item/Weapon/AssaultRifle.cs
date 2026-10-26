@@ -5,12 +5,13 @@ public class AssaultRifle : WeaponBase
     public override bool Initialize(
         PlayerManager _owner,
         ItemData _itemData,
+        ItemView _itemView,
         InventoryItem _itemState)
     {
         if (_owner == null || _itemData == null || _itemState == null)
             return false;
 
-        weaponView = GetComponent<WeaponView>();
+        weaponView = _itemView;
 
         if (weaponView == null)
             return false;

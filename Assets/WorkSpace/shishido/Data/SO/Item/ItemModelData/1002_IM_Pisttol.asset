@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5353aee40483b8a44a92d919cec2ca45, type: 3}
-  m_Name: 2001_HealthPotion
+  m_Name: 1002_IM_Pisttol
   m_EditorClassIdentifier: 
-  itemId: 2001
-  AppearancePrefab: {fileID: 625242516236402489, guid: 89346ec0623e8aa4d9ce4935556eabd8, type: 3}
+  itemId: 1002
+  AppearancePrefab: {fileID: 3763604498974455608, guid: 372dab9382c36534ea6722db15fa0b4e, type: 3}

@@ -1,14 +1,13 @@
 using FishNet;
+using FishNet.Object;
 using NaughtyAttributes;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.InputSystem.LowLevel;
 using static GameConst;
 
-public class InventoryManager : MonoBehaviour
+public class InventoryManager : NetworkBehaviour
 {
     [InfoBox("インベントリ内部の処理" +
         "建材、弾、アイテムを管理している場所です")]
@@ -28,6 +27,7 @@ public class InventoryManager : MonoBehaviour
     //  アイテムスロット
     //public List<ItemData> slots /*{ get; private set; } */= new();
 
+    [SerializeField]
     private List<InventoryItem> slots = new();
 
 

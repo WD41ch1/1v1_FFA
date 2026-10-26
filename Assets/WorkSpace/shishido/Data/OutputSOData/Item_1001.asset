@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Item_1001
   m_EditorClassIdentifier: 
   itemId: 1001
-  itemIcon: {fileID: 0}
+  itemIcon: {fileID: 21300000, guid: a1fb763fd8f998c45ba5cb432cb11280, type: 3}
   rarityBackGroundIcon: {fileID: 0}
   ItemName: "\u30A2\u30B5\u30EB\u30C8\u30E9\u30A4\u30D5\u30EB"
   itemType: 0

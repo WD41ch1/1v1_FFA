@@ -7,7 +7,8 @@ public class miniPotion : HealingItemBase
 {
     public override bool Initialize(
         PlayerManager _owner, 
-        ItemData _itemData, 
+        ItemData _itemData,
+        ItemView _itemView, 
         InventoryItem _itemState = null)
     {
         if (_owner == null || _itemData == null || _itemState == null)

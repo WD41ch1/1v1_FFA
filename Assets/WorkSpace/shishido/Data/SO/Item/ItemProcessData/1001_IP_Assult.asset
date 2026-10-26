@@ -9,8 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5353aee40483b8a44a92d919cec2ca45, type: 3}
-  m_Name: 1003_ShotGun
+  m_Script: {fileID: 11500000, guid: 30cfec77265ade4498058ff573c7f0d8, type: 3}
+  m_Name: 1001_IP_Assult
   m_EditorClassIdentifier: 
-  itemId: 1003
-  AppearancePrefab: {fileID: 1236257789494122, guid: df7f97ea49620774184dfc3fc3bfd157, type: 3}
+  itemId: 1001
+  processPrefab: {fileID: 6897773712280933368, guid: b39ee2acb8047a94fbdb29d0a0056691, type: 3}

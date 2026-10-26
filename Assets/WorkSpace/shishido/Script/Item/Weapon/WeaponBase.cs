@@ -11,7 +11,7 @@ public abstract class WeaponBase : ItemBase
 {
     protected WeaponData weaponData;
 
-    protected WeaponView weaponView;
+    protected ItemView weaponView;
 
     protected WeaponState weaponState;
 
@@ -24,6 +24,17 @@ public abstract class WeaponBase : ItemBase
 
     //  ADSができるかどうかのフラグ(例えば空中にいるときはADSできない など)
     protected bool canADS;
+
+    /// <summary>
+    /// 射撃処理
+    /// </summary>
+    public abstract void Fire();
+
+    /// <summary>
+    /// リロード処理
+    /// </summary>
+    public abstract void Reload();
+
 
     public override void UsePrimary(InputAction.CallbackContext context)
     {
@@ -52,18 +63,9 @@ public abstract class WeaponBase : ItemBase
         if (!owner.IsOwner)
             return;
 
-        owner.FireRequest();
+        OnFireRequest();
     }
 
-    /// <summary>
-    /// 射撃処理
-    /// </summary>
-    public abstract void Fire();
-
-    /// <summary>
-    /// リロード処理
-    /// </summary>
-    public abstract void Reload();
 
 
     public void StartFire()
@@ -90,6 +92,36 @@ public abstract class WeaponBase : ItemBase
         isFiring = false;
         CancelInvoke(nameof(FireRequest));
     }
+
+    public void OnFireRequest()
+    {
+        if (owner == null)
+            return;
+
+
+        if (IsServerInitialized)
+        {
+            FireInternal();
+        }
+        else if (IsClientInitialized)
+        {
+            FireServerRpc();
+        }
+
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void FireServerRpc()
+    {
+        FireInternal();
+    }
+
+    [Server]
+    private void FireInternal()
+    {
+        Fire();
+    }
+
 
     /// <summary>
     /// スコープを覗く(ADS)
@@ -157,7 +189,7 @@ public abstract class WeaponBase : ItemBase
         isReloading = false;
     }
 
-    protected virtual void BulletShoot(WeaponView weaponView, Vector3 target)
+    protected virtual void BulletShoot(ItemView weaponView, Vector3 target)
     {
         if (weaponView == null) return;
         Transform muzzlePoint = weaponView.muzzlePoint;
@@ -220,7 +252,7 @@ public abstract class WeaponBase : ItemBase
         return weaponData;
     }
 
-    public WeaponView GetWeaponView()
+    public ItemView GetWeaponView()
     {
         return weaponView;
     }

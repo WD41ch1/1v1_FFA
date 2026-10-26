@@ -45,7 +45,7 @@ public class ItemPickup : PickupBase
 
         AppearanceModelData modelData = null;
 
-        if (!ItemModelManager.Instance.TryGetModelData(itemData.itemId, out modelData))
+        if (!ItemDataManager.Instance.TryGetModelData(itemData.itemId, out modelData))
         {
             Despawn(this);
             return ;
@@ -59,8 +59,11 @@ public class ItemPickup : PickupBase
         }
 
 
-        appearanceOBJ = prefab;
+        appearanceOBJ = Instantiate(prefab, transform);
 
+        //if (appearanceOBJ == null) return;
+
+        //Spawn(appearanceOBJ);
 #else
 
         //  見た目オブジェクトの生成

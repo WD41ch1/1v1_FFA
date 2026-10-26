@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5353aee40483b8a44a92d919cec2ca45, type: 3}
-  m_Name: 1004_SubmachineGun
+  m_Name: 2001_IM_HealthPotion
   m_EditorClassIdentifier: 
-  itemId: 1004
-  AppearancePrefab: {fileID: 1095254202041702, guid: 305b23dabd215f84097ffb98baab9d69, type: 3}
+  itemId: 2001
+  AppearancePrefab: {fileID: 625242516236402489, guid: 89346ec0623e8aa4d9ce4935556eabd8, type: 3}

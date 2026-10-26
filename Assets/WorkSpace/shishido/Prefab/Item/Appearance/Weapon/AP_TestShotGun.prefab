@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4243371153570508}
   - component: {fileID: 33898383997488124}
   - component: {fileID: 23904141403194016}
-  - component: {fileID: -7456902686387774178}
+  - component: {fileID: 7750170902847172586}
   m_Layer: 0
   m_Name: AP_TestShotGun
   m_TagString: Untagged
@@ -87,7 +87,7 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &-7456902686387774178
+--- !u!114 &7750170902847172586
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -96,16 +96,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 1236257789494122}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8dd50cc5d39bc0b4baef94b692e48879, type: 3}
+  m_Script: {fileID: 11500000, guid: 7fbfce747a739b044b99129840d60ce1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   animator: {fileID: 0}
-  muzzlePoint: {fileID: 4851364115034366836, guid: 2af581842b170e84d9538062242679a8, type: 3}
-  shellPoint: {fileID: 0}
-  adsPoint: {fileID: 8939410225081786069, guid: 2af581842b170e84d9538062242679a8, type: 3}
+  muzzlePoint: {fileID: 9091181278638824519}
+  shellPoint: {fileID: 9091181278638824519}
+  adsPoint: {fileID: 4996469487512398}
   muzzleFlashPrefab: {fileID: 0}
   hitEffectPrefab: {fileID: 0}
-  projectilePrefab: {fileID: 5111063274538450963, guid: d6af723573a39994b9011fa5c0f4db63, type: 3}
+  projectilePrefab: {fileID: 7411188235904062972, guid: 23144aaa9e4f45544bd3e6e27e3e75b0, type: 3}
 --- !u!1 &1326079549577358
 GameObject:
   m_ObjectHideFlags: 0

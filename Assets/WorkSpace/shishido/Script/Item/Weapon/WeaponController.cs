@@ -6,7 +6,7 @@ public abstract class WeaponController : MonoBehaviour
 {
     protected PlayerManager owner;
     protected WeaponData weaponData;
-    protected WeaponView weaponView;
+    protected ItemView weaponView;
     protected ItemData ItemData;
     protected ItemState weaponState;
 

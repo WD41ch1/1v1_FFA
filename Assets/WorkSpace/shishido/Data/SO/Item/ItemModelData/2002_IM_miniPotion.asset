@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5353aee40483b8a44a92d919cec2ca45, type: 3}
-  m_Name: 1001_Assult
+  m_Name: 2002_IM_miniPotion
   m_EditorClassIdentifier: 
-  itemId: 1001
-  AppearancePrefab: {fileID: 6648396557018715953, guid: a4479a76cc5a5db4eb44043a4d1a1396, type: 3}
+  itemId: 2002
+  AppearancePrefab: {fileID: 3682867802421972290, guid: fc6cc7a0402095b4b886bb82240223a7, type: 3}

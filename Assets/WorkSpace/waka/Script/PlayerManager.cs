@@ -220,40 +220,6 @@ public class PlayerManager : NetworkBehaviour
 #endif
     }
 
-    #region Itemの使用処理関連
-
-    public void FireRequest()
-    {
-        if (!IsOwner)
-            return;
-
-
-        if (IsServerInitialized)
-        {
-            FireInternal();
-        }
-        else if (IsClientInitialized)
-        {
-            FireServerRpc();
-        }
-
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    private void FireServerRpc()
-    {
-        FireInternal();
-    }
-
-    [Server]
-    private void FireInternal()
-    {
-        //equipmentManager.GetcurrentItem() ? Fire();
-    }
-
-
-    #endregion
-
     /// <summary>
     /// 自身のカメラを生成
     /// </summary>

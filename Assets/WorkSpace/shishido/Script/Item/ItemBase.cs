@@ -4,7 +4,7 @@ using UnityEngine.InputSystem;
 using static GameConst;
 
 
-public abstract class ItemBase : MonoBehaviour
+public abstract class ItemBase : NetworkBehaviour
 {
     //  使用者
     protected PlayerManager owner;
@@ -14,7 +14,7 @@ public abstract class ItemBase : MonoBehaviour
     /// <summary>
     /// 初期化
     /// </summary>
-    public virtual bool Initialize(PlayerManager _owner, ItemData _itemData, InventoryItem _itemState) { return true; }
+    public virtual bool Initialize(PlayerManager _owner, ItemData _itemData,ItemView _itemView, InventoryItem _itemState) { return true; }
 
     public virtual void UsePrimary(InputAction.CallbackContext context) { }
     public virtual void UseSecondary(bool flag) { }
