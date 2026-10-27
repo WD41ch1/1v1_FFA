@@ -1,12 +1,14 @@
-using FishNet.Object;
 using UnityEngine;
-using UnityEngine.Windows;
 using static GameConst;
 
-public class CameraController :MonoBehaviour
+public class CameraController : MonoBehaviour
 {
+    // UI側から開閉状態を設定する。
+    public static bool InventoryOpen { get; set; }
+
     [SerializeField]
     private Camera playerCamera;
+
     public Camera PlayerCamera => playerCamera;
 
     public PlayerManager owner;
@@ -36,35 +38,35 @@ public class CameraController :MonoBehaviour
     public float closeCameraHeight = 2.2f;
     public float closeCameraBack = 0.4f;
 
-    // 現在の左右回転角度
     public float Yaw => yaw;
 
-    // 左右回転
     private float yaw;
-
-    // 上下回転
     private float pitch = 15f;
 
-    /// <summary>
-    /// 初期化
-    /// </summary>
-    /// <param name="_owner"></param>
+    // Domain Reloadを無効にしていても再生開始時にリセット。
+    [RuntimeInitializeOnLoadMethod(
+        RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetInventoryState()
+    {
+        InventoryOpen = false;
+    }
+
     public void Initialize(
         PlayerManager _owner,
-        Transform _target
-        )
+        Transform _target)
     {
         owner = _owner;
-        input = owner?.inputController;
+        input = owner != null ? owner.inputController : null;
         target = _target;
+
+        if (target != null)
+            yaw = target.eulerAngles.y;
     }
 
     private void Start()
     {
         if (target != null)
-        {
             yaw = target.eulerAngles.y;
-        }
 
         if (playerCamera != null)
             playerCamera.fieldOfView = DEFAULT_PLAYER_FOV;
@@ -72,21 +74,25 @@ public class CameraController :MonoBehaviour
 
     private void LateUpdate()
     {
-        if (target == null || input == null) return;
+        if (target == null || input == null)
+            return;
 
-        Vector2 lookInput = input.LookInput;
+        // インベントリ中はマウス入力で視点を回転させない。
+        if (!InventoryOpen)
+        {
+            Vector2 lookInput = input.LookInput;
 
-        yaw += lookInput.x * mouseSensitivity;
-        pitch -= lookInput.y * mouseSensitivity;
-        pitch = Mathf.Clamp(pitch, -80f, 80f);
+            yaw += lookInput.x * mouseSensitivity;
+            pitch -= lookInput.y * mouseSensitivity;
+            pitch = Mathf.Clamp(pitch, -80f, 80f);
+        }
 
-        Quaternion rotation = Quaternion.Euler(pitch, yaw, 0f);
+        Quaternion rotation =
+            Quaternion.Euler(pitch, yaw, 0f);
 
-        // プレイヤーの胸〜顔あたりを見る
         Vector3 targetPoint =
             target.position + Vector3.up * targetHeight;
 
-        // 本来置きたいカメラ位置
         Vector3 desiredPosition =
             targetPoint + rotation * offset;
 
@@ -99,7 +105,7 @@ public class CameraController :MonoBehaviour
 
         Vector3 finalPosition = desiredPosition;
 
-        // 壁に当たったら手前に寄せる
+        // インベントリ中もカメラの衝突判定は続ける。
         if (Physics.SphereCast(
             targetPoint,
             cameraRadius,
@@ -112,13 +118,11 @@ public class CameraController :MonoBehaviour
                 hit.point - direction * wallOffset;
         }
 
-        // カメラがプレイヤーに近すぎる場合
         float currentDistance =
             Vector3.Distance(targetPoint, finalPosition);
 
         if (currentDistance < minDistance)
         {
-            // カメラをプレイヤーの少し上＋少し後ろに逃がす
             Vector3 backDirection = -target.forward;
 
             finalPosition =
@@ -127,9 +131,8 @@ public class CameraController :MonoBehaviour
                 + backDirection * closeCameraBack;
         }
 
+        // プレイヤーへの追従は続ける。
         transform.position = finalPosition;
-
-        // プレイヤーの胸〜顔を見る
         transform.rotation = rotation;
     }
 
@@ -139,48 +142,32 @@ public class CameraController :MonoBehaviour
 
         if (Physics.Raycast(ray, out RaycastHit hit))
         {
-            // Rayが当たったオブジェクトからItemPickupを探す
-            IPickupable item = hit.collider.GetComponentInParent<IPickupable>();
+            IPickupable item =
+                hit.collider.GetComponentInParent<IPickupable>();
 
             if (item == null)
                 return;
 
-            // Playerとアイテムの距離を確認
             float distance = Vector3.Distance(
                 transform.position,
-                item.GetTransform().position
-            );
+                item.GetTransform().position);
 
             if (distance > PICKUP_DISTANCE)
                 return;
 
-            // 取得処理
             item.Pickup(owner);
-           // Destroy(item.GetTransform().gameObject);
-            
         }
     }
 
-    /// <summary>
-    /// 画面中央(クロスヘア)からRayを飛ばす
-    /// </summary>
-    /// <returns></returns>
     public Ray GetCrosshairRay()
     {
-        return playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+        return playerCamera.ViewportPointToRay(
+            new Vector3(0.5f, 0.5f, 0f));
     }
 
-    /// <summary>
-    /// クロスヘアで何を狙ってるかを取得
-    /// </summary>
-    /// <param name="hit"></param>
-    /// <returns></returns>
     public bool GetCrosshairTarget(out RaycastHit hit)
     {
-        //  画面の中央からレイを飛ばす
         Ray ray = GetCrosshairRay();
-
         return Physics.Raycast(ray, out hit);
     }
-
 }
