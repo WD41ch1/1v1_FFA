@@ -1,9 +1,6 @@
-using FishNet.Demo.AdditiveScenes;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerHealth : NetworkBehaviour
@@ -39,14 +36,10 @@ public class PlayerHealth : NetworkBehaviour
     /// <param name="maxShield">最大シールド</param>
     /// <param name="health">開始時の体力</param>
     /// <param name="shield">開始時のシールド</param>
-    public void Initialize(
+    public bool Initialize(
         float maxHealth, float maxShield,
         float health, float shield)
     {
-        //  Actoinの登録
-        //  ※SyncVar軽油なので、値が変わると自動で更新される
-        currentHealth.OnChange += HealthChanged;
-        currentShield.OnChange += ShieldChanged;
 
         //  最大値の設定
         MaxHealth = maxHealth;
@@ -56,7 +49,18 @@ public class PlayerHealth : NetworkBehaviour
         currentHealth.Value = Mathf.Clamp(health, 0, MaxHealth);
         currentShield.Value = Mathf.Clamp(shield, 0, MaxShield);
 
+        GameDebug.Log(
+            $"PlayerHealth[Initialize]," +
+            $"IsServerInitialized:{IsServerInitialized}," +
+            $"IsClientInitialized:{IsClientInitialized}," +
+            $"IsOwner:{IsOwner}," + 
+            $"HP:{currentHealth.Value}," +
+            $"Shield{currentShield.Value}");
+
+
         //  UIの更新
+
+        return true;
     }
 
     /// <summary>
@@ -65,7 +69,37 @@ public class PlayerHealth : NetworkBehaviour
     /// <param name="_myPlayer"></param>
     public void RegisterPlayer(PlayerManager _myPlayer)
     {
-       myPlayer = _myPlayer;
+        myPlayer = _myPlayer;
+    }
+
+    public override void OnStartNetwork()
+    {
+        base.OnStartNetwork();
+
+    }
+
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+
+        //  Actoinの登録
+        //  ※SyncVar軽油なので、値が変わると自動で更新される
+        currentHealth.OnChange += HealthChanged;
+        currentShield.OnChange += ShieldChanged;
+
+        GameDebug.Log(
+            $"PlayerHealth[OnStartClient]," +
+            $"IsServerInitialized:{IsServerInitialized}," +
+            $"HP:{currentHealth.Value}," +
+            $"Shield{currentShield.Value}");
+    }
+
+    public override void OnStopNetwork()
+    {
+        currentHealth.OnChange -= HealthChanged;
+        currentShield.OnChange -= ShieldChanged;
+
+        base.OnStopNetwork();
     }
 
     #endregion
@@ -77,6 +111,7 @@ public class PlayerHealth : NetworkBehaviour
     /// </summary>
     /// <param name="damageInfo"></param>
     /// <returns></returns>
+    [Server]
     public DamageResult TakeDamage(DamageInfo damageInfo)
     {
         DamageResult result = new DamageResult();
@@ -127,28 +162,51 @@ public class PlayerHealth : NetworkBehaviour
     }
 
     /// <summary>
-    /// HPの回復処理
+    /// HPの回復処理(server側)
     /// </summary>
     /// <param name="amount"></param>
+    [Server]
     public void Heal(float amount, float limit)
     {
         // 回復
         currentHealth.Value = Mathf.Min(currentHealth.Value + amount, limit);
-
     }
 
     /// <summary>
-    /// シールドの回復処理
+    /// シールドの回復処理(server側)
     /// </summary>
     /// <param name="amount"></param>
+    [Server]
     public void AddShield(float amount, float limit)
     {
         //  シールド所持フラグをあげる
         if (currentShield.Value <= 0 && !haveShield) haveShield = true;
         // 回復
         currentShield.Value = Mathf.Min(currentShield.Value + amount, limit);
-
     }
+
+    /// <summary>
+    /// HPの回復処理(Cliant側)
+    /// </summary>
+    /// <param name="amount"></param>
+    /// <param name="limit"></param>
+    [ServerRpc]
+    public void RequestHeal(float amount, float limit)
+    {
+        Heal(amount, limit);
+    }
+
+    /// <summary>
+    /// シールドの回復処理(Cliant側)
+    /// </summary>
+    /// <param name="amount"></param>
+    /// <param name="limit"></param>
+    [ServerRpc]
+    public void RequestAddShield(float amount, float limit)
+    {
+        AddShield(amount, limit);
+    }
+
 
     public void SetHealth(float amount)
     {
@@ -158,16 +216,22 @@ public class PlayerHealth : NetworkBehaviour
     {
     }
 
+
     /// <summary>
     /// 死亡処理
     /// </summary>
+    [ServerRpc]
     private void Die()
     {
         Debug.Log($"{lastAttacker?.name}に倒された");
 
-        this.gameObject.SetActive(false);
 
-        //Destroy(this.gameObject);
+        //  ダウンアニメーションor死亡アニメーション再生
+
+
+        //  シーンから消す
+        this.gameObject.SetActive(false);
+        //Despawn();
     }
 
     #endregion
@@ -177,7 +241,13 @@ public class PlayerHealth : NetworkBehaviour
     /// </summary>
     public void UIUpdateRequest()
     {
-        if (myPlayer == null || !myPlayer.IsInitialized) return;
+        if (!IsOwner ||
+            myPlayer == null || !myPlayer.IsInitializedInSever) return;
+
+        GameDebug.Log(
+    $"IsServerInitialized:{IsServerInitialized}," +
+    $"HP:{currentHealth.Value}," +
+    $"Shield{currentShield.Value}");
 
         float health = currentHealth.Value;
         float shield = currentShield.Value;
@@ -201,7 +271,7 @@ public class PlayerHealth : NetworkBehaviour
     {
         if (!IsOwner ||
             myPlayer == null ||
-            !myPlayer.IsInitialized)
+            !myPlayer.IsInitializedInSever)
             return;
 
         // 自分のHP UIだけ更新
@@ -222,7 +292,7 @@ public class PlayerHealth : NetworkBehaviour
     {
         if (!IsOwner ||
             myPlayer == null ||
-            !myPlayer.IsInitialized)
+            !myPlayer.IsInitializedInSever)
             return;
 
         // 自分のHP UIだけ更新

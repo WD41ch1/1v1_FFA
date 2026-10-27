@@ -8,21 +8,32 @@ public class Pickaxe : ItemBase
     private PickaxeData pickaxeData;
     private PickaxeView pickaxeView;
 
-    public override void Initialize(
-        PlayerManager _owner,
-        ItemData itemData,
-        ItemState state = null)
+    public override bool Initialize(
+        PlayerManager _owner, 
+        ItemData _itemData,
+        ItemView _itemView, 
+        InventoryItem _itemState = null)
     {
-        if (itemData is PickaxeData)
+        if (_owner == null || _itemData == null || _itemState == null)
+            return false;
+
+        pickaxeView = GetComponent<PickaxeView>();
+
+        if (pickaxeView == null)
+            return false;
+
+        if (_itemData is PickaxeData)
         {
-            pickaxeData = (PickaxeData)itemData;
+            pickaxeData = (PickaxeData)_itemData;
         }
+        else
+            return false;
 
         //  使用者情報
         this.owner = _owner;
 
-        pickaxeView = GetComponent<PickaxeView>();
-
+        return true;
+        
     }
 
     public override void UsePrimary(InputAction.CallbackContext context)

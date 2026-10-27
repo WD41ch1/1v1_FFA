@@ -1,19 +1,20 @@
 using FishNet.Object;
-using System.Threading.Tasks;
-using Unity.VisualScripting;
-using Cysharp.Threading.Tasks;
 using UnityEngine;
 using static GameConst;
+using static CheckReferenceUtility;
+using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
+using System.Threading;
 
 /// <summary>
 /// Playerについているclassを管理するクラス
 /// </summary>
 public class PlayerManager : NetworkBehaviour
 {
-    [SerializeField, Header("ローカル上でのデバッグ")]
-    private bool isLocalDebug = false;
-
     #region SerializeField
+
+    [SerializeField, Header("PlayerのLogを有効にするフラグ(Editorのみ操作可能)")]
+    private bool isShowLog = true;
 
     [Header("Cameraの生成")]
     [SerializeField] private Camera _cameraPrefab;
@@ -27,6 +28,8 @@ public class PlayerManager : NetworkBehaviour
     [SerializeField]
     private PlayerType playerType;
 
+    private CancellationToken _token;
+
     #endregion
 
     #region public
@@ -39,7 +42,8 @@ public class PlayerManager : NetworkBehaviour
     /// <summary>
     /// 初期化が完了しているかのフラグ
     /// </summary>
-    public bool IsInitialized { get; private set; } = false;
+    public bool IsInitializedInSever { get; private set; } = false;
+    public bool IsInitializedInClient { get; private set; } = false;
 
     #endregion
 
@@ -47,6 +51,9 @@ public class PlayerManager : NetworkBehaviour
 
     //  生成されるカメラの格納場所
     private Camera _camera = null;
+
+    //  生成されるCanvasの格納場所
+    private GameObject _playerCanvas = null;
 
     #endregion
 
@@ -60,7 +67,7 @@ public class PlayerManager : NetworkBehaviour
     public EquipmentManager equipmentManager;
     public InventoryManager inventoryManager;
 
-    [Header("UI")]      
+    [Header("UI")]
     // 全体処理用変数
     public IGuiInitialize characterGUI;
     //  Player側のGUIManager
@@ -68,17 +75,81 @@ public class PlayerManager : NetworkBehaviour
 
     #endregion
 
+    #region override
+    public override void OnStartServer()
+    {
+        base.OnStartServer();
+
+        ServerSideInitialize();
+    }
+
+    /// <summary>
+    /// ※このオブジェクトが生成されると、このメソッドはクライアント側で実行されます。
+    /// </summary>
+    public override void OnStartClient()
+    {
+        GameDebug.Client("OnStartClient", isShowLog);
+        // この処理は、このオブジェクトがインスタンス化されているすべてのクライアントで実行されるため、
+        // 自分たちが管理するオブジェクトに対してのみ、カメラをインスタンス化すればよい。        if (IsOwner)
+        if (IsOwner)
+        {
+            CliantSideInitialize();
+        }
+    }
+
+    #endregion
+
     #region Initialize
+
+    private void Awake()
+    {
+        _token = this.GetCancellationTokenOnDestroy();
+
+        //  Playerのすべてのクラスを取得
+        GetPlayerClass();
+        //  Playerのすべてのクラスに自身を登録
+        Register();
+    }
+
+    private bool ServerSideInitialize()
+    {
+        //  Playerのすべてのクラスを初期化
+        UniTask task = PlayerClassInitialize();
+
+        IsInitializedInSever = true;
+
+        return true;
+    }
+
+    private bool CliantSideInitialize()
+    {
+        //  PlayerCanvasの生成
+        if (!CreateGUI())
+        {
+            GameDebug.Warning("CliantSideInitialize:Canvasが生成できませんでした。");
+        }
+        //  Cameraの生成
+        if (!CreateMyCamera())
+        {
+            GameDebug.Warning("CliantSideInitialize:Cameraが生成できませんでした。");
+            return false;
+        }
+
+
+        //  初期化処理
+        controller.Initialize(_camera.transform);
+        equipmentManager?.Initialize();
+
+        IsInitializedInClient = true;
+
+        return true;
+    }
 
     /// <summary>
     /// 初期化
     /// </summary>
     private void Initialize()
     {
-        //  Playerのすべてのクラスを初期化
-        PlayerClassInitialize();
-
-        IsInitialized = true;
 
         //  status管理側からのUI更新要求
         playerHealth?.UIUpdateRequest();
@@ -111,23 +182,36 @@ public class PlayerManager : NetworkBehaviour
     /// <summary>
     /// Playerについているすべてのクラスの初期化
     /// </summary>
-    private void PlayerClassInitialize()
+    private async UniTask PlayerClassInitialize()
     {
+        // PlayerHealthの取得待ち
+        if (!await WaitForReference(
+            () => playerHealth, nameof(playerHealth), 3f, _token))
+        {
+            return;
+        }
+
+        if (_camera == null)
+        {
+            // Cameraの取得待ち
+            if (!await WaitForReference(
+                () => _camera, nameof(_camera), 3f, _token))
+            {
+                return;
+            }
+        }
+
         // Player・Bot初期化
         switch (playerType)
         {
             case PlayerType.Player:
                 //  statusの初期化
-                playerHealth?.Initialize(
+                playerHealth.Initialize(
                     PLAYER_MAXHEALTH,
                     PLAYER_MAXSHIELDE,
                     100,
                     100
                     );
-
-                //  初期化処理
-                controller.Initialize(_camera.transform);
-                equipmentManager?.Initialize();
 
                 break;
             case PlayerType.Bot:
@@ -146,83 +230,97 @@ public class PlayerManager : NetworkBehaviour
         characterGUI?.Initialize();
     }
 
+
+    #endregion
+
+    #region 生成関数
+
     /// <summary>
     /// Canvasの生成or取得
     /// </summary>
-    private void CreateGUI()
+    private bool CreateGUI()
     {
+        //  すでにあるなら飛ばす
+        if (_playerCanvas != null)
+            return false;
+
+        if (!ReferenceCheck(canvasPrefab, "canvasPrefab"))
+            return false;
+
         // UIを登録
         switch (playerType)
         {
             case PlayerType.Player:
-                GameObject go = Instantiate(canvasPrefab);
-                characterGUI = go.GetComponentInChildren<GUIManager>();
+
+                //  canvasPrefabの生成
+                _playerCanvas = Instantiate(canvasPrefab);
+
+                //  生成チェック
+                if (!ReferenceCheck(_playerCanvas, "_playerCanvas"))
+                    return false;
+
+                GameDebug.Log(
+                    $"[CreateGUI]IsServerInitialized:{IsServerInitialized}," +
+                    $"生成したCanvas: {_playerCanvas.name}," +
+                    $"CanvasのPrefab: {canvasPrefab.name}," +
+                    $"CanvasのActive: {_playerCanvas.activeInHierarchy}"
+                    , isShowLog);
+
+                characterGUI = _playerCanvas.GetComponentInChildren<GUIManager>();
                 break;
             case PlayerType.Bot:
                 characterGUI = GetComponentInChildren<BOTHealthBer>();
                 break;
         }
 
-        characterGUI.RegisterPlayer(this);
-    }
+        if (characterGUI == null)
+            GameDebug.Error("GUIManagerがNULLです！", isShowLog, this);
 
-    #endregion
-    private void Awake()
-    {
-        //  Playerのすべてのクラスを取得
-        GetPlayerClass();
-        //  Playerのすべてのクラスに自身を登録
-        Register();
-    }
+        characterGUI?.RegisterPlayer(this);
 
-    /// <summary>
-    /// ※このオブジェクトが生成されると、このメソッドはクライアント側で実行されます。
-    /// </summary>
-    public override void OnStartClient()
-    {
-        Debug.Log("OnStartClient");
-        // この処理は、このオブジェクトがインスタンス化されているすべてのクライアントで実行されるため、
-        // 自分たちが管理するオブジェクトに対してのみ、カメラをインスタンス化すればよい。        if (IsOwner)
-        if (IsOwner)
-        {
-            //  PlayerCanvasの生成
-            CreateGUI();
-            //  
-            CreateMyCamera();
-            //  初期化
-            Initialize();
-        }
-    }
-
-
-    void Start()
-    {
-#if UNITY_EDITOR
-        Debug.Log("Start");
-        //  ローカルデバッグ時のカメラ生成
-        if (isLocalDebug)
-        {
-            CreateMyCamera();
-            //  初期化
-            Initialize();
-        }
-#endif
+        return true;
     }
 
     /// <summary>
     /// 自身のカメラを生成
     /// </summary>
-    private void CreateMyCamera()
+    private bool CreateMyCamera()
     {
-        //  すでに生成されていれば
-        if (_camera != null) return;
-        //  カメラ生成
-        _camera =
-            Instantiate(_cameraPrefab, _cameraHolder.position, _cameraHolder.rotation, _cameraHolder);
-        //  コンポーネント取得 + 初期化
-        cameraController = _camera.gameObject.GetComponent<CameraController>();
-        cameraController?.Initialize(this, transform);
+        //  すでにあるなら飛ばす
+        if (_camera != null)
+            return false;
+
+        //  リファレンスチェック
+        if (!ReferenceCheck(_cameraPrefab, "CameraPrefab") ||
+            !ReferenceCheck(_cameraHolder, "CameraHolder"))
+            return false;
+
+        //  生成
+        _camera = Instantiate(
+            _cameraPrefab,
+            _cameraHolder.position,
+            _cameraHolder.rotation,
+            _cameraHolder
+        );
+
+        if (!ReferenceCheck(_camera, "Camera"))
+            return false;
+
+        cameraController = _camera.GetComponent<CameraController>();
+
+        if (!ReferenceCheck(cameraController, "CameraController"))
+            return false;
+
+        //  初期化
+        cameraController.Initialize(this, transform);
+
+        return true;
     }
+
+
+    #endregion
+
+    #region 要求関数
 
     /// <summary>
     /// 弾消費要求
@@ -259,5 +357,21 @@ public class PlayerManager : NetworkBehaviour
             amount,
             out approvalValue);
     }
+
+    #endregion
+
+    #region checker
+
+    public bool ReferenceCheck(Object target, string objectName)
+    {
+        return CheckReference(target, objectName, isShowLog, this);
+    }
+
+    private bool MyObjectCheck()
+    {
+        return (ReferenceCheck(_camera, "_camera") && ReferenceCheck(_playerCanvas, "_playerCanvas"));
+    }
+
+    #endregion
 
 }

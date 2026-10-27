@@ -1,12 +1,13 @@
+using FishNet;
+using FishNet.Object;
 using NaughtyAttributes;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
-using UnityEngine.InputSystem.LowLevel;
 using static GameConst;
 
-public class InventoryManager : MonoBehaviour
+public class InventoryManager : NetworkBehaviour
 {
     [InfoBox("インベントリ内部の処理" +
         "建材、弾、アイテムを管理している場所です")]
@@ -24,7 +25,11 @@ public class InventoryManager : MonoBehaviour
     //=======================================================
 
     //  アイテムスロット
-    public List<ItemData> slots /*{ get; private set; } */= new();
+    //public List<ItemData> slots /*{ get; private set; } */= new();
+
+    [SerializeField]
+    private List<InventoryItem> slots = new();
+
 
     //  弾薬スロット
     public Dictionary<AmmoType, int> ammoDict =
@@ -37,7 +42,8 @@ public class InventoryManager : MonoBehaviour
     //=======================================================
 
     //  武器の状態を保存しておくリスト
-    public List<ItemState> itemStates = new();
+    //public List<ItemState> itemStates = new();
+
 
     //=======================================================
     //EquipmentManager側装備通知処理
@@ -60,7 +66,6 @@ public class InventoryManager : MonoBehaviour
         for (int i = 0; i < ITEM_SLOT_MAX; i++)
         {
             slots.Add(null);
-            itemStates.Add(null);
         }
     }
 
@@ -90,23 +95,28 @@ public class InventoryManager : MonoBehaviour
     /// スタック可能なアイテムのスロット番号を取得
     /// </summary>
     private bool IsAvailableStackSlot(
-        ItemData item,
-        out int slotNum)
+    ItemData item,
+    out int slotNum)
     {
         slotNum = -1;
 
+        if (item == null || item.MaxStack <= 1)
+            return false;
+
         for (int i = 0; i < slots.Count; i++)
         {
-            //  違うアイテムなら次へ
-            if (slots[i] != item)
+            InventoryItem slot = slots[i];
+
+            // 空きスロットなら次へ
+            if (slot == null || slot.data == null)
                 continue;
 
-            //  Stateが存在しないなら次へ
-            if (itemStates[i] == null)
+            // 違うアイテムなら次へ
+            if (slot.data != item)
                 continue;
 
-            //  スタックに空きがあるなら
-            if (itemStates[i].currentStack < item.maxStack)
+            // スタックに空きがあるなら
+            if (slot.stackCount < item.MaxStack)
             {
                 slotNum = i;
                 return true;
@@ -117,125 +127,106 @@ public class InventoryManager : MonoBehaviour
     }
 
     /// <summary>
-    /// アイテムを拾う（追加)
+    /// アイテムを拾う（追加）
     /// </summary>
-    /// <param name="item"></param>
-    public void AddItem(ItemData item, ItemState state = null)
+    /// <param name="item">追加するアイテムの設定データ</param>
+    /// <param name="state">引き継ぐアイテム状態（任意）</param>
+    public bool AddItem(ItemData item, ItemState state = null)
     {
-        // 武器以外かつスタック可能なスロットが存在する
-        if (item.itemType != BerItemType.Weapon
-            && IsAvailableStackSlot(item, out int index))
+        // ItemDataのチェック
+        if (item == null)
         {
-            //  取ったアイテムがすでにstateを持っているか
-            if (state != null)
+            GameDebug.Warning(
+                "[InventoryManager] 追加する ItemData が null です。");
+            return false;
+        }
+
+        // スタック可能なら、既存スロットへの追加を試みる
+        if (item.MaxStack > 1
+            && IsAvailableStackSlot(item, out int stackIndex))
+        {
+            InventoryItem inventoryItem = slots[stackIndex];
+
+            // スタック数を増やす
+            inventoryItem.stackCount++;
+
+            // 既存の状態（ItemState）は維持する
+            SlotUpdateRequest(stackIndex, item.itemType);
+
+            OnChangeInventoryItem?.Invoke(
+                stackIndex,
+                item,
+                ResourceChangeType.Updated);
+
+            return true;
+        }
+
+        // 新しいスロットを探す
+        if (!isAvailableSlot(out int availableSlotNum))
+        {
+            GameDebug.Warning(
+                $"[InventoryManager] 空きスロットがありません: {item.ItemName}");
+            return false;
+        }
+
+        // 新しいInventoryItemを作成
+        InventoryItem inventoryItemNew = new InventoryItem(item);
+
+        // ドロップなどから状態を引き継ぐ場合
+        if (state != null)
+        {
+            // 武器には WeaponState が必要
+            if (item is WeaponData)
             {
-                int stack =
-                    itemStates[index].currentStack
-                    + state.currentStack;
-
-                //  スタック上限に達した場合
-                if (item.maxStack <= stack)
+                if (state is WeaponState)
                 {
-                    int overStack = stack - item.maxStack;
-
-                    itemStates[index].currentStack = item.maxStack;
-
-                    ItemState newState =
-                        new ItemState(item.itemType, overStack, index);
-
-                    // 超過分はドロップ
-                    ItemDroping(index, item, newState);
+                    inventoryItemNew.state = state;
                 }
                 else
                 {
-                    itemStates[index].currentStack = stack;
+                    GameDebug.Warning(
+                        "[InventoryManager] 武器に WeaponState 以外が渡されました。" +
+                        "初期状態を維持します。");
                 }
             }
             else
             {
-                itemStates[index].currentStack++;
+                // 武器以外は ItemState を引き継ぐ
+                if (state is ItemState && state is not WeaponState)
+                {
+                    inventoryItemNew.state = state;
+                }
+                else
+                {
+                    GameDebug.Warning(
+                        "[InventoryManager] アイテムの状態型が一致しません。" +
+                        "初期状態を維持します。");
+                }
             }
-
-            SlotUpdateRequest(index, item.itemType);
-
-            return;
         }
+        // スロットに登録
+        slots[availableSlotNum] = inventoryItemNew;
 
-        // ここから「新しいスロットに入れる処理」
-        if (isAvailableSlot(out int availableSlotNum))
-        {
-            slots[availableSlotNum] = item;
+        // UIなどへ通知
+        OnChangeInventoryItem?.Invoke(
+            availableSlotNum,
+            item,
+            ResourceChangeType.AddedNew);
 
-            HaveItemState(
-                availableSlotNum,
-                item,
-                state
-            );
+        OnAddHotbarItem?.Invoke(availableSlotNum);
 
-            OnChangeInventoryItem?.Invoke(
-                availableSlotNum,
-                slots[availableSlotNum],
-                ResourceChangeType.AddedNew
-            );
+        SlotUpdateRequest(availableSlotNum, item.itemType);
 
-            OnAddHotbarItem?.Invoke(availableSlotNum);
-
-            SlotUpdateRequest(
-                availableSlotNum,
-                item.itemType
-            );
-
-            return;
-        }
-
+        return true;
     }
 
     #region 基本アイテム系
 
-    /// <summary>
-    /// ItemStateを持っているかの確認
-    /// </summary>
-    /// <param name="listNum"></param>
-    /// <param name="item"></param>
-    /// <param name="state"></param>
-    private void HaveItemState(
-        int listNum,
-        ItemData item,
-        ItemState state = null)
+
+    public InventoryItem GetInvetoryItem(int listNum)
     {
-        if (state != null)
-        {
-            //  そのまま代入
-            itemStates[listNum] = state;
-        }
-        else
-        {
-            //  アイテムの種類別で新しく作成
-            switch (item.itemType)
-            {
-                //  アイテムが武器関連なら
-                case BerItemType.Weapon:
-                    if (item is WeaponData weaponData)
-                    {
-                        itemStates[listNum] = new ItemState(item.itemType, weaponData.maxAmmo, listNum);
-                    }
-                    break;
-
-                //  アイテムが回復関連なら
-                case BerItemType.Healing:
-                    if (item is HealingItemData HealingData)
-                    {
-                        itemStates[listNum] = new ItemState(item.itemType, 1, listNum);
-                    }
-                    break;
-                case BerItemType.Throwing:
-                    break;
-                default:
-                    break;
-            }
-        }
+        return slots[listNum];
     }
-
 
     /// <summary>
     /// List内のWeaponState取得関数
@@ -244,94 +235,183 @@ public class InventoryManager : MonoBehaviour
     /// <returns></returns>
     public ItemState GetItemState(int listNum)
     {
-        return itemStates[listNum];
+        if (listNum < 0 || listNum >= slots.Count)
+            return null;
+
+        return slots[listNum]?.state;
     }
 
     /// <summary>
-    /// インベントリ内部のアイテムデータを削除
+    /// 指定したスロットのアイテムを削除する
     /// </summary>
-    public void RemoveItem(int number)
+    /// <param name="slotNum">削除するスロット番号</param>
+    /// <returns>削除に成功したか</returns>
+    public bool RemoveItem(int slotNum)
     {
-        //  対応スロットのデータ削除
-        slots[number] = null;
-        itemStates[number] = null;
+        // スロット番号の範囲チェック
+        if (slotNum < 0 || slotNum >= slots.Count)
+        {
+            GameDebug.Warning($"[RemoveItem] 無効なスロット番号: {slotNum}");
+            return false;
+        }
 
+        // 対象スロットのアイテムを取得
+        InventoryItem item = slots[slotNum];
+
+        // アイテムが存在しない場合は削除しない
+        if (item == null || item.data == null)
+        {
+            GameDebug.Warning($"[RemoveItem] スロット {slotNum} は空です");
+            return false;
+        }
+
+        // スロットを空にする
+        // RemoveAt() は使わない（後ろのスロットがずれてしまうため）
+        slots[slotNum] = null;
+
+        // 必要に応じて、既存のインベントリ更新イベントを呼び出す
+        // 例：OnRemoveItem?.Invoke(slotNum);
         //  見た目の削除要求
         OnDeletingSetItems.Invoke();
-        //  UIの更新要求
-        OnRemoveItem.Invoke(number);
+        //  インベントリ側UIの更新要求
+        ItemData data = item.data;
+        OnChangeInventoryItem.Invoke(slotNum, data, ResourceChangeType.Removed);
+        //  ホットバー側UIの更新要求
+        OnRemoveItem.Invoke(slotNum);
+
+        return true;
     }
 
     /// <summary>
     /// インベントリ内部のアイテムデータを削除
     /// </summary>
-    public void RemoveItem(ItemData data)
+    public bool RemoveItem(InventoryItem data)
     {
         //  アイテムからスロット番号を取得
         int number = slots.IndexOf(data);
 
-        //  対応スロットのデータ削除
+        // スロット番号の範囲チェック
+        if (number < 0 || number >= slots.Count)
+        {
+            GameDebug.Warning($"[RemoveItem] 無効なスロット番号: {number}");
+            return false;
+        }
+
+        // 対象スロットのアイテムを取得
+        InventoryItem item = slots[number];
+
+        // アイテムが存在しない場合は削除しない
+        if (item == null || item.data == null)
+        {
+            GameDebug.Warning($"[RemoveItem] スロット {number} は空です");
+            return false;
+        }
+
+
+        // スロットを空にする
         slots[number] = null;
-        itemStates[number] = null;
 
         //  見た目の削除要求
         OnDeletingSetItems.Invoke();
         //  インベントリ側UIの更新要求
-        OnChangeInventoryItem.Invoke(number, data, ResourceChangeType.Removed);
+        ItemData itemdata = item.data;
+        OnChangeInventoryItem.Invoke(number, itemdata, ResourceChangeType.Removed);
         //  ホットバー側UIの更新要求
         OnRemoveItem.Invoke(number);
-    }
 
-    /// <summary>
-    /// インベントリ内アイテムの入れ替え
-    /// </summary>
-    /// <param name="indexA">現在の番号</param>
-    /// <param name="indexB">変更予定の番号</param>
-    public bool SwapItem(int indexA, int indexB)
-    {
-        //  変更予定の場所に入っているデータを格納
-        ItemData temp1 = slots[indexB];
-        ItemState temp2 = itemStates[indexB];
-
-        //  データを移動
-        //  ItemData
-        slots[indexB] = slots[indexA];
-        slots[indexA] = temp1;
-        //  State内スロット番号のセット
-        itemStates[indexA]?.SetuseSlotNum(indexB);
-        itemStates[indexB]?.SetuseSlotNum(indexA);
-        // ItemState 
-        itemStates[indexB] = itemStates[indexA];
-        itemStates[indexA] = temp2;
-
-        //  ホットバーへ変更の通知
-        OnSwapHotbarItem?.Invoke(indexA, indexB);
-
-        //  移動完了を通知
         return true;
     }
 
     /// <summary>
-    /// アイテムの捨てる処理
+    /// 2つのスロットのアイテムを入れ替える
     /// </summary>
-    public bool ItemDroping(int number, ItemData dropData)
+    /// <param name="fromSlotNum">入れ替え元のスロット番号</param>
+    /// <param name="toSlotNum">入れ替え先のスロット番号</param>
+    /// <returns>入れ替えに成功したか</returns>
+    public bool SwapItem(int fromSlotNum, int toSlotNum)
     {
-        GameObject obj;
+        // 両方のスロット番号をチェック
+        if (fromSlotNum < 0 || fromSlotNum >= slots.Count)
+        {
+            GameDebug.Warning(
+                $"[SwapItem] 入れ替え元のスロット番号が無効: {fromSlotNum}");
+            return false;
+        }
 
-        ItemState state = GetItemState(number);
-        RemoveItem(number);
+        if (toSlotNum < 0 || toSlotNum >= slots.Count)
+        {
+            GameDebug.Warning(
+                $"[SwapItem] 入れ替え先のスロット番号が無効: {toSlotNum}");
+            return false;
+        }
 
-        //  ドロップオブジェクトを生成
-        obj = Instantiate(
+        // 同じスロットなら何もしない
+        if (fromSlotNum == toSlotNum)
+            return true;
+
+        // InventoryItem ごと取得する
+        InventoryItem fromItem = slots[fromSlotNum];
+        InventoryItem toItem = slots[toSlotNum];
+
+        // アイテムそのものを交換する
+        slots[fromSlotNum] = toItem;
+        slots[toSlotNum] = fromItem;
+
+        // 必要に応じて、既存のインベントリ更新イベントを呼び出す
+        // 例：OnSwapHotbarItem?.Invoke(fromSlotNum, toSlotNum);
+
+        return true;
+    }
+
+    /// <summary>
+    /// アイテムをドロップする
+    /// </summary>
+    public bool ItemDroping(
+        int number,
+        ItemData dropData,
+        ItemState state = null)
+    {
+        // アイテムデータのチェック
+        if (dropData == null)
+        {
+            GameDebug.Warning(
+                "[InventoryManager] ドロップする ItemData が null です。");
+            return false;
+        }
+
+        // ドロップ対象の状態を取得
+        ItemState sourceState = state ?? GetItemState(number);
+
+        // 状態をコピー
+        ItemState dropState = CopyItemState(sourceState);
+
+        // ドロップオブジェクトを生成
+        GameObject obj = Instantiate(
             ItemdropObj,
             transform.position + transform.forward * 5f,
             Quaternion.identity);
 
-        //  ドロップアイテム(オブジェクト)の初期化
+        // ItemPickupの初期化
         ItemPickup item = obj.GetComponent<ItemPickup>();
-        item.Initialize(dropData, state);
 
-        //  通知
+        if (item == null)
+        {
+            Destroy(obj);
+
+            GameDebug.Warning(
+                "[InventoryManager] ItemPickup が見つかりません。");
+            return false;
+        }
+
+        item.Initialize(dropData, dropState);
+
+        // ネットワーク上にスポーン
+        InstanceFinder.ServerManager.Spawn(obj);
+
+        // インベントリからアイテムを削除
+        RemoveItem(number);
+
+        // UIなどへ通知
         OnChangeInventoryItem?.Invoke(
             number,
             dropData,
@@ -340,61 +420,59 @@ public class InventoryManager : MonoBehaviour
         return true;
     }
 
-    /// <summary>
-    /// アイテムの捨てる処理(ステートを新たに設定)
-    /// </summary>
-    public bool ItemDroping(int number, ItemData dropData, ItemState _state)
+    private ItemState CopyItemState(ItemState source)
     {
-        GameObject obj;
+        if (source == null)
+            return null;
 
-        ItemState state = _state;
-        //  インベントリ内部のアイテムデータを削除
-        RemoveItem(number);
+        if (source is WeaponState weaponState)
+            return new WeaponState(weaponState);
 
-        //  ドロップオブジェクトを生成
-        obj = Instantiate(
-            ItemdropObj,
-            transform.position + transform.forward * 5f,
-            Quaternion.identity);
-
-        //  ドロップアイテム(オブジェクト)の初期化
-        ItemPickup item = obj.GetComponent<ItemPickup>();
-        item.Initialize(dropData, state);
-
-        //  通知
-        OnChangeInventoryItem?.Invoke(
-            number,
-            dropData,
-            ResourceChangeType.Removed);
-
-        return true;
+        // 通常の ItemState は、現時点ではコピー方法が不明
+        return source;
     }
 
     public ItemData GetItem(int slotNumber)
     {
-        if (slots == null || slots.Count == 0 ||
-            slots.Count < slotNumber + 1)
+        if (slotNumber < 0 || slotNumber >= slots.Count)
             return null;
 
-        return slots[slotNumber];
+        return slots[slotNumber]?.data;
     }
 
-    public void SlotUpdateRequest(int slotNum, BerItemType itemType)
+    /// <summary>
+    /// SlotのUI更新要求
+    /// </summary>
+    /// <param name="slotNum"></param>
+    /// <param name="itemType"></param>
+    public void SlotUpdateRequest(
+    int slotNum,
+    BerItemType itemType)
     {
+        if (slotNum < 0 || slotNum >= slots.Count)
+            return;
+
+        InventoryItem item = slots[slotNum];
+
+        if (item == null)
+            return;
+
         int count = 0;
+
         switch (itemType)
         {
             case BerItemType.Weapon:
-                count = itemStates[slotNum].currentAmmo;
+                if (item.state is WeaponState weaponState)
+                    count = weaponState.currentAmmo;
                 break;
+
             case BerItemType.Healing:
-                count = itemStates[slotNum].currentStack;
-                break;
             case BerItemType.Throwing:
+                count = item.stackCount;
                 break;
         }
 
-        OnUpdateItem.Invoke(slotNum, count);
+        OnUpdateItem?.Invoke(slotNum, count);
     }
 
     #endregion
@@ -409,13 +487,16 @@ public class InventoryManager : MonoBehaviour
     /// <param name="amount"></param>
     /// <param name="maxValue"></param>
     /// <param name="onOverflow"></param>
-    private void AddResource<TKey>(
+    private bool AddResource<TKey>(
     Dictionary<TKey, int> dict,
     TKey key,
     int amount,
     int maxValue,
     Action<TKey, int> onOverflow)
     {
+        if (dict == null)
+            return false;
+
         // キーが存在しなければ追加
         if (!dict.ContainsKey(key))
         {
@@ -434,6 +515,8 @@ public class InventoryManager : MonoBehaviour
             //  dict[key]の計算はonOverflow内で行われるので省く
             onOverflow?.Invoke(key, overValue);
         }
+
+        return true;
     }
     /// <summary>
     /// 共通Droping関数
@@ -574,17 +657,21 @@ public class InventoryManager : MonoBehaviour
 
     #region 弾薬系
 
-    public void AddAmmo(AmmoType type, int amount)
+    public bool AddAmmo(AmmoType type, int amount)
     {
         bool isNew = !ammoDict.ContainsKey(type);
 
         //  Add共通関数実行
-        AddResource(
-        ammoDict,
-        type,
-        amount,
-        MAX_AMMO,
-        AmmoDroping);
+        bool canAddResource = AddResource(
+            ammoDict,
+            type,
+            amount,
+            MAX_AMMO,
+            AmmoDroping
+            );
+
+        if (!canAddResource)
+            return false;
 
         //  新規追加かどうか
         if (isNew)
@@ -592,6 +679,7 @@ public class InventoryManager : MonoBehaviour
         else
             OnChangeAmmo?.Invoke(type, ammoDict[type], ResourceChangeType.Updated);
 
+        return true;
     }
 
     /// <summary>
@@ -601,7 +689,6 @@ public class InventoryManager : MonoBehaviour
     /// <param name="amount"></param>
     public void AmmoDroping(AmmoType type, int amount)
     {
-#if true
         GameObject obj;
         int dropAmount = 0;
 
@@ -619,7 +706,6 @@ public class InventoryManager : MonoBehaviour
         ap?.Initialize(type, dropAmount);
 
         OnChangeAmmo?.Invoke(type, ammoDict[type], ResourceChangeType.Removed);
-#endif
     }
 
     /// <summary>
@@ -657,24 +743,32 @@ public class InventoryManager : MonoBehaviour
 
     #region 建材系
 
-    public void AddBildMat(BildingMatType type, int amount)
+    public bool AddBildMat(BildingMatType type, int amount)
     {
+        if(bildMatDict == null)
+            return false;
+
         //  新規追加かどうか
         bool isNew = !bildMatDict.ContainsKey(type);
 
         //  Add共通関数実行
-        AddResource(
-        bildMatDict,
-        type,
-        amount,
-        MAX_BILDMAT,
-        MatDroping);
+        bool canAddResource = AddResource(
+            bildMatDict,
+            type,
+            amount,
+            MAX_BILDMAT,
+            MatDroping);
+
+        if(!canAddResource)
+            return false;
 
         //  新規追加なら
         if (isNew)
             OnChangeBildMat?.Invoke(type, bildMatDict[type], ResourceChangeType.AddedNew);
         else
             OnChangeBildMat?.Invoke(type, bildMatDict[type], ResourceChangeType.Updated);
+
+        return true;
     }
 
     /// <summary>

@@ -239,37 +239,37 @@ public class PlayerInputController : MonoBehaviour
     {
         if (!CanProcessInput) return;
         if (owner == null || owner.equipmentManager == null) return;
-        owner.equipmentManager.Equip(this.owner, PICKEL_SLOT);
+        owner.equipmentManager.Equip(PICKEL_SLOT);
     }
     public void OnEquipItemSlot1(InputAction.CallbackContext context)
     {
         if (!CanProcessInput) return;
         if (owner == null || owner.equipmentManager == null) return;
-        owner.equipmentManager.Equip(this.owner, ITEM_SLOT_1);
+        owner.equipmentManager.Equip(ITEM_SLOT_1);
     }
     public void OnEquipItemSlot2(InputAction.CallbackContext context)
     {
         if (!CanProcessInput) return;
         if (owner == null || owner.equipmentManager == null) return;
-        owner.equipmentManager.Equip(this.owner, ITEM_SLOT_2);
+        owner.equipmentManager.Equip(ITEM_SLOT_2);
     }
     public void OnEquipItemSlot3(InputAction.CallbackContext context)
     {
         if (!CanProcessInput) return;
         if (owner == null || owner.equipmentManager == null) return;
-        owner.equipmentManager.Equip(this.owner, ITEM_SLOT_3);
+        owner.equipmentManager.Equip(ITEM_SLOT_3);
     }
     public void OnEquipItemSlot4(InputAction.CallbackContext context)
     {
         if (!CanProcessInput) return;
         if (owner == null || owner.equipmentManager == null) return;
-        owner.equipmentManager.Equip(this.owner, ITEM_SLOT_4);
+        owner.equipmentManager.Equip(ITEM_SLOT_4);
     }
     public void OnEquipItemSlot5(InputAction.CallbackContext context)
     {
         if (!CanProcessInput) return;
         if (owner == null || owner.equipmentManager == null) return;
-        owner.equipmentManager.Equip(this.owner, ITEM_SLOT_5);
+        owner.equipmentManager.Equip(ITEM_SLOT_5);
     }
     public void OnNextSlot(InputAction.CallbackContext context)
     {
@@ -283,7 +283,7 @@ public class PlayerInputController : MonoBehaviour
         if (scroll.y < 0)
         {
             //Debug.Log("上にスクロール");
-            owner.equipmentManager.NextItemEquip(this.owner);
+            owner.equipmentManager.NextItemEquip();
         }
     }
     public void OnPreviousSlot(InputAction.CallbackContext context)
@@ -298,7 +298,7 @@ public class PlayerInputController : MonoBehaviour
         if (scroll.y > 0)
         {
             //Debug.Log("下にスクロール");
-            owner.equipmentManager.PreviousItemEquip(this.owner);
+            owner.equipmentManager.PreviousItemEquip();
         }
     }
 

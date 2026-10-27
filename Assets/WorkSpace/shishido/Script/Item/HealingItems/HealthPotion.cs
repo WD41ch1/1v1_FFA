@@ -4,21 +4,30 @@ using UnityEngine;
 
 public class HealthPotion : HealingItemBase
 {
-    public override void Initialize(
+    public override bool Initialize(
         PlayerManager _owner,
-        ItemData itemData,
-        ItemState state = null)
+        ItemData _itemData,
+        ItemView _itemView,
+        InventoryItem _itemState = null)
     {
-        if (itemData is HealingItemData)
+        if (_owner == null || _itemData == null || _itemState == null)
+            return false;
+
+        if (_itemData is HealingItemData)
         {
-            healingData = (HealingItemData)itemData;
+            healingData = (HealingItemData)_itemData;
+        }
+        else
+        {
+            return false;
         }
 
         //  使用者情報
         this.owner = _owner;
 
-        healingState = state;
+        //itemState = _itemState;
 
+        return true;
     }
 
     /// <summary>
@@ -46,19 +55,19 @@ public class HealthPotion : HealingItemBase
         yield return new WaitForSeconds(reloadTime);
 
         //  使用者にHP追加
-        owner.playerHealth.Heal(
+        owner.playerHealth.RequestHeal(
             healingData.healingValue,
             healingData.maxHealingAmount
             );
 
         isHealing = false;
 
-        Debug.Log(
-            $"使用Slot: {owner.equipmentManager.GetcurrentSlot()} " +
-            $"StateSlot: {healingState.useSlotNum} " +
-            $"Stack: {healingState.currentStack} " +
-            $"StateID: {healingState.GetHashCode()}"
-        );
+        //Debug.Log(
+        //    $"使用Slot: {owner.equipmentManager.GetcurrentSlot()} " +
+        //    $"StateSlot: {healingState.useSlotNum} " +
+        //    $"Stack: {healingState.currentStack} " +
+        //    $"StateID: {healingState.GetHashCode()}"
+        //);
 
         StackCheker();
     }

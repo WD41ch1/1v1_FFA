@@ -145,7 +145,7 @@ public class PlayerMovement : NetworkBehaviour
 
     private void FixedUpdate()
     {
-        if (!IsOwner || myPlayer == null || !myPlayer.IsInitialized ||
+        if (!IsOwner || myPlayer == null || !myPlayer.IsInitializedInSever ||
             rb == null || input == null ||
             cameraTransform == null || groundCheck == null)
         {

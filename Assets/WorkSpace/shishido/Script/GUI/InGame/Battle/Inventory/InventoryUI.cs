@@ -1,9 +1,6 @@
 using DG.Tweening;
-using NaughtyAttributes;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -197,7 +194,7 @@ public class InventoryUI : UIBase, IDropHandler
             case BerItemType.Weapon:
                 if (data is WeaponData weapon)
                 {
-                    itemAmont = weapon.maxAmmo;
+                    itemAmont = weapon.magazineSize;
                 }
 
                 break;
@@ -238,6 +235,8 @@ public class InventoryUI : UIBase, IDropHandler
         List<IS_Item> list
        )
     {
+        if (list[slotNum] == null) return;
+
         //  入っているデータを削除
         list[slotNum].DeleteData();
 

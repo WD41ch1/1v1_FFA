@@ -2491,8 +2491,6 @@ GameObject:
   - component: {fileID: 898863480700411928}
   - component: {fileID: 6618349034464132242}
   - component: {fileID: 6470015901775650543}
-  - component: {fileID: 5761869814578630481}
-  - component: {fileID: 2137823967972275950}
   - component: {fileID: 465754603406957824}
   - component: {fileID: 6764875046408002967}
   - component: {fileID: 3652847014429532586}
@@ -2799,13 +2797,13 @@ MonoBehaviour:
     m_ActionName: Player/Slot4[/Keyboard/4]
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 7999714468741671046}
-        m_TargetAssemblyTypeName: 
-        m_MethodName: 
-        m_Mode: 1
+      - m_Target: {fileID: 3830073925755514194}
+        m_TargetAssemblyTypeName: PlayerInputController, Assembly-CSharp
+        m_MethodName: OnEquipItemSlot5
+        m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: 
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -2817,7 +2815,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 3830073925755514194}
         m_TargetAssemblyTypeName: PlayerInputController, Assembly-CSharp
-        m_MethodName: OnEquipItemSlot5
+        m_MethodName: OnPreviousSlot
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -3015,38 +3013,6 @@ MonoBehaviour:
   _addedNetworkObject: {fileID: 631448758456972407}
   _networkObjectCache: {fileID: 0}
   haveShield: 0
---- !u!114 &5761869814578630481
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7999714468741671046}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 564a2910d73468148af921e7e91abe3d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  canvasPrefab: {fileID: 5154976365679985728, guid: 32e0bca70d3e0a94aa923a7b382cfb00, type: 3}
---- !u!114 &2137823967972275950
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7999714468741671046}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a21fbf189c7d6b746a9771339f06af33, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  pm: {fileID: 0}
-  em: {fileID: 0}
-  im: {fileID: 0}
-  gui: {fileID: 0}
-  si: {fileID: 0}
-  itemData: {fileID: 11400000, guid: 86bf548c0bdc9da49bf20813f883f633, type: 2}
-  itemData2: {fileID: 11400000, guid: 5ddaaa04021ec3c41be821974a526c9c, type: 2}
 --- !u!114 &465754603406957824
 MonoBehaviour:
   m_ObjectHideFlags: 0

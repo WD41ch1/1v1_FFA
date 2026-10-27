@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 8
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e23ae7c48d1a4d742ac18007bb38b7a5, type: 3}
+  m_Name: ItemMasterData
+  m_EditorClassIdentifier: 
+  sheets:
+  - name: Items
+    list:
+    - itemId: 1001
+      dataType: 0
+      itemName: "\u30A2\u30B5\u30EB\u30C8\u30E9\u30A4\u30D5\u30EB"
+      itemType: 0
+      maxStack: 1
+    - itemId: 1002
+      dataType: 0
+      itemName: "\u30D4\u30B9\u30C8\u30EB"
+      itemType: 0
+      maxStack: 1
+    - itemId: 1003
+      dataType: 0
+      itemName: "\u30B7\u30E7\u30C3\u30C8\u30AC\u30F3"
+      itemType: 0
+      maxStack: 1
+    - itemId: 1004
+      dataType: 0
+      itemName: "\u30B5\u30D6\u30DE\u30B7\u30F3\u30AC\u30F3"
+      itemType: 0
+      maxStack: 1
+    - itemId: 2001
+      dataType: 1
+      itemName: "\u5305\u5E2F"
+      itemType: 1
+      maxStack: 10
+    - itemId: 2002
+      dataType: 1
+      itemName: "\u30DF\u30CB\u30DD\u30FC\u30B7\u30E7\u30F3"
+      itemType: 1
+      maxStack: 6

@@ -2,24 +2,40 @@ using UnityEngine;
 
 public class AssaultRifle : WeaponBase
 {
-    public override void Initialize(
+    public override bool Initialize(
         PlayerManager _owner,
-        ItemData itemData,
-        ItemState state = null)
+        ItemData _itemData,
+        ItemView _itemView,
+        InventoryItem _itemState)
     {
-        if (itemData is WeaponData)
+        if (_owner == null || _itemData == null || _itemState == null)
+            return false;
+
+        weaponView = _itemView;
+
+        if (weaponView == null)
+            return false;
+
+        if (_itemData is WeaponData)
         {
-            weaponData = (WeaponData)itemData;
+            weaponData = (WeaponData)_itemData;
+        }
+        else
+        {
+            // 失敗：WeaponDataではない、またはnull
+            Debug.LogWarning("WeaponDataへの変換に失敗しました");
+            return false;
         }
 
         //  使用者情報
         this.owner = _owner;
 
-        weaponView = GetComponent<WeaponView>();
+        itemState = _itemState;
 
-        weaponState = state;
-        //weaponState.currentAmmo = weaponData.maxAmmo;
+        if(!CheckWeaponState(itemState, out weaponState))
+            return false;
 
+        return true;
     }
 
     public override void Fire()
@@ -54,7 +70,7 @@ public class AssaultRifle : WeaponBase
         if (isReloading) return;
 
         //  補充必要数取得
-        int requestValue = weaponData.maxAmmo - weaponState.currentAmmo;
+        int requestValue = weaponData.magazineSize - weaponState.currentAmmo;
         //  承認
         int approvalValue = 0;
         //  inventory内弾数消費要求
@@ -67,8 +83,8 @@ public class AssaultRifle : WeaponBase
             StartCoroutine(ReloadAnimation(weaponData.reloadTime, approvalValue));
 
             //  万が一マガジン数が上限より上を行った場合
-            if (weaponData.maxAmmo <= weaponState.currentAmmo)
-                weaponState.currentAmmo = weaponData.maxAmmo;
+            if (weaponData.magazineSize <= weaponState.currentAmmo)
+                weaponState.currentAmmo = weaponData.magazineSize;
         }
 
     }

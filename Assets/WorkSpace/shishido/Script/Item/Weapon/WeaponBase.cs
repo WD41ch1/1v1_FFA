@@ -1,25 +1,40 @@
 using DG.Tweening;
 using FishNet.Example.ColliderRollbacks;
+using FishNet.Object;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.TextCore.Text;
 using static GameConst;
 
 public abstract class WeaponBase : ItemBase
 {
     protected WeaponData weaponData;
 
-    protected WeaponView weaponView;
+    protected ItemView weaponView;
 
-    protected ItemState weaponState;
+    protected WeaponState weaponState;
 
     //  リロード中かいなか
     protected bool isReloading;
     //  現在の弾数
     //protected int currentAmmo;
+    private bool isFiring;
+
 
     //  ADSができるかどうかのフラグ(例えば空中にいるときはADSできない など)
     protected bool canADS;
+
+    /// <summary>
+    /// 射撃処理
+    /// </summary>
+    public abstract void Fire();
+
+    /// <summary>
+    /// リロード処理
+    /// </summary>
+    public abstract void Reload();
+
 
     public override void UsePrimary(InputAction.CallbackContext context)
     {
@@ -39,72 +54,74 @@ public abstract class WeaponBase : ItemBase
         Reload();
     }
 
-    /// <summary>
-    /// 射撃処理
-    /// </summary>
-    public abstract void Fire();
+    protected void FireRequest()
+    {
+        if (owner == null)
+            return;
 
-    /// <summary>
-    /// リロード処理
-    /// </summary>
-    public abstract void Reload();
+        // 自分が操作しているプレイヤー以外は射撃要求を送らない
+        if (!owner.IsOwner)
+            return;
+
+        OnFireRequest();
+    }
+
+
 
     public void StartFire()
     {
-        //  射撃
-        Fire();
+        if (isFiring)
+            return;
 
-        //  連射処理(フルオート)
+        isFiring = true;
+
+        FireRequest();
+
         if (weaponData.fireMode == FireMode.FullAuto)
         {
             InvokeRepeating(
-                nameof(Fire),
+                nameof(FireRequest),
                 weaponData.fireRate,
                 weaponData.fireRate
-                );
+            );
         }
     }
 
-    //  連射終了処理
     public void StopFire()
     {
-        CancelInvoke(nameof(Fire));
+        isFiring = false;
+        CancelInvoke(nameof(FireRequest));
     }
 
-    /// <summary>
-    /// カメラで狙ってるものを取得
-    /// </summary>
-    /// <returns></returns>
-    public Vector3 GetTarget()
+    public void OnFireRequest()
     {
-        RaycastHit target;
-        Vector3 targetPosition;
+        if (owner == null)
+            return;
 
-        //  Ray(カメラ)を飛ばし当たったものを取得
-        bool isRayHit = owner.cameraController.GetCrosshairTarget(out target);
 
-        // 何かに当たった
-        if (isRayHit)
+        if (IsServerInitialized)
         {
-            //  発射位置
-            Transform muzzlePoint = weaponView.muzzlePoint;
-
-            //  軌道計算
-            //targetPosition = (target.point - muzzlePoint.position).normalized;
-            targetPosition = target.point;
+            FireInternal();
         }
-        // 何もない
-        else
+        else if (IsClientInitialized)
         {
-            //  カメラの向いているほうを取得
-            Ray ray = owner.cameraController.GetCrosshairRay();
-
-            //  仮の目標地点を設定
-            targetPosition = ray.origin + ray.direction * 1000f;
+            FireServerRpc();
         }
 
-        return targetPosition;
     }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void FireServerRpc()
+    {
+        FireInternal();
+    }
+
+    [Server]
+    private void FireInternal()
+    {
+        Fire();
+    }
+
 
     /// <summary>
     /// スコープを覗く(ADS)
@@ -144,6 +161,17 @@ public abstract class WeaponBase : ItemBase
         //camera.transform.DORotate(normalRotation, 0.2f);
     }
 
+
+    protected void AmmoCheker()
+    {
+        if (weaponData == null) return;
+
+        //  UIの更新要求
+        owner.inventoryManager.SlotUpdateRequest(
+            owner.equipmentManager.GetcurrentSlot(),
+            weaponData.itemType
+        );
+    }
     /// <summary>
     /// リロードコルーチン
     /// </summary>
@@ -161,7 +189,7 @@ public abstract class WeaponBase : ItemBase
         isReloading = false;
     }
 
-    protected virtual void BulletShoot(WeaponView weaponView, Vector3 target)
+    protected virtual void BulletShoot(ItemView weaponView, Vector3 target)
     {
         if (weaponView == null) return;
         Transform muzzlePoint = weaponView.muzzlePoint;
@@ -181,23 +209,50 @@ public abstract class WeaponBase : ItemBase
         Destroy(projectile, 5.0f);
     }
 
-    protected void AmmoCheker()
-    {
-        if (weaponData == null) return;
+    #region Getter
 
-        //  UIの更新要求
-        owner.inventoryManager.SlotUpdateRequest(
-            owner.equipmentManager.GetcurrentSlot(),
-            weaponData.itemType
-        );
+    /// <summary>
+    /// カメラで狙ってるものを取得
+    /// </summary>
+    /// <returns></returns>
+    public Vector3 GetTarget()
+    {
+        RaycastHit target;
+        Vector3 targetPosition;
+
+        //  Ray(カメラ)を飛ばし当たったものを取得
+        bool isRayHit = owner.cameraController.GetCrosshairTarget(out target);
+
+        // 何かに当たった
+        if (isRayHit)
+        {
+            //  発射位置
+            Transform muzzlePoint = weaponView.muzzlePoint;
+
+            //  軌道計算
+            //targetPosition = (target.point - muzzlePoint.position).normalized;
+            targetPosition = target.point;
+        }
+        // 何もない
+        else
+        {
+            //  カメラの向いているほうを取得
+            Ray ray = owner.cameraController.GetCrosshairRay();
+
+            //  仮の目標地点を設定
+            targetPosition = ray.origin + ray.direction * 1000f;
+        }
+
+        return targetPosition;
     }
+
 
     public WeaponData GetWeaponData()
     {
         return weaponData;
     }
 
-    public WeaponView GetWeaponView()
+    public ItemView GetWeaponView()
     {
         return weaponView;
     }
@@ -206,4 +261,41 @@ public abstract class WeaponBase : ItemBase
     {
         return weaponState.currentAmmo;
     }
+
+    #endregion
+
+    #region checker
+
+    public bool CheckWeaponState(InventoryItem item, out WeaponState state)
+    {
+        state = null;
+
+        if (item == null)
+        {
+            GameDebug.Warning("InventoryItem が null");
+            return false;
+        }
+
+        if (item.state == null)
+        {
+            GameDebug.Warning("state が null");
+            return false;
+        }
+
+        GameDebug.Log($"stateの実際の型: {item.state.GetType().FullName}");
+        GameDebug.Log($"WeaponStateか: {item.state is WeaponState}");
+
+        WeaponState weaponState = item.weaponState;
+
+        if (weaponState == null)
+        {
+            GameDebug.Warning("WeaponStateとして取得できませんでした");
+            return false;
+        }
+
+        state = weaponState;
+        return true;
+    }
+
+    #endregion
 }

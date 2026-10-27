@@ -10,7 +10,7 @@ public abstract class UIBase : MonoBehaviour
     protected GUIManager gui;
     protected CanvasGroup canvasGroup;
     protected RectTransform rect;
-    protected bool isInitialized = false;
+    public bool isInitialized { get; private set; } = false;
 
     /// <summary>
     /// 全体の初期化
