@@ -1,9 +1,6 @@
-using FishNet.Demo.AdditiveScenes;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerHealth : NetworkBehaviour
@@ -39,7 +36,7 @@ public class PlayerHealth : NetworkBehaviour
     /// <param name="maxShield">最大シールド</param>
     /// <param name="health">開始時の体力</param>
     /// <param name="shield">開始時のシールド</param>
-    public void Initialize(
+    public bool Initialize(
         float maxHealth, float maxShield,
         float health, float shield)
     {
@@ -52,7 +49,18 @@ public class PlayerHealth : NetworkBehaviour
         currentHealth.Value = Mathf.Clamp(health, 0, MaxHealth);
         currentShield.Value = Mathf.Clamp(shield, 0, MaxShield);
 
+        GameDebug.Log(
+            $"PlayerHealth[Initialize]," +
+            $"IsServerInitialized:{IsServerInitialized}," +
+            $"IsClientInitialized:{IsClientInitialized}," +
+            $"IsOwner:{IsOwner}," + 
+            $"HP:{currentHealth.Value}," +
+            $"Shield{currentShield.Value}");
+
+
         //  UIの更新
+
+        return true;
     }
 
     /// <summary>
@@ -61,7 +69,7 @@ public class PlayerHealth : NetworkBehaviour
     /// <param name="_myPlayer"></param>
     public void RegisterPlayer(PlayerManager _myPlayer)
     {
-       myPlayer = _myPlayer;
+        myPlayer = _myPlayer;
     }
 
     public override void OnStartNetwork()
@@ -79,7 +87,11 @@ public class PlayerHealth : NetworkBehaviour
         currentHealth.OnChange += HealthChanged;
         currentShield.OnChange += ShieldChanged;
 
-        UIUpdateRequest();
+        GameDebug.Log(
+            $"PlayerHealth[OnStartClient]," +
+            $"IsServerInitialized:{IsServerInitialized}," +
+            $"HP:{currentHealth.Value}," +
+            $"Shield{currentShield.Value}");
     }
 
     public override void OnStopNetwork()
@@ -229,7 +241,13 @@ public class PlayerHealth : NetworkBehaviour
     /// </summary>
     public void UIUpdateRequest()
     {
-        if (myPlayer == null || !myPlayer.IsInitialized) return;
+        if (!IsOwner ||
+            myPlayer == null || !myPlayer.IsInitializedInSever) return;
+
+        GameDebug.Log(
+    $"IsServerInitialized:{IsServerInitialized}," +
+    $"HP:{currentHealth.Value}," +
+    $"Shield{currentShield.Value}");
 
         float health = currentHealth.Value;
         float shield = currentShield.Value;
@@ -253,7 +271,7 @@ public class PlayerHealth : NetworkBehaviour
     {
         if (!IsOwner ||
             myPlayer == null ||
-            !myPlayer.IsInitialized)
+            !myPlayer.IsInitializedInSever)
             return;
 
         // 自分のHP UIだけ更新
@@ -274,7 +292,7 @@ public class PlayerHealth : NetworkBehaviour
     {
         if (!IsOwner ||
             myPlayer == null ||
-            !myPlayer.IsInitialized)
+            !myPlayer.IsInitializedInSever)
             return;
 
         // 自分のHP UIだけ更新

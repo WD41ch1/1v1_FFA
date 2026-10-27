@@ -45,6 +45,5 @@ public class StatusBerUI : UIBase
 
         shieldBer.value = _currentShield;
         shieldCounter.text = _currentShield.ToString();
-
     }
 }
