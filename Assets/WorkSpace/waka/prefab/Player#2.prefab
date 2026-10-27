@@ -2584,6 +2584,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   owner: {fileID: 465754603406957824}
   playerInput: {fileID: 2686211574380882674}
+  onInventoryToggle:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &3278360314800298617
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3026,6 +3029,22 @@ MonoBehaviour:
         m_CallState: 2
     m_ActionId: 503e0b5d-7724-43e9-9b0b-b3cab0977225
     m_ActionName: Building/Cone[/Keyboard/c]
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 3830073925755514194}
+        m_TargetAssemblyTypeName: PlayerInputController, Assembly-CSharp
+        m_MethodName: OnInventory
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: 02c534f8-1282-4fa8-b75d-5b34b087b48a
+    m_ActionName: Player/Inventory[/Keyboard/g]
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
   m_DefaultActionMap: Player
@@ -3092,6 +3111,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 564a2910d73468148af921e7e91abe3d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 3890100773366206426}
+  _networkObjectCache: {fileID: 0}
   canvasPrefab: {fileID: 5154976365679985728, guid: 32e0bca70d3e0a94aa923a7b382cfb00, type: 3}
 --- !u!114 &2137823967972275950
 MonoBehaviour:
