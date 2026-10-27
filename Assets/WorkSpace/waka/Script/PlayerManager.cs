@@ -80,7 +80,12 @@ public class PlayerManager : NetworkBehaviour
     {
         base.OnStartServer();
 
-        ServerSideInitialize();
+        GameDebug.Server(
+        $"[SERVER] OnStartServer " +
+        $"ObjectId:{ObjectId}, OwnerId:{OwnerId}",
+        true);
+
+        ServerSideInitialize().Forget();
     }
 
     /// <summary>
@@ -88,13 +93,16 @@ public class PlayerManager : NetworkBehaviour
     /// </summary>
     public override void OnStartClient()
     {
-        GameDebug.Client("OnStartClient", isShowLog);
         // この処理は、このオブジェクトがインスタンス化されているすべてのクライアントで実行されるため、
         // 自分たちが管理するオブジェクトに対してのみ、カメラをインスタンス化すればよい。        if (IsOwner)
         if (IsOwner)
         {
             CliantSideInitialize();
         }
+
+        GameDebug.Client(
+        $"[CLIENT] OnStartClient " +
+        $"ObjectId:{ObjectId}, OwnerId:{OwnerId}, IsOwner:{IsOwner}");
     }
 
     #endregion
@@ -111,27 +119,35 @@ public class PlayerManager : NetworkBehaviour
         Register();
     }
 
-    private bool ServerSideInitialize()
+    private async UniTask ServerSideInitialize()
     {
-        //  Playerのすべてのクラスを初期化
-        UniTask task = PlayerClassInitialize();
+        GameDebug.Server(
+            $"[SERVER] ServerSideInitialize START " +
+            $"ObjectId:{ObjectId}, OwnerId:{OwnerId}",
+            true);
+
+        await PlayerClassInitialize();
+
+        GameDebug.Server(
+            $"[SERVER] ServerSideInitialize END " +
+            $"ObjectId:{ObjectId}, OwnerId:{OwnerId}",
+            true);
 
         IsInitializedInSever = true;
-
-        return true;
     }
+
 
     private bool CliantSideInitialize()
     {
         //  PlayerCanvasの生成
         if (!CreateGUI())
         {
-            GameDebug.Warning("CliantSideInitialize:Canvasが生成できませんでした。");
+            GameDebug.Warning("CliantSideInitialize:Canvasが生成できませんでした。", isShowLog);
         }
         //  Cameraの生成
         if (!CreateMyCamera())
         {
-            GameDebug.Warning("CliantSideInitialize:Cameraが生成できませんでした。");
+            GameDebug.Warning("CliantSideInitialize:Cameraが生成できませんでした。", isShowLog);
             return false;
         }
 
@@ -140,19 +156,12 @@ public class PlayerManager : NetworkBehaviour
         controller.Initialize(_camera.transform);
         equipmentManager?.Initialize();
 
+        //  UI更新要求
+        UniTask task = HealthUIUpdateRequest();
+
         IsInitializedInClient = true;
 
         return true;
-    }
-
-    /// <summary>
-    /// 初期化
-    /// </summary>
-    private void Initialize()
-    {
-
-        //  status管理側からのUI更新要求
-        playerHealth?.UIUpdateRequest();
     }
 
 
@@ -184,11 +193,17 @@ public class PlayerManager : NetworkBehaviour
     /// </summary>
     private async UniTask PlayerClassInitialize()
     {
-        // PlayerHealthの取得待ち
-        if (!await WaitForReference(
-            () => playerHealth, nameof(playerHealth), 3f, _token))
+        GameDebug.Server($"PlayerClassInitialize," +
+            $"IsServerInitialized:{IsServerInitialized}", isShowLog);
+
+        if (playerHealth == null)
         {
-            return;
+            // PlayerHealthの取得待ち
+            if (!await WaitForReference(
+                () => playerHealth, nameof(playerHealth), 3f, _token))
+            {
+                return;
+            }
         }
 
         if (_camera == null)
@@ -356,6 +371,23 @@ public class PlayerManager : NetworkBehaviour
             type,
             amount,
             out approvalValue);
+    }
+
+    private async UniTask HealthUIUpdateRequest()
+    {
+        if (playerHealth == null) return;
+
+        // PlayerHealthの取得待ち
+        if (playerHealth.isInitialize == false)
+        {
+            if (!await WaitForReference(
+                   () => playerHealth.isInitialize, nameof(playerHealth.isInitialize), 5f, _token))
+            {
+                return;
+            }
+        }
+        //  UI更新要求
+        playerHealth.UIUpdateRequest();
     }
 
     #endregion

@@ -27,6 +27,8 @@ public class PlayerHealth : NetworkBehaviour
     //  攻撃者
     public PlayerManager lastAttacker { get; private set; }
 
+    public bool isInitialize { get; private set; } = false;
+
     #region 初期化
 
     /// <summary>
@@ -60,7 +62,9 @@ public class PlayerHealth : NetworkBehaviour
 
         //  UIの更新
 
-        return true;
+        isInitialize = true;
+
+        return isInitialize;
     }
 
     /// <summary>
