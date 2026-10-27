@@ -289,7 +289,7 @@ public class PlayerInputController : MonoBehaviour
         if (owner == null || owner.equipmentManager == null)
             return;
 
-        owner.equipmentManager.Equip(owner, slot);
+        owner.equipmentManager.Equip(slot);
     }
 
     public void OnEquipPickelSlot(InputAction.CallbackContext context)
@@ -333,7 +333,7 @@ public class PlayerInputController : MonoBehaviour
         Vector2 scroll = context.ReadValue<Vector2>();
 
         if (scroll.y < 0f)
-            owner.equipmentManager.NextItemEquip(owner);
+            owner.equipmentManager.NextItemEquip();
     }
 
     public void OnPreviousSlot(InputAction.CallbackContext context)
@@ -347,7 +347,7 @@ public class PlayerInputController : MonoBehaviour
         Vector2 scroll = context.ReadValue<Vector2>();
 
         if (scroll.y > 0f)
-            owner.equipmentManager.PreviousItemEquip(owner);
+            owner.equipmentManager.PreviousItemEquip();
     }
 
     // ---------------------------
