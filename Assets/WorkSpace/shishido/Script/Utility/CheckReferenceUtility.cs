@@ -133,8 +133,8 @@ public static class CheckReferenceUtility
         if (getCondition())
             return true;
 
-        using var timeoutCts = new CancellationTokenSource();
-        timeoutCts.CancelAfterSlim(
+        using var timeoutCts =
+            new CancellationTokenSource(
             TimeSpan.FromSeconds(timeoutSeconds));
 
         using var linkedCts =
