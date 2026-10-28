@@ -13,6 +13,15 @@ public class ItemDataManager : MonoBehaviour
     // IDから見た目データを取得するための辞書
     private Dictionary<int, AppearanceModelData> modelDataDictionary = new();
 
+    [Header("アイテムの見た目データ")]
+    [SerializeField]
+    private List<AppearanceModelData> MatmodelDataList = new();
+
+    // IDから見た目データを取得するための辞書
+    private Dictionary<int, AppearanceModelData> MatmodelDataDictionary = new();
+
+
+
     [Header("アイテムの内部処理データ")]
     [SerializeField]
     private List<ItemProcessData> processDataList = new();
