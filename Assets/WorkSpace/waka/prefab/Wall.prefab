@@ -156,6 +156,9 @@ MonoBehaviour:
   - name: "\u53F36\u30DE\u30B9"
     removedCells: 070000000800000004000000050000000100000002000000
     resultPrefab: {fileID: 0}
+  - name: "\u5DE6\u4E0B4\u30DE\u30B9"
+    removedCells: 00000000010000000400000003000000
+    resultPrefab: {fileID: 0}
 --- !u!114 &6826113611838482170
 MonoBehaviour:
   m_ObjectHideFlags: 0
