@@ -191,7 +191,9 @@ MonoBehaviour:
   <ComponentIndex>k__BackingField: 0
   <PredictedSpawn>k__BackingField: {fileID: 0}
   <PredictedOwner>k__BackingField: {fileID: 0}
-  NetworkBehaviours: []
+  NetworkBehaviours:
+  - {fileID: 8604093040107998719}
+  - {fileID: 3780586814237973145}
   InitializedParentNetworkBehaviour: {fileID: 0}
   InitializedNestedNetworkObjects: []
   RuntimeParentNetworkBehaviour: {fileID: 0}
@@ -202,7 +204,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
-  _initializedTimestamp: 0
+  _initializedTimestamp: -8584084492113727810
   _localLevelOfDetailCalculationType: 0
   _useLevelOfDetail: 0
   _useRootLevelOfDetail: 1
@@ -221,15 +223,15 @@ MonoBehaviour:
   _spectatorInterpolation: 2
   _enableTeleport: 0
   _teleportThreshold: 1
-  <PrefabId>k__BackingField: 65535
+  <PrefabId>k__BackingField: 19
   <SpawnableCollectionId>k__BackingField: 0
   <AssetPathHash>k__BackingField: 12446890168704224421
   SceneId: 0
   SerializedTransformProperties:
-    Position: {x: 0, y: 0, z: 0}
-    Rotation: {x: 0, y: 0, z: 0, w: 0}
-    Scale: {x: 0, y: 0, z: 0}
-    IsValid: 0
+    Position: {x: 0, y: 2.5, z: 6.32}
+    Rotation: {x: 0, y: 0, z: 0, w: 1}
+    Scale: {x: 4, y: 4, z: 0.01}
+    IsValid: 1
 --- !u!114 &8604093040107998719
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -242,9 +244,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: beb8eeb42f62fbd44a127674116c77c2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _componentIndexCache: 255
+  _componentIndexCache: 0
   _addedNetworkObject: {fileID: 2550444828961590937}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 2550444828961590937}
   groundLayer:
     serializedVersion: 2
     m_Bits: 8
@@ -261,9 +263,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 699d9ab0f482d6b4b9d4e4e0eb322c8f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _componentIndexCache: 255
+  _componentIndexCache: 1
   _addedNetworkObject: {fileID: 2550444828961590937}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 2550444828961590937}
   maxEditDistance: 8
   obstructionMask:
     serializedVersion: 2

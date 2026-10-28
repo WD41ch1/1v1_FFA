@@ -84,11 +84,8 @@ public class NetworkBuildingEdit : NetworkBehaviour
             if (!(component is INetworkBuildingEditTarget candidate))
                 continue;
 
-            if (component.GetComponentInParent<NetworkBuildingEdit>() !=
-                this)
-            {
+            if (component.GetComponentInParent<NetworkBuildingEdit>() != this)
                 continue;
-            }
 
             target = candidate;
             targetComponent = component;
@@ -222,7 +219,7 @@ public class NetworkBuildingEdit : NetworkBehaviour
         pending = true;
         pendingRequest = ++nextRequest;
 
-        // ホストでも二重適用しないよう、先にグリッドを閉じる。
+        // ホストでも二重適用しないよう先にグリッドを閉じる
         source.CancelEdit();
 
         EditServerRpc(
@@ -348,8 +345,7 @@ public class NetworkBuildingEdit : NetworkBehaviour
     {
         Physics.SyncTransforms();
 
-        Collider body =
-            player.GetComponent<Collider>();
+        Collider body = player.GetComponent<Collider>();
 
         Vector3 origin =
             body != null && body.enabled
@@ -447,12 +443,24 @@ public class NetworkBuildingEdit : NetworkBehaviour
         base.OnStopClient();
     }
 
+    /// <summary>
+    /// 編集後の形状Prefabを検証する。
+    /// 拒否した場合は参照先とColliderの状態を表示する。
+    /// </summary>
     public static bool ValidateResultPrefab(
         GameObject prefab,
         UnityEngine.Object context)
     {
+        // 空欄なら編集スクリプト側で形状を自動生成する
         if (prefab == null)
             return true;
+
+        string prefabInfo = prefab.name;
+
+#if UNITY_EDITOR
+        prefabInfo += "\n参照先：" +
+            UnityEditor.AssetDatabase.GetAssetPath(prefab);
+#endif
 
         if (prefab.GetComponentInChildren<NetworkObject>(true) != null ||
             prefab.GetComponentInChildren<NetworkBehaviour>(true) != null ||
@@ -460,10 +468,12 @@ public class NetworkBuildingEdit : NetworkBehaviour
             prefab.GetComponentInChildren<Rigidbody>(true) != null)
         {
             Debug.LogError(
-                "[編集同期] Result Prefabは形状専用にしてください。" +
+                "[編集同期] Result Prefabは形状専用にしてください。\n" +
                 "NetworkObject・NetworkBehaviour・BuildSupport・" +
-                "Rigidbodyを含めないでください：" + prefab.name,
+                "Rigidbodyを含めないでください。\n" +
+                prefabInfo,
                 context);
+
             return false;
         }
 
@@ -474,21 +484,40 @@ public class NetworkBuildingEdit : NetworkBehaviour
             {
                 Debug.LogError(
                     "[編集同期] Result PrefabにEditコンポーネントを" +
-                    "含めないでください：" + prefab.name,
+                    "含めないでください。\n" +
+                    prefabInfo,
                     context);
+
                 return false;
             }
         }
 
+        bool valid = true;
+
         foreach (Collider col in
                  prefab.GetComponentsInChildren<Collider>(true))
         {
-            if (!col.enabled ||
-                !col.gameObject.activeSelf ||
-                col.isTrigger)
-            {
+            if (!col.enabled || col.isTrigger)
                 continue;
+
+            // 生成時にはルートを有効化する。
+            // ルートより下の非アクティブな階層だけを除外する。
+            bool inactiveChild = false;
+            Transform current = col.transform;
+
+            while (current != null && current != prefab.transform)
+            {
+                if (!current.gameObject.activeSelf)
+                {
+                    inactiveChild = true;
+                    break;
+                }
+
+                current = current.parent;
             }
+
+            if (inactiveChild)
+                continue;
 
             if (col is BoxCollider ||
                 col is SphereCollider ||
@@ -497,25 +526,64 @@ public class NetworkBuildingEdit : NetworkBehaviour
                 continue;
             }
 
-            if (col is MeshCollider mesh &&
-                mesh.convex &&
-                mesh.sharedMesh != null)
+            string colliderPath = GetColliderPath(
+                prefab.transform,
+                col.transform);
+
+            if (col is MeshCollider mesh)
             {
-                continue;
+                if (mesh.convex && mesh.sharedMesh != null)
+                    continue;
+
+                string meshName = mesh.sharedMesh != null
+                    ? mesh.sharedMesh.name
+                    : "None";
+
+                Debug.LogError(
+                    "[編集同期・Collider診断]\n" +
+                    "Prefab：" + prefabInfo + "\n" +
+                    "対象：" + colliderPath + "\n" +
+                    "種類：MeshCollider\n" +
+                    "Convex：" + mesh.convex + "\n" +
+                    "Mesh：" + meshName + "\n" +
+                    "原因：" +
+                    (!mesh.convex ? "ConvexがOFFです。 " : "") +
+                    (mesh.sharedMesh == null ? "Meshが未設定です。" : ""),
+                    context);
+            }
+            else
+            {
+                Debug.LogError(
+                    "[編集同期・Collider診断]\n" +
+                    "Prefab：" + prefabInfo + "\n" +
+                    "対象：" + colliderPath + "\n" +
+                    "非対応の種類：" + col.GetType().Name,
+                    context);
             }
 
-            Debug.LogError(
-                "[編集同期] 崩壊判定に使えないColliderです：" +
-                col.name,
-                context);
-            return false;
+            valid = false;
         }
 
-        return true;
+        return valid;
+    }
+
+    private static string GetColliderPath(
+        Transform root,
+        Transform child)
+    {
+        string path = child.name;
+
+        while (child != root && child.parent != null)
+        {
+            child = child.parent;
+            path = child.name + "/" + path;
+        }
+
+        return path;
     }
 }
 
-// この下の3つも、同じファイル内に必要。
+// 以下の3つも、このファイル内に残してください。
 
 [Serializable]
 public class BuildingEditState
