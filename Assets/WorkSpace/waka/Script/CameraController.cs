@@ -3,8 +3,12 @@ using static GameConst;
 
 public class CameraController : MonoBehaviour
 {
-    // GUIManagerから開閉状態を設定する
+    // それぞれのUIから開閉状態を知らせる
     public static bool InventoryOpen { get; set; }
+    public static bool DisConnectMenuOpen { get; set; }
+
+    public static bool IsCameraLocked =>
+        InventoryOpen || DisConnectMenuOpen;
 
     [SerializeField]
     private Camera playerCamera;
@@ -43,17 +47,18 @@ public class CameraController : MonoBehaviour
     private float yaw;
     private float pitch = 15f;
 
-    // 再生開始時に状態をリセット
+    private bool cursorReleased;
+    private CursorLockMode previousCursorLock;
+    private bool previousCursorVisible;
+
     [RuntimeInitializeOnLoadMethod(
         RuntimeInitializeLoadType.SubsystemRegistration)]
-    private static void ResetInventoryState()
+    private static void ResetMenuState()
     {
         InventoryOpen = false;
+        DisConnectMenuOpen = false;
     }
 
-    /// <summary>
-    /// 初期化
-    /// </summary>
     public void Initialize(
         PlayerManager _owner,
         Transform _target)
@@ -63,31 +68,34 @@ public class CameraController : MonoBehaviour
         target = _target;
 
         if (target != null)
-        {
             yaw = target.eulerAngles.y;
-        }
     }
 
     private void Start()
     {
         if (target != null)
-        {
             yaw = target.eulerAngles.y;
-        }
 
         if (playerCamera != null)
-        {
             playerCamera.fieldOfView = DEFAULT_PLAYER_FOV;
-        }
     }
 
     private void LateUpdate()
     {
-        if (target == null || input == null)
+        // 自分が操作するカメラだけ処理する
+        if (input == null || !input.CanProcessInput)
+        {
+            RestoreCursor();
+            return;
+        }
+
+        UpdateCursor();
+
+        if (target == null)
             return;
 
-        // インベントリを閉じているときだけ視点を回転する
-        if (!InventoryOpen)
+        // どちらかのUIが開いていたら視点回転を止める
+        if (!IsCameraLocked)
         {
             Vector2 lookInput = input.LookInput;
 
@@ -99,23 +107,18 @@ public class CameraController : MonoBehaviour
         Quaternion rotation =
             Quaternion.Euler(pitch, yaw, 0f);
 
-        // プレイヤーの胸〜顔あたりを基準にする
         Vector3 targetPoint =
             target.position + Vector3.up * targetHeight;
 
-        // 本来置きたいカメラ位置
         Vector3 desiredPosition =
             targetPoint + rotation * offset;
 
-        Vector3 direction =
-            desiredPosition - targetPoint;
-
+        Vector3 direction = desiredPosition - targetPoint;
         float distance = direction.magnitude;
         direction.Normalize();
 
         Vector3 finalPosition = desiredPosition;
 
-        // 壁に当たったら手前に寄せる
         if (Physics.SphereCast(
             targetPoint,
             cameraRadius,
@@ -128,7 +131,6 @@ public class CameraController : MonoBehaviour
                 hit.point - direction * wallOffset;
         }
 
-        // カメラがプレイヤーに近すぎる場合
         float currentDistance =
             Vector3.Distance(targetPoint, finalPosition);
 
@@ -144,6 +146,41 @@ public class CameraController : MonoBehaviour
 
         transform.position = finalPosition;
         transform.rotation = rotation;
+    }
+
+    private void UpdateCursor()
+    {
+        if (IsCameraLocked)
+        {
+            if (!cursorReleased)
+            {
+                previousCursorLock = Cursor.lockState;
+                previousCursorVisible = Cursor.visible;
+                cursorReleased = true;
+            }
+
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+        else
+        {
+            RestoreCursor();
+        }
+    }
+
+    private void RestoreCursor()
+    {
+        if (!cursorReleased)
+            return;
+
+        Cursor.lockState = previousCursorLock;
+        Cursor.visible = previousCursorVisible;
+        cursorReleased = false;
+    }
+
+    private void OnDisable()
+    {
+        RestoreCursor();
     }
 
     public void StandbyPickUpItem()
@@ -169,23 +206,16 @@ public class CameraController : MonoBehaviour
             if (distance > PICKUP_DISTANCE)
                 return;
 
-            // 既存の取得リクエスト処理
             item.RequestPickup(owner);
         }
     }
 
-    /// <summary>
-    /// 画面中央からRayを飛ばす
-    /// </summary>
     public Ray GetCrosshairRay()
     {
         return playerCamera.ViewportPointToRay(
             new Vector3(0.5f, 0.5f, 0f));
     }
 
-    /// <summary>
-    /// クロスヘアで何を狙っているか取得する
-    /// </summary>
     public bool GetCrosshairTarget(out RaycastHit hit)
     {
         if (playerCamera == null)
@@ -194,8 +224,6 @@ public class CameraController : MonoBehaviour
             return false;
         }
 
-        Ray ray = GetCrosshairRay();
-
-        return Physics.Raycast(ray, out hit);
+        return Physics.Raycast(GetCrosshairRay(), out hit);
     }
 }

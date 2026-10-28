@@ -1,15 +1,14 @@
 using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using FishNet;
 using FishNet.Managing;
 using FishNet.Transporting;
-using UnityEngine;
-using UnityEngine.UI;
-using DG.Tweening;
-
-
-using static GameConst;
 using NaughtyAttributes;
+using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
+using static GameConst;
 
 public enum DisConnectMenuState
 {
@@ -254,6 +253,16 @@ public class ConnectionMonitoringManager : MonoBehaviour
         }
     }
 
+    private void Update()
+    {
+        if (Keyboard.current == null)
+            return;
+
+        if (Keyboard.current.tabKey.wasPressedThisFrame)
+        {
+            ToggleDisConnectMenu();
+        }
+    }
     [Button]
     public void ToggleDisConnectMenu()
     {
@@ -284,6 +293,7 @@ public class ConnectionMonitoringManager : MonoBehaviour
 
         rect.DOAnchorPos(_ShowPos.anchoredPosition, toggleTime);
         d_state = DisConnectMenuState.show;
+        CameraController.DisConnectMenuOpen = true;
     }
 
     private void Hide()
@@ -293,6 +303,7 @@ public class ConnectionMonitoringManager : MonoBehaviour
 
         rect.DOAnchorPos(_HidePos.anchoredPosition, toggleTime);
         d_state = DisConnectMenuState.hide;
+        CameraController.DisConnectMenuOpen = false;
     }
 
     #endregion
