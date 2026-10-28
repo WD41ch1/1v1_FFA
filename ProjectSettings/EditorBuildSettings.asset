@@ -14,10 +14,10 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/WorkSpace/shishido/Scene/LobbyScene.unity
     guid: 866262ea6d188bc44912c5eb9cde82e9
-  - enabled: 1
+  - enabled: 0
     path: Assets/WorkSpace/shishido/Scene/BattleScene.unity
     guid: 1c2f5739f4069d4478b3c1584afba4bc
-  - enabled: 0
+  - enabled: 1
     path: Assets/WorkSpace/waka/Scenes/BattleScene.unity
     guid: 5712a1bf2523ae9428f49317c17c309c
   m_configObjects:
