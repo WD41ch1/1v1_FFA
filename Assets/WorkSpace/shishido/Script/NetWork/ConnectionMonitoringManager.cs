@@ -2,12 +2,20 @@ using Cysharp.Threading.Tasks;
 using FishNet;
 using FishNet.Managing;
 using FishNet.Transporting;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using DG.Tweening;
+
 
 using static GameConst;
+using NaughtyAttributes;
+using UnityEngine.SceneManagement;
+
+public enum DisConnectMenuState
+{
+    show,
+    hide,
+}
 
 
 public class ConnectionMonitoringManager : MonoBehaviour
@@ -31,12 +39,21 @@ public class ConnectionMonitoringManager : MonoBehaviour
     private LocalConnectionState _clientConnectionState
 = LocalConnectionState.Stopped;
 
+    private RectTransform rect;
+    private DisConnectMenuState d_state;
+    private float toggleTime = 0.2f;
+    private bool toggle;
+
     #endregion
 
     #region SerializeField
 
-    [SerializeField] private GameObject _disConnectCanvas;
+    [SerializeField] private GameObject _ConnectionLostOBJ;
+    [SerializeField] private GameObject _disConnectOBJ;
     [SerializeField] private Button _backButton;
+    [SerializeField] private Button _ExitButton;
+    [SerializeField] private RectTransform _ShowPos;
+    [SerializeField] private RectTransform _HidePos;
 
     #endregion
 
@@ -54,7 +71,8 @@ public class ConnectionMonitoringManager : MonoBehaviour
         // シーン遷移後も保持
         DontDestroyOnLoad(gameObject);
 
-        _disConnectCanvas?.SetActive(false);
+        //  UIの初期化
+        Init();
     }
 
     private void OnDestroy()
@@ -80,6 +98,9 @@ public class ConnectionMonitoringManager : MonoBehaviour
 
         if (_backButton != null)
             _backButton.onClick.AddListener(OnBackLoadScene);
+
+        if (_backButton != null)
+            _ExitButton.onClick.AddListener(OnExtiMatchi);
     }
 
     private void OnDisable()
@@ -128,7 +149,7 @@ public class ConnectionMonitoringManager : MonoBehaviour
 
         GameDebug.Warning("サーバーとの接続が切断されました");
 
-        _disConnectCanvas.SetActive(true);
+        _ConnectionLostOBJ.SetActive(true);
     }
 
     /// <summary>
@@ -160,8 +181,15 @@ public class ConnectionMonitoringManager : MonoBehaviour
     {
         LocalSceneManager.LoadScene(SCENE_CONNECTIONLOBBY);
 
-        if (_disConnectCanvas?.activeSelf == true)
-            _disConnectCanvas?.SetActive(false);
+        if (_ConnectionLostOBJ?.activeSelf == true)
+            _ConnectionLostOBJ?.SetActive(false);
+    }
+
+    public void OnExtiMatchi()
+    {
+        OnDisConnection();
+
+        Hide();
     }
 
     /// <summary>
@@ -169,7 +197,7 @@ public class ConnectionMonitoringManager : MonoBehaviour
     /// </summary>
     public void OnDisConnection()
     {
-        GameDebug.Log("切断ボタンが押されました");
+        GameDebug.Log("[切断ボタン]または[マッチ退出ボタン]が押されました");
 
         if (_isReturning)
             return;
@@ -205,6 +233,70 @@ public class ConnectionMonitoringManager : MonoBehaviour
     }
 
     #endregion
+
+    #region UI関連
+
+    private void Init()
+    {
+        //  ConnectionLostは隠しておく
+        if (_ConnectionLostOBJ != null)
+            _ConnectionLostOBJ.SetActive(false);
+
+
+        if (_disConnectOBJ == null || _ShowPos == null || _HidePos == null)
+        {
+            _disConnectOBJ.SetActive(false);
+        }
+        else
+        {
+            rect = _disConnectOBJ.GetComponent<RectTransform>();
+            Hide();
+        }
+    }
+
+    [Button]
+    public void ToggleDisConnectMenu()
+    {
+        //  BattleScene出ない場合利用不可
+        if (SceneManager.GetActiveScene().name != SCENE_BATTLE)
+            return;
+
+        toggle = !toggle;
+
+        //  すでに同じ状態であるなら
+        if (toggle && d_state == DisConnectMenuState.show)
+            return;
+        else if (!toggle && d_state == DisConnectMenuState.hide)
+            return;
+
+        //  表示切替処理
+        if (toggle)
+            Show();
+        else
+            Hide();
+
+    }
+
+    private void Show()
+    {
+        if (d_state == DisConnectMenuState.show)
+            return;
+
+        rect.DOAnchorPos(_ShowPos.anchoredPosition, toggleTime);
+        d_state = DisConnectMenuState.show;
+    }
+
+    private void Hide()
+    {
+        if (d_state == DisConnectMenuState.hide)
+            return;
+
+        rect.DOAnchorPos(_HidePos.anchoredPosition, toggleTime);
+        d_state = DisConnectMenuState.hide;
+    }
+
+    #endregion
+
 
 
     /// <summary>
