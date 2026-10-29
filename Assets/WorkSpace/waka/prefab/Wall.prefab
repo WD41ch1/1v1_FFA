@@ -135,9 +135,6 @@ MonoBehaviour:
   - name: DableWindow
     removedCells: 0300000005000000
     resultPrefab: {fileID: 0}
-  - name: "\u53F3\u4E0A\u4E09\u89D2"
-    removedCells: 070000000800000005000000
-    resultPrefab: {fileID: 0}
   - name: "\u53F3\u4E0B\u56DB\u30DE\u30B9"
     removedCells: 01000000040000000500000002000000
     resultPrefab: {fileID: 0}
@@ -159,6 +156,15 @@ MonoBehaviour:
   - name: "\u5DE6\u4E0B4\u30DE\u30B9"
     removedCells: 00000000010000000400000003000000
     resultPrefab: {fileID: 0}
+  - name: "\u5DE6\u4E0B3\u30DE\u30B9"
+    removedCells: 000000000100000003000000
+    resultPrefab: {fileID: 362201339420559770, guid: ba89364eac6ba954297825ab06315d1f, type: 3}
+  - name: "\u5DE6\u4E0A\uFF13\u30DE\u30B9"
+    removedCells: 030000000600000007000000
+    resultPrefab: {fileID: 362201339420559770, guid: 454ce8faa873ad148afe369d4403f552, type: 3}
+  - name: "\u53F3\u4E0A\uFF13\u30DE\u30B9"
+    removedCells: 050000000700000008000000
+    resultPrefab: {fileID: 362201339420559770, guid: c0355246c36bb15488a5c80268af2d8c, type: 3}
 --- !u!114 &6826113611838482170
 MonoBehaviour:
   m_ObjectHideFlags: 0

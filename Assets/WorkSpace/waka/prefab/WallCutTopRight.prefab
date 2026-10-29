@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6281791170780484928}
   m_Layer: 0
-  m_Name: HalfWallResult
+  m_Name: WallCutTopRight
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -62,7 +62,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2625981282771465144, guid: 32c493ce69af4154db4c00e1925edc67, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0
+      value: 0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: 2625981282771465144, guid: 32c493ce69af4154db4c00e1925edc67, type: 3}
       propertyPath: m_LocalRotation.x
@@ -70,7 +70,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2625981282771465144, guid: 32c493ce69af4154db4c00e1925edc67, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.7071068
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2625981282771465144, guid: 32c493ce69af4154db4c00e1925edc67, type: 3}
       propertyPath: m_LocalRotation.z
@@ -86,7 +86,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2625981282771465144, guid: 32c493ce69af4154db4c00e1925edc67, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
+      value: -90
       objectReference: {fileID: 0}
     - target: {fileID: 2815500843210378934, guid: 32c493ce69af4154db4c00e1925edc67, type: 3}
       propertyPath: m_Mesh
