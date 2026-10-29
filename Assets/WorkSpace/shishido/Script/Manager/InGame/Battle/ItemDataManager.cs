@@ -51,6 +51,7 @@ public class ItemDataManager : MonoBehaviour
     private void BuildDictionary()
     {
         modelDataDictionary.Clear();
+        MatmodelDataDictionary.Clear();
         processlDataDictionary.Clear();
 
         foreach (AppearanceModelData data in modelDataList)
@@ -70,6 +71,25 @@ public class ItemDataManager : MonoBehaviour
             }
 
             modelDataDictionary.Add(data.itemId, data);
+        }
+
+        foreach (AppearanceModelData data in MatmodelDataList)
+        {
+            if (data == null)
+            {
+                GameDebug.Warning(
+                    "ItemModelManager: ItemModelDataが未登録です。");
+                continue;
+            }
+
+            if (MatmodelDataDictionary.ContainsKey(data.itemId))
+            {
+                GameDebug.Error(
+                    $"ItemModelManager: ItemModelDataのIDが重複しています: {data.itemId}");
+                continue;
+            }
+
+            MatmodelDataDictionary.Add(data.itemId, data);
         }
 
         foreach (ItemProcessData data in processDataList)
@@ -103,6 +123,17 @@ public class ItemDataManager : MonoBehaviour
         out AppearanceModelData modelData)
     {
         return modelDataDictionary.TryGetValue(
+            itemId, out modelData);
+    }
+
+    /// <summary>
+    /// IDから見た目データを取得
+    /// </summary>
+    public bool TryGetMatModelData(
+        int itemId,
+        out AppearanceModelData modelData)
+    {
+        return MatmodelDataDictionary.TryGetValue(
             itemId, out modelData);
     }
 

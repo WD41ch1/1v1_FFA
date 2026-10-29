@@ -22,6 +22,8 @@ public class AmmoPickup : PickupBase
     {
         ammoType = type;
         amount = _amount;
+
+        SetAppearance();
     }
 
     /// <summary>
@@ -46,4 +48,68 @@ public class AmmoPickup : PickupBase
 
         return isAddAmmo;
     }
+
+    private int GetModelID()
+    {
+        int id = -1;
+
+        switch (ammoType)
+        {
+            case AmmoType.SmallAmmo:
+                id = MODEL_ID_SMALLAMMO;
+                break;
+            case AmmoType.MiddleAmmo:
+                id = MODEL_ID_MIDDLEAMMO;
+                break;
+            case AmmoType.BigAmmo:
+                id = MODEL_ID_BIGAMMO;
+                break;
+            case AmmoType.ShotgunAmmo:
+                id = MODEL_ID_SGAMMO;
+                break;
+        }
+
+        return id;
+    }
+
+
+    /// <summary>
+    /// 見た目のせってい
+    /// </summary>
+    public override void SetAppearance()
+    {
+
+        int id = GetModelID();
+
+        if (id == -1)
+            return;
+
+        //  すでに生成されているなら
+        if (appearanceOBJ != null)
+            Destroy(appearanceOBJ);
+
+        AppearanceModelData modelData = null;
+
+        if (!ItemDataManager.Instance.TryGetMatModelData(id, out modelData))
+        {
+            Despawn(this);
+            return;
+        }
+
+        GameObject prefab = modelData.AppearancePrefab;
+        if (prefab == null)
+        {
+            Despawn(this);
+            return;
+        }
+
+
+        appearanceOBJ = Instantiate(prefab, transform);
+
+        //if (appearanceOBJ == null) return;
+
+        //Spawn(appearanceOBJ);
+
+    }
+
 }

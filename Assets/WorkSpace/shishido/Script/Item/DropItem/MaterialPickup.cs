@@ -21,6 +21,8 @@ public class MaterialPickup : PickupBase
     {
         bildingMatType = type;
         amount = _amount;
+
+        SetAppearance();
     }
 
     public override bool AddInventory(PlayerManager character)
@@ -32,5 +34,64 @@ public class MaterialPickup : PickupBase
             character.inventoryManager.AddBildMat(bildingMatType, amount);
 
         return isAddBildMat;
+    }
+
+    private int GetModelID()
+    {
+        int id = -1;
+
+        switch (bildingMatType)
+        {
+            case BildingMatType.Wood:
+                id = MODEL_ID_WOOD;
+                break;
+            case BildingMatType.Brick:
+                id = MODEL_ID_BRICK;
+                break;
+            case BildingMatType.Iron:
+                id = MODEL_ID_IRON;
+                break;
+        }
+
+        return id;
+    }
+
+    /// <summary>
+    /// 見た目のせってい
+    /// </summary>
+    public override void SetAppearance()
+    {
+
+        int id = GetModelID();
+
+        if (id == -1)
+            return;
+
+        //  すでに生成されているなら
+        if (appearanceOBJ != null)
+            Destroy(appearanceOBJ);
+
+        AppearanceModelData modelData = null;
+
+        if (!ItemDataManager.Instance.TryGetMatModelData(id, out modelData))
+        {
+            Despawn(this);
+            return;
+        }
+
+        GameObject prefab = modelData.AppearancePrefab;
+        if (prefab == null)
+        {
+            Despawn(this);
+            return;
+        }
+
+
+        appearanceOBJ = Instantiate(prefab, transform);
+
+        //if (appearanceOBJ == null) return;
+
+        //Spawn(appearanceOBJ);
+
     }
 }

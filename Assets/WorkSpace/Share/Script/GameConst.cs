@@ -1,5 +1,5 @@
 
-public class GameConst 
+public class GameConst
 {
     //======================================================
     //                      Scene
@@ -40,4 +40,11 @@ public class GameConst
     public static readonly int MAX_AMMO = 999;
     public static readonly int MAX_BILDMAT = 999;
 
+    public static readonly int MODEL_ID_WOOD        = 9101;
+    public static readonly int MODEL_ID_BRICK       = 9102;
+    public static readonly int MODEL_ID_IRON        = 9103;
+    public static readonly int MODEL_ID_SMALLAMMO   = 9201;
+    public static readonly int MODEL_ID_MIDDLEAMMO  = 9202;
+    public static readonly int MODEL_ID_BIGAMMO     = 9203;
+    public static readonly int MODEL_ID_SGAMMO      = 9204;
 }

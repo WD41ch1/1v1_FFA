@@ -6,6 +6,7 @@ public class ItemView : MonoBehaviour
 {
     public Animator animator;
 
+
     [Header("武器用:Point")]//  エフェクト(マズルフラッシュ)、弾の生成位置、レイキャスト開始位置など
     public Transform muzzlePoint;
     //  薬莢などの生成位置
