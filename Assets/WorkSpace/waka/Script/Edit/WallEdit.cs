@@ -79,14 +79,10 @@ public class WallEdit : MonoBehaviour, INetworkBuildingEditTarget
         colliderStates = new bool[originalColliders.Length];
 
         for (int i = 0; i < originalRenderers.Length; i++)
-        {
             rendererStates[i] = originalRenderers[i].enabled;
-        }
 
         for (int i = 0; i < originalColliders.Length; i++)
-        {
             colliderStates[i] = originalColliders[i].enabled;
-        }
     }
 
     public bool BeginEdit(Camera camera)
@@ -97,7 +93,7 @@ public class WallEdit : MonoBehaviour, INetworkBuildingEditTarget
         if (width <= 0 || height <= 0 || thickness <= 0)
         {
             Debug.LogError(
-                "WallEdit：Width・Height・Thicknessは0より大きくしてください。",
+                "[壁編集] Width・Height・Thicknessは0より大きくしてください。",
                 this);
             return false;
         }
@@ -108,16 +104,15 @@ public class WallEdit : MonoBehaviour, INetworkBuildingEditTarget
         if (network == null || !network.Ready)
         {
             Debug.LogWarning(
-                "WallEdit：編集同期の初期化が完了していません。",
+                "[壁編集] 編集同期の初期化が完了していません。",
                 this);
             return false;
         }
 
-        // ビルド時のShader.Find依存をなくす。
         if (gridMaterial == null)
         {
             Debug.LogError(
-                "WallEdit：Grid Materialを設定してください。",
+                "[壁編集] Grid Materialを設定してください。",
                 this);
             return false;
         }
@@ -146,9 +141,9 @@ public class WallEdit : MonoBehaviour, INetworkBuildingEditTarget
             tile.transform.SetParent(grid.transform, false);
 
             tile.transform.localPosition =
-                CellCenter(i) +
-                Vector3.forward * faceSign *
-                (thickness / 2f + 0.015f);
+                CellCenter(i)
+                + Vector3.forward * faceSign
+                * (thickness / 2f + 0.015f);
 
             tile.transform.localScale = new Vector3(
                 width / 3f * 0.94f,
@@ -193,8 +188,8 @@ public class WallEdit : MonoBehaviour, INetworkBuildingEditTarget
             return;
 
         float planeZ =
-            localCenter.z +
-            faceSign * (thickness / 2f + 0.015f);
+            localCenter.z
+            + faceSign * (thickness / 2f + 0.015f);
 
         float t = (planeZ - origin.z) / direction.z;
 
@@ -212,13 +207,11 @@ public class WallEdit : MonoBehaviour, INetworkBuildingEditTarget
 
         int x = Mathf.Clamp(
             Mathf.FloorToInt((point.x / width + 0.5f) * 3f),
-            0,
-            2);
+            0, 2);
 
         int y = Mathf.Clamp(
             Mathf.FloorToInt((point.y / height + 0.5f) * 3f),
-            0,
-            2);
+            0, 2);
 
         int cell = y * 3 + x;
 
@@ -261,9 +254,21 @@ public class WallEdit : MonoBehaviour, INetworkBuildingEditTarget
         return mask > 0 && mask < 511;
     }
 
-    /// <summary>
-    /// 操作側では形状を変更せず、サーバーに要求する。
-    /// </summary>
+    private static string DescribeMask(int mask)
+    {
+        List<int> cells = new List<int>();
+
+        for (int i = 0; i < 9; i++)
+        {
+            if ((mask & (1 << i)) != 0)
+                cells.Add(i);
+        }
+
+        return cells.Count == 0
+            ? "なし（元の壁）"
+            : string.Join(", ", cells);
+    }
+
     public bool ConfirmEdit(Transform player, out string reason)
     {
         reason = "";
@@ -279,23 +284,29 @@ public class WallEdit : MonoBehaviour, INetworkBuildingEditTarget
 
         if (network == null)
         {
-            reason =
-                "完成壁のルートにNetworkBuildingEditが必要です。";
+            reason = "完成壁のルートにNetworkBuildingEditが必要です。";
+            Debug.LogWarning("[壁編集] " + reason, this);
             return false;
         }
 
-        return network.RequestEdit(
+        Debug.Log(
+            $"[壁編集要求] 削除マス：{DescribeMask(selectionMask)}",
+            this);
+
+        bool requested = network.RequestEdit(
             this,
             player,
             editRevision,
             selectionMask,
             new int[0],
             out reason);
+
+        if (!requested)
+            Debug.LogWarning("[壁編集要求失敗] " + reason, this);
+
+        return requested;
     }
 
-    /// <summary>
-    /// サーバーの確定処理、または同期状態の復元から呼ばれる。
-    /// </summary>
     public bool CommitNetworkSelection(
         int mask,
         int[] order,
@@ -307,6 +318,7 @@ public class WallEdit : MonoBehaviour, INetworkBuildingEditTarget
         if (mask < 0 || mask >= 511)
         {
             reason = "壁の選択データが不正です。";
+            Debug.LogWarning("[壁編集拒否] " + reason, this);
             return false;
         }
 
@@ -318,7 +330,13 @@ public class WallEdit : MonoBehaviour, INetworkBuildingEditTarget
         bool accepted = CommitEditLocal(player, out reason);
 
         if (!accepted)
+        {
+            Debug.LogWarning(
+                $"[壁編集拒否] 削除マス：{DescribeMask(mask)}\n{reason}",
+                this);
+
             CancelEdit();
+        }
 
         return accepted;
     }
@@ -342,8 +360,7 @@ public class WallEdit : MonoBehaviour, INetworkBuildingEditTarget
             return false;
         }
 
-        // 受信側ではPlayerとの重なりで結果を拒否しない。
-        // サーバーで確定した形状をそのまま反映する。
+        // サーバーで確定済みなので受信側はPlayer重なり判定をしない
         return CommitNetworkSelection(
             snapshot.mask,
             snapshot.order,
@@ -373,29 +390,38 @@ public class WallEdit : MonoBehaviour, INetworkBuildingEditTarget
 
         if (selectionMask != 0)
         {
-            foreach (Pattern item in patterns)
+            if (patterns != null)
             {
-                if (item == null)
-                    continue;
-
-                if (!TryGetMask(item.removedCells, out int mask))
-                    continue;
-
-                if (mask != selectionMask)
-                    continue;
-
-                if (pattern != null)
+                foreach (Pattern item in patterns)
                 {
-                    reason = "同じ編集パターンが重複登録されています。";
-                    return false;
-                }
+                    if (item == null)
+                        continue;
 
-                pattern = item;
+                    if (!TryGetMask(item.removedCells, out int mask))
+                        continue;
+
+                    if (mask != selectionMask)
+                        continue;
+
+                    if (pattern != null)
+                    {
+                        reason =
+                            $"「{pattern.name}」と「{item.name}」に"
+                            + "同じ削除マスが登録されています。"
+                            + "同じ組み合わせは1つだけにしてください。";
+                        return false;
+                    }
+
+                    pattern = item;
+                }
             }
 
             if (pattern == null)
             {
-                reason = "選択したマスの編集パターンが登録されていません。";
+                reason =
+                    $"削除マス [{DescribeMask(selectionMask)}] "
+                    + "に一致するパターンがありません。"
+                    + "実行中の壁のPatternsを確認してください。";
                 return false;
             }
         }
@@ -404,13 +430,10 @@ public class WallEdit : MonoBehaviour, INetworkBuildingEditTarget
 
         if (selectionMask != 0)
         {
-            candidate = CreateResult(pattern);
+            candidate = CreateResult(pattern, out reason);
 
             if (candidate == null)
-            {
-                reason = "編集結果のPrefabまたはColliderを確認してください。";
                 return false;
-            }
         }
 
         Physics.SyncTransforms();
@@ -419,43 +442,45 @@ public class WallEdit : MonoBehaviour, INetworkBuildingEditTarget
             ? candidate.GetComponentsInChildren<Collider>()
             : originalColliders;
 
-        if (OverlapsPlayer(
-                candidateColliders,
-                candidate == null,
-                player))
+        if (!CheckPlayerClearance(
+            candidateColliders,
+            candidate == null,
+            player,
+            out reason))
         {
-            if (candidate != null)
-            {
-                candidate.SetActive(false);
-                Destroy(candidate);
-            }
-
-            reason = "変更後の壁とPlayerが重なります。少し離れてください。";
+            RemoveResult(candidate);
             return false;
         }
 
-        if (result != null)
-        {
-            result.SetActive(false);
-            Destroy(result);
-        }
-
+        RemoveResult(result);
         result = candidate;
 
         SetOriginal(selectionMask == 0);
-
         committedMask = selectionMask;
+
+        Debug.Log(
+            result != null
+                ? $"[壁編集成功] 生成した形状：{result.name}"
+                : "[壁編集成功] 元の壁に戻しました。",
+            this);
 
         Finish();
         return true;
     }
 
-    private GameObject CreateResult(Pattern pattern)
+    private GameObject CreateResult(
+        Pattern pattern,
+        out string reason)
     {
+        reason = "";
+
         if (!NetworkBuildingEdit.ValidateResultPrefab(
-                pattern.resultPrefab,
-                this))
+            pattern.resultPrefab,
+            this))
         {
+            reason =
+                $"「{pattern.name}」のResult Prefabが検証で拒否されました。"
+                + "直前のConsoleメッセージを確認してください。";
             return null;
         }
 
@@ -468,6 +493,8 @@ public class WallEdit : MonoBehaviour, INetworkBuildingEditTarget
                 transform,
                 false);
 
+            // 結果Prefabの親は壁と同じローカル座標系を使う
+            // メッシュの回転・位置調整はPrefabの子で行う
             root.transform.localPosition = Vector3.zero;
             root.transform.localRotation = Quaternion.identity;
             root.SetActive(true);
@@ -492,22 +519,18 @@ public class WallEdit : MonoBehaviour, INetworkBuildingEditTarget
 
                 cell.transform.SetParent(root.transform, false);
                 cell.transform.localPosition = CellCenter(i);
-
                 cell.transform.localScale = new Vector3(
                     width / 3f,
                     height / 3f,
                     thickness);
 
                 if (material != null)
-                {
-                    cell.GetComponent<Renderer>().sharedMaterial =
-                        material;
-                }
+                    cell.GetComponent<Renderer>().sharedMaterial = material;
             }
         }
 
         foreach (Transform child in
-                 root.GetComponentsInChildren<Transform>(true))
+            root.GetComponentsInChildren<Transform>(true))
         {
             child.gameObject.layer = gameObject.layer;
         }
@@ -515,30 +538,44 @@ public class WallEdit : MonoBehaviour, INetworkBuildingEditTarget
         bool hasSolidCollider = false;
 
         foreach (Collider col in
-                 root.GetComponentsInChildren<Collider>())
+            root.GetComponentsInChildren<Collider>())
         {
-            hasSolidCollider |= col.enabled && !col.isTrigger;
+            if (!col.enabled || col.isTrigger)
+                continue;
+
+            if (col is MeshCollider mesh && mesh.sharedMesh == null)
+                continue;
+
+            hasSolidCollider = true;
+            break;
         }
 
         if (!hasSolidCollider)
         {
-            root.SetActive(false);
-            Destroy(root);
+            reason =
+                $"「{root.name}」に使用可能なColliderがありません。"
+                + "有効なColliderを付け、Is TriggerをOFFにしてください。";
+
+            RemoveResult(root);
             return null;
         }
 
         return root;
     }
 
-    private bool OverlapsPlayer(
+    // 外接する四角い範囲ではなくColliderの形状で判定する
+    private bool CheckPlayerClearance(
         Collider[] colliders,
         bool original,
-        Transform player)
+        Transform player,
+        out string reason)
     {
-        if (player == null)
-            return false;
+        reason = "";
 
-        Collider[] players =
+        if (player == null)
+            return true;
+
+        Collider[] bodies =
             player.GetComponentsInChildren<Collider>();
 
         for (int i = 0; i < colliders.Length; i++)
@@ -560,25 +597,88 @@ public class WallEdit : MonoBehaviour, INetworkBuildingEditTarget
 
             bool enabledBefore = col.enabled;
 
-            col.enabled = true;
-            Physics.SyncTransforms();
-
-            Bounds bounds = col.bounds;
-
-            col.enabled = enabledBefore;
-
-            foreach (Collider body in players)
+            try
             {
-                if (body.enabled &&
-                    !body.isTrigger &&
-                    bounds.Intersects(body.bounds))
+                col.enabled = true;
+                Physics.SyncTransforms();
+
+                foreach (Collider body in bodies)
                 {
-                    return true;
+                    if (body == null ||
+                        body == col ||
+                        !body.enabled ||
+                        body.isTrigger ||
+                        !body.gameObject.activeInHierarchy)
+                    {
+                        continue;
+                    }
+
+                    // 壁自体をPlayerのColliderとして扱わない
+                    if (body.transform.IsChildOf(transform))
+                        continue;
+
+                    bool colSupported = IsPenetrationShape(col);
+                    bool bodySupported = IsPenetrationShape(body);
+
+                    if (!colSupported && !bodySupported)
+                    {
+                        reason =
+                            "重なり判定に対応していないColliderの組み合わせです。"
+                            + $" 壁：{col.name}、Player：{body.name}。"
+                            + "PlayerにはCapsuleColliderなどを使用してください。";
+                        return false;
+                    }
+
+                    // 対応するColliderを第一引数にする
+                    Collider first = colSupported ? col : body;
+                    Collider second = colSupported ? body : col;
+
+                    bool overlapping = Physics.ComputePenetration(
+                        first,
+                        first.transform.position,
+                        first.transform.rotation,
+                        second,
+                        second.transform.position,
+                        second.transform.rotation,
+                        out Vector3 direction,
+                        out float depth);
+
+                    if (overlapping && depth > 0.001f)
+                    {
+                        reason =
+                            "変更後の壁とPlayerが重なっています。"
+                            + $" Collider：{col.name}、重なり量：{depth:F4}。"
+                            + "少し離れて編集してください。";
+                        return false;
+                    }
                 }
+            }
+            finally
+            {
+                col.enabled = enabledBefore;
             }
         }
 
-        return false;
+        return true;
+    }
+
+    private static bool IsPenetrationShape(Collider col)
+    {
+        return col is BoxCollider ||
+               col is SphereCollider ||
+               col is CapsuleCollider ||
+               (col is MeshCollider mesh &&
+                mesh.convex &&
+                mesh.sharedMesh != null);
+    }
+
+    private void RemoveResult(GameObject obj)
+    {
+        if (obj == null)
+            return;
+
+        obj.SetActive(false);
+        Destroy(obj);
     }
 
     private void SetOriginal(bool visible)
@@ -604,6 +704,8 @@ public class WallEdit : MonoBehaviour, INetworkBuildingEditTarget
 
     private void RefreshGrid()
     {
+        MaterialPropertyBlock block = new MaterialPropertyBlock();
+
         for (int i = 0; i < 9; i++)
         {
             if (tiles[i] == null)
@@ -612,9 +714,6 @@ public class WallEdit : MonoBehaviour, INetworkBuildingEditTarget
             Color color = (selectionMask & (1 << i)) != 0
                 ? new Color(1f, 0.35f, 0.1f)
                 : new Color(0.1f, 0.65f, 1f);
-
-            MaterialPropertyBlock block =
-                new MaterialPropertyBlock();
 
             block.SetColor("_Color", color);
             block.SetColor("_BaseColor", color);
@@ -664,22 +763,22 @@ public class WallEdit : MonoBehaviour, INetworkBuildingEditTarget
         for (int i = 0; i < 9; i++)
         {
             Vector3 point = transform.TransformPoint(
-                CellCenter(i) +
-                Vector3.forward * faceSign *
-                (thickness / 2f + 0.025f));
+                CellCenter(i)
+                + Vector3.forward * faceSign
+                * (thickness / 2f + 0.025f));
 
             Vector3 screen = editCamera.WorldToScreenPoint(point);
 
-            if (screen.z > 0)
-            {
-                GUI.Label(
-                    new Rect(
-                        screen.x - 6,
-                        Screen.height - screen.y - 10,
-                        24,
-                        24),
-                    i.ToString());
-            }
+            if (screen.z <= 0)
+                continue;
+
+            GUI.Label(
+                new Rect(
+                    screen.x - 6,
+                    Screen.height - screen.y - 10,
+                    24,
+                    24),
+                i.ToString());
         }
     }
 }
