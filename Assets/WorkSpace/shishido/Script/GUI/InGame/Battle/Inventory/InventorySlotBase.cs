@@ -20,6 +20,7 @@ public abstract class InventorySlotBase<T> : MonoBehaviour,
 
     protected InventoryUI inventory;
     protected GUIManager gui;
+    protected Sprite itemIcon;
     protected T type;
     protected ItemType itemType;
     protected int quantity;
@@ -54,6 +55,7 @@ public abstract class InventorySlotBase<T> : MonoBehaviour,
 
     public abstract void Open();
     public abstract void Hide();
+    public virtual void SetSprite() { }
 
     #region ドラッグアンドドロップ関係
 

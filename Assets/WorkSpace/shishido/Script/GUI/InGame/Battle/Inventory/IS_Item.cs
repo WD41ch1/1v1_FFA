@@ -5,6 +5,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using static UnityEngine.Rendering.DebugUI;
 
 public class IS_Item : InventorySlotBase<BerItemType>
 {
@@ -13,6 +14,9 @@ public class IS_Item : InventorySlotBase<BerItemType>
     public Image rarityIcon;
 
     public ItemData itemData;
+
+    public Image timerRing;
+    private Coroutine nowCoroutine;
 
     public override void Initialize(InventoryUI _inventory, BerItemType _type)
     {
@@ -48,67 +52,6 @@ public class IS_Item : InventorySlotBase<BerItemType>
 
     }
 
-
-
-    //public override void DetectDropZone(PointerEventData eventData)
-    //{
-    //    // UI Raycast を使って、マウス位置の UI 要素を全て取得
-    //    var results = new System.Collections.Generic.List<RaycastResult>();
-    //    EventSystem.current.RaycastAll(eventData, results);
-
-    //    IDropHandler foundDropZone = null;
-
-    //    // Raycast の結果を全て確認
-    //    foreach (var result in results)
-    //    {
-    //        if (result.gameObject == gameObject)
-    //            continue;
-
-    //        IDropHandler dropHandler =
-    //            result.gameObject.GetComponent<IDropHandler>();
-
-    //        if (dropHandler == null)
-    //            continue;
-
-    //        // 最優先のDropZoneだった場合
-    //        if (dropHandler is InventoryUI_ItemDrop)
-    //        {
-    //            foundDropZone = dropHandler;
-    //            break;
-    //        }
-
-    //        // 通常DropZoneは一旦保存
-    //        if (foundDropZone == null)
-    //        {
-    //            foundDropZone = dropHandler;
-    //        }
-    //    }
-
-    //    // ドロップゾーンが変わった場合
-    //    if (foundDropZone != currentDropZone)
-    //    {
-    //        // 前のドロップゾーンから出た
-    //        if (currentDropZone != null)
-    //        {
-    //            Debug.Log("ドロップゾーンから出ました");
-    //            // IPointerExitHandler を呼びたい場合
-    //            var pointerExit = currentDropZone as IPointerExitHandler;
-    //            pointerExit?.OnPointerExit(eventData);
-    //        }
-
-    //        // 新しいドロップゾーンに入った
-    //        if (foundDropZone != null)
-    //        {
-    //            Debug.Log("ドロップゾーンに入りました");
-    //            // IPointerEnterHandler を呼びたい場合
-    //            var pointerEnter = foundDropZone as IPointerEnterHandler;
-    //            pointerEnter?.OnPointerEnter(eventData);
-    //        }
-
-    //        currentDropZone = foundDropZone;
-    //    }
-    //}
-
     public override void Open()
     {
     }
@@ -136,5 +79,44 @@ public class IS_Item : InventorySlotBase<BerItemType>
     public void SetNumber(int num)
     {
         slotNumber = num;
+    }
+
+    public void StertTimer(float duration)
+    {
+        if (timerRing == null) return;
+
+        timerRing.gameObject.SetActive(true);
+
+        nowCoroutine = StartCoroutine(ReloadTimer(duration));
+    }
+
+    public void CancelTimer()
+    {
+        if (nowCoroutine != null)
+        {
+            StopCoroutine(nowCoroutine);
+            nowCoroutine = null;
+            timerRing.fillAmount = 0f;
+            timerRing.gameObject.SetActive(false);
+        }
+    }
+
+    private IEnumerator ReloadTimer(float duration)
+    {
+        float startValue = timerRing.fillAmount;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            timerRing.fillAmount = Mathf.Lerp(startValue, 0f, elapsed / duration);
+
+            yield return null;
+        }
+
+        timerRing.fillAmount = 0f;
+
+        timerRing.gameObject.SetActive(false);
+        nowCoroutine = null;
     }
 }

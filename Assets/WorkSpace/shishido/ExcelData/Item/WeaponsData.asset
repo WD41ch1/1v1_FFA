@@ -20,7 +20,7 @@ MonoBehaviour:
       FireMode: 0
       fireRate: 0.5
       reloadTime: 3
-      ammoType: 2
+      ammoType: 1
       magazineSize: 30
       ammoSpeed: 50
       fireAccuracy: 0
@@ -68,7 +68,7 @@ MonoBehaviour:
       FireMode: 0
       fireRate: 0.05
       reloadTime: 1.5
-      ammoType: 1
+      ammoType: 0
       magazineSize: 30
       ammoSpeed: 50
       fireAccuracy: 0

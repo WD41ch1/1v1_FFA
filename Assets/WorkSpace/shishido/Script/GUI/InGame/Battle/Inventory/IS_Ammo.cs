@@ -5,6 +5,11 @@ using UnityEngine;
 
 public class IS_Ammo : InventorySlotBase<AmmoType>
 {
+    [Header("Icon用スプライト")]
+    [SerializeField] private Sprite SmallAmmoIcon;
+    [SerializeField] private Sprite MiddleAmmoIcon;
+    [SerializeField] private Sprite BigAmmoIcon;
+    [SerializeField] private Sprite ShotgunAmmoIcon;
 
     public override void Initialize(InventoryUI _inventory, AmmoType _type)
     {
@@ -19,6 +24,8 @@ public class IS_Ammo : InventorySlotBase<AmmoType>
         if (quantityText == null) quantityText = GetComponentInChildren<TextMeshProUGUI>();
         //  建材タイプ
         type = _type;
+        //  スプライトのセット
+        SetSprite();
     }
 
     public override void UpdateUI(int _quantity)
@@ -46,4 +53,28 @@ public class IS_Ammo : InventorySlotBase<AmmoType>
     {
         transform.gameObject.SetActive(false);
     }
+
+    public override void SetSprite()
+    {
+        if (icon == null) return;
+
+        switch (type)
+        {
+            case AmmoType.SmallAmmo:
+                itemIcon = SmallAmmoIcon;
+                break;
+            case AmmoType.MiddleAmmo:
+                itemIcon = MiddleAmmoIcon;
+                break;
+            case AmmoType.BigAmmo:
+                itemIcon = BigAmmoIcon;
+                break;
+            case AmmoType.ShotgunAmmo:
+                itemIcon = ShotgunAmmoIcon;
+                break;
+        }
+
+        icon.sprite = itemIcon;
+    }
+
 }
