@@ -653,43 +653,43 @@ public class BuildCone : MonoBehaviour
     /// 完成済みConeとの重複判定
     /// 床は重複判定へ含めない
     /// </summary>
-    private bool IsOverlappingCone(
-        Vector3 position
-    )
+    private bool IsOverlappingCone(Vector3 position)
     {
-        float coneBaseY =
-            position.y -
-            conePivotFromBottom;
+        // 屋根のPivotを補正し、階段と同じ底面グリッドで確認
+        if (NetworkBuildPiece.Occupied(
+            BuildingSystem.BuildType.Cone,
+            position,
+            Quaternion.Euler(0f, coneRotationY, 0f),
+            gridSize,
+            conePivotFromBottom,
+            false))
+        {
+            return true;
+        }
 
-        Vector3 checkCenter = new Vector3(
+        float baseY = position.y - conePivotFromBottom;
+
+        Vector3 center = new Vector3(
             position.x,
-            coneBaseY + coneHeight / 2f,
-            position.z
-        );
+            baseY + coneHeight / 2f,
+            position.z);
 
         Vector3 halfExtents = new Vector3(
-            gridSize / 2f - 0.1f,
-            Mathf.Max(
-                coneHeight / 2f - 0.05f,
-                0.05f
-            ),
-            gridSize / 2f - 0.1f
-        );
+            Mathf.Max(gridSize / 2f - 0.1f, 0.01f),
+            Mathf.Max(coneHeight / 2f - 0.05f, 0.05f),
+            Mathf.Max(gridSize / 2f - 0.1f, 0.01f));
 
         Collider[] hits = Physics.OverlapBox(
-            checkCenter,
+            center,
             halfExtents,
             Quaternion.identity,
             coneLayer,
-            QueryTriggerInteraction.Ignore
-        );
+            QueryTriggerInteraction.Ignore);
 
         foreach (Collider hit in hits)
         {
-            if (IsPreviewCollider(hit))
-            {
+            if (IsPreviewCollider(hit) || IsPlayerCollider(hit))
                 continue;
-            }
 
             return true;
         }
