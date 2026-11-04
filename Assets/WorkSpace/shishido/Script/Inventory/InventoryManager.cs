@@ -475,6 +475,11 @@ public class InventoryManager : NetworkBehaviour
         OnUpdateItem?.Invoke(slotNum, count);
     }
 
+    public void StartTimerRequest(float duration)
+    {
+
+    }
+
     #endregion
 
     #region 共通関数

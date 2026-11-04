@@ -186,6 +186,9 @@ public abstract class WeaponBase : ItemBase
         //  弾補充     
         weaponState.currentAmmo += _approvalValue;
 
+        //  HotBerSlotの更新
+        AmmoCheker();
+
         isReloading = false;
     }
 

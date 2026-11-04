@@ -1,3 +1,4 @@
+using FishNet;
 using FishNet.Connection;
 using FishNet.Managing;
 using FishNet.Object;
@@ -8,11 +9,25 @@ using UnityEngine;
 
 public class ScenePlayerSpawner : NetworkBehaviour
 {
+    public NetworkManager _networkManager;
+
     [SerializeField] private NetworkObject _playerPrefab;
 
     private readonly SyncList<NetworkObject> _playerList = new SyncList<NetworkObject>();
     [SerializeField] private List<NetworkObject> _viewplayerList;
 
+    /// <summary>
+    /// SceneManager を通じてグローバルシーンが指定されていない場合、アクティブなシーンにプレイヤーを追加するように設定します
+    /// </summary>
+    [Tooltip("SceneManager を通じてグローバルシーンが指定されていない場合、アクティブなシーンにプレイヤーを追加するように設定します")]
+    [SerializeField]
+    private bool _addToDefaultScene = true;
+
+    private void Awake()
+    {
+        if (_networkManager == null)
+            _networkManager = InstanceFinder.NetworkManager;
+    }
 
     public override void OnStartServer()
     {
@@ -59,13 +74,18 @@ public class ScenePlayerSpawner : NetworkBehaviour
     {
         //  FishNetのプーリングシステムを使用した生成
         NetworkObject obj = NetworkManager.GetPooledInstantiated(_playerPrefab, asServer: true);
+
+        //グローバルシーンが存在しない場合
+        if (_addToDefaultScene)
+            _networkManager.SceneManager.AddOwnerToDefaultScene(obj);
+
         Spawn(obj, connection, gameObject.scene);
         _playerList.Add(obj);
     }
 
     private void OnChangeList(SyncListOperation op, int index, NetworkObject oldItem, NetworkObject newItem, bool asServer)
     {
-        if (_viewplayerList.Contains(newItem)|| newItem == null)
+        if (_viewplayerList.Contains(newItem) || newItem == null)
             return;
 
         _viewplayerList.Add(newItem);

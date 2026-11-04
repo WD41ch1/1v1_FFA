@@ -93,11 +93,17 @@ public class PlayerManager : NetworkBehaviour
     /// </summary>
     public override void OnStartClient()
     {
+        base.OnStartClient();
+
         // この処理は、このオブジェクトがインスタンス化されているすべてのクライアントで実行されるため、
         // 自分たちが管理するオブジェクトに対してのみ、カメラをインスタンス化すればよい。        if (IsOwner)
         if (IsOwner)
         {
             CliantSideInitialize();
+        }
+        else
+        {
+            GetComponent<PlayerManager>().enabled = false;
         }
 
         GameDebug.Client(

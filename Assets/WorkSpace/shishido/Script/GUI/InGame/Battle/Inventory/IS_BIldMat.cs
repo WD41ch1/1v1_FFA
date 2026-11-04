@@ -5,6 +5,12 @@ using UnityEngine;
 
 public class IS_BIldMat : InventorySlotBase<BildingMatType>
 {
+
+    [Header("Icon用スプライト")]
+    [SerializeField] private Sprite WoodIcon;
+    [SerializeField] private Sprite BrickIcon;
+    [SerializeField] private Sprite IronIcon;
+
     public override void Initialize(InventoryUI _inventory, BildingMatType _type)
     {
         //  ItemTypeの設定
@@ -18,6 +24,8 @@ public class IS_BIldMat : InventorySlotBase<BildingMatType>
         if (quantityText == null) quantityText = GetComponentInChildren<TextMeshProUGUI>();
         //  建材タイプ
         type = _type;
+        //  スプライトのセット
+        SetSprite();
     }
 
     public override void UpdateUI(int _quantity)
@@ -47,5 +55,25 @@ public class IS_BIldMat : InventorySlotBase<BildingMatType>
     public override void Hide()
     {
         transform.gameObject.SetActive(false);
+    }
+
+    public override void SetSprite()
+    {
+        if (icon == null) return;
+
+        switch (type)
+        {
+            case BildingMatType.Wood:
+                itemIcon = WoodIcon;
+                break;
+            case BildingMatType.Brick:
+                itemIcon = BrickIcon;
+                break;
+            case BildingMatType.Iron:
+                itemIcon = IronIcon;
+                break;
+        }
+
+        icon.sprite = itemIcon;
     }
 }

@@ -43,6 +43,8 @@ public class PlayerHealth : NetworkBehaviour
         float health, float shield)
     {
 
+        if (!IsOwner) return false; 
+
         //  最大値の設定
         MaxHealth = maxHealth;
         MaxShield = maxShield;
@@ -64,7 +66,7 @@ public class PlayerHealth : NetworkBehaviour
 
         isInitialize = true;
 
-        return isInitialize;
+        return true;
     }
 
     /// <summary>
