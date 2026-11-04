@@ -87,6 +87,8 @@ public class IS_Item : InventorySlotBase<BerItemType>
 
         timerRing.gameObject.SetActive(true);
 
+        timerRing.fillAmount = 1.0f;
+
         nowCoroutine = StartCoroutine(ReloadTimer(duration));
     }
 

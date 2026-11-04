@@ -300,6 +300,7 @@ MonoBehaviour:
   quantityText: {fileID: 8193802149831643754}
   rarityIcon: {fileID: 0}
   itemData: {fileID: 0}
+  timerRing: {fileID: 2855104583291444663}
 --- !u!1 &6971603603797908290
 GameObject:
   m_ObjectHideFlags: 0

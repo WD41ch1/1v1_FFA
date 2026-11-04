@@ -66,7 +66,7 @@ public class PlayerHealth : NetworkBehaviour
 
         isInitialize = true;
 
-        return isInitialize;
+        return true;
     }
 
     /// <summary>
