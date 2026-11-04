@@ -42,8 +42,7 @@ public class PlayerManager : NetworkBehaviour
     /// <summary>
     /// 初期化が完了しているかのフラグ
     /// </summary>
-    public bool IsInitializedInSever { get; private set; } = false;
-    public bool IsInitializedInClient { get; private set; } = false;
+    public bool IsInitialized { get; private set; } = false;
 
     #endregion
 
@@ -84,8 +83,6 @@ public class PlayerManager : NetworkBehaviour
         $"[SERVER] OnStartServer " +
         $"ObjectId:{ObjectId}, OwnerId:{OwnerId}",
         true);
-
-        ServerSideInitialize().Forget();
     }
 
     /// <summary>
@@ -97,7 +94,7 @@ public class PlayerManager : NetworkBehaviour
 
         // この処理は、このオブジェクトがインスタンス化されているすべてのクライアントで実行されるため、
         // 自分たちが管理するオブジェクトに対してのみ、カメラをインスタンス化すればよい。        if (IsOwner)
-        if (IsOwner)
+        if (base.IsOwner)
         {
             CliantSideInitialize();
         }
@@ -125,26 +122,12 @@ public class PlayerManager : NetworkBehaviour
         Register();
     }
 
-    private async UniTask ServerSideInitialize()
-    {
-        GameDebug.Server(
-            $"[SERVER] ServerSideInitialize START " +
-            $"ObjectId:{ObjectId}, OwnerId:{OwnerId}",
-            true);
-
-        await PlayerClassInitialize();
-
-        GameDebug.Server(
-            $"[SERVER] ServerSideInitialize END " +
-            $"ObjectId:{ObjectId}, OwnerId:{OwnerId}",
-            true);
-
-        IsInitializedInSever = true;
-    }
-
 
     private bool CliantSideInitialize()
     {
+        //  
+        UniTask Playertask = PlayerClassInitialize();
+
         //  PlayerCanvasの生成
         if (!CreateGUI())
         {
@@ -163,9 +146,9 @@ public class PlayerManager : NetworkBehaviour
         equipmentManager?.Initialize();
 
         //  UI更新要求
-        UniTask task = HealthUIUpdateRequest();
+        UniTask HealthUItask = HealthUIUpdateRequest();
 
-        IsInitializedInClient = true;
+        IsInitialized = true;
 
         return true;
     }

@@ -50,6 +50,28 @@ public class PlayerMovement : NetworkBehaviour
     private bool positionLocked;
     private RigidbodyConstraints constraintsBeforeLock;
 
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+
+        if (base.IsOwner)
+        {
+
+        }
+        else
+        {
+            GetComponent<PlayerMovement>().enabled = false;
+        }
+#if UNITY_EDITOR
+        // Unity Editorでのみ
+        GameDebug.Log($"{gameObject.name}:Editer");
+#else
+        // Editor以外（ビルド時）でのみ
+        GameDebug.Log($"{gameObject.name}:ビルド");
+#endif
+
+    }
+
     private Vector2 GetMoveInput()
     {
         Vector2 value = Vector2.ClampMagnitude(input.MoveInput, 1f);
@@ -145,7 +167,10 @@ public class PlayerMovement : NetworkBehaviour
 
     private void FixedUpdate()
     {
-        if (!IsOwner || myPlayer == null || !myPlayer.IsInitializedInSever ||
+        if (!IsOwner)
+            return;
+
+        if ( myPlayer == null || !myPlayer.IsInitialized ||
             rb == null || input == null ||
             cameraTransform == null || groundCheck == null)
         {

@@ -43,8 +43,6 @@ public class PlayerHealth : NetworkBehaviour
         float health, float shield)
     {
 
-        if (!IsOwner) return false; 
-
         //  最大値の設定
         MaxHealth = maxHealth;
         MaxShield = maxShield;
@@ -248,7 +246,7 @@ public class PlayerHealth : NetworkBehaviour
     public void UIUpdateRequest()
     {
         if (!IsOwner ||
-            myPlayer == null || !myPlayer.IsInitializedInSever) return;
+            myPlayer == null || !myPlayer.IsInitialized) return;
 
         GameDebug.Log(
     $"IsServerInitialized:{IsServerInitialized}," +
@@ -277,7 +275,7 @@ public class PlayerHealth : NetworkBehaviour
     {
         if (!IsOwner ||
             myPlayer == null ||
-            !myPlayer.IsInitializedInSever)
+            !myPlayer.IsInitialized)
             return;
 
         // 自分のHP UIだけ更新
@@ -298,7 +296,7 @@ public class PlayerHealth : NetworkBehaviour
     {
         if (!IsOwner ||
             myPlayer == null ||
-            !myPlayer.IsInitializedInSever)
+            !myPlayer.IsInitialized)
             return;
 
         // 自分のHP UIだけ更新
