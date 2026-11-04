@@ -1,6 +1,8 @@
 using DG.Tweening;
 using FishNet.Example.ColliderRollbacks;
 using FishNet.Object;
+using FishNet.Object.Synchronizing;
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -24,6 +26,18 @@ public abstract class WeaponBase : ItemBase
 
     //  ADSができるかどうかのフラグ(例えば空中にいるときはADSできない など)
     protected bool canADS;
+
+    public readonly SyncVar<int> bulletShootCount = new();
+
+    private void Awake()
+    {
+        bulletShootCount.OnChange += OnchangeShootCount;
+    }
+
+    private void OnchangeShootCount(int prev, int next, bool asServer)
+    {
+        GameDebug.Server($"[OnchangeShootCount]実行回数:{next}");
+    }
 
     /// <summary>
     /// 射撃処理
@@ -192,24 +206,32 @@ public abstract class WeaponBase : ItemBase
         isReloading = false;
     }
 
-    protected virtual void BulletShoot(ItemView weaponView, Vector3 target)
+    [ServerRpc]
+    public void BulletShoot(
+        WeaponBase script,
+        PlayerManager _owner,
+        NetworkObject _prefab,
+        Vector3 _position,
+        Quaternion _rotation,
+        Transform _transform,
+        Vector3 target)
     {
-        if (weaponView == null) return;
-        Transform muzzlePoint = weaponView.muzzlePoint;
+        script.bulletShootCount.Value++;
+        if (_prefab == null) return;
 
-        GameObject projectile =
-            Instantiate(
-                weaponView.projectilePrefab,
-                muzzlePoint.position,
-                muzzlePoint.rotation,
-                transform.root.parent
-                );
+
+        NetworkObject projectile = Instantiate(
+            _prefab,
+            _position,
+            _rotation,
+            _transform
+            );
 
         projectile.GetComponent<ProjectileBase>()?
-            .Initialize(owner, this, target);
+            .Initialize(_owner, this, target);
 
-        //  TODO: ※いずれプーリング処理で行う
-        Destroy(projectile, 5.0f);
+        Spawn(projectile);
+
     }
 
     #region Getter

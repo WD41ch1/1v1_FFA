@@ -1,8 +1,9 @@
+using FishNet.Object;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class ProjectileBase : MonoBehaviour
+public abstract class ProjectileBase : NetworkBehaviour
 {
     protected Rigidbody rb;
     protected Vector3 direction;

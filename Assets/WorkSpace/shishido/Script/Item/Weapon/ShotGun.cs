@@ -1,3 +1,4 @@
+using FishNet.Object;
 using System.Collections;
 using UnityEngine;
 
@@ -84,16 +85,14 @@ public class ShotGun : WeaponBase
             );
 
             Transform muzzlePoint = weaponView.muzzlePoint;
-            GameObject projectile = Instantiate(
+
+            SGBulletShoot(
+                owner,
                 weaponView.projectilePrefab,
                 muzzlePoint.position,
                 rotation
                 );
 
-            projectile.GetComponent<ProjectileBase>()?
-            .Initialize(owner, this, Vector3.zero);
-
-            Destroy(projectile, 5f);
         }
 
         //  弾数消費
@@ -151,6 +150,26 @@ public class ShotGun : WeaponBase
         }
 
         isReloading = false;
+    }
+
+    [ServerRpc]
+    public void SGBulletShoot(
+        PlayerManager _owner,
+        NetworkObject _prefab,
+        Vector3 _position,
+        Quaternion _rotation)
+    {
+        NetworkObject projectile = Instantiate(
+           _prefab,
+            _position,
+            _rotation
+            );
+
+        projectile.GetComponent<ProjectileBase>()?
+        .Initialize(_owner, this, Vector3.zero);
+
+        Spawn(projectile);
+
     }
 }
 

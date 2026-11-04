@@ -70,6 +70,8 @@ public class EquipmentManager : NetworkBehaviour
         bool asServer
         )
     {
+        if(OnEquipChanged == null) return;
+
         //  UIに通知
         OnEquipChanged.Invoke(next);
     }

@@ -10,7 +10,7 @@ public class SubmachineGun : WeaponBase
         ItemView _itemView,
         InventoryItem _itemState)
     {
-        if(_owner == null || _itemData == null || _itemState == null)
+        if (_owner == null || _itemData == null || _itemState == null)
             return false;
 
         weaponView = _itemView;
@@ -57,8 +57,17 @@ public class SubmachineGun : WeaponBase
         Debug.Log("発射");
         Debug.Log(weaponData.weaponDamage);
 
+        Transform muzzlePoint = weaponView.muzzlePoint;
+
         //  弾の生成(現状可視化するためのデバッグ用)
-        BulletShoot(weaponView, GetTarget());
+        BulletShoot(
+            this,
+            owner,
+            weaponView.projectilePrefab,
+            muzzlePoint.position,
+            muzzlePoint.rotation,
+            transform.root.parent,
+            GetTarget());
 
         //  弾数消費
         weaponState.currentAmmo--;

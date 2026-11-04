@@ -2,15 +2,17 @@ using FishNet.Object;
 using FishNet.Object.Synchronizing;
 using System;
 using UnityEngine;
+using static UnityEngine.Rendering.DebugUI;
 
 public class PlayerHealth : NetworkBehaviour
 {
+
     //  HP
-    private readonly SyncVar<float> currentHealth = new SyncVar<float>();
+    public readonly SyncVar<float> currentHealth = new SyncVar<float>();
     private float MaxHealth;
 
     //  Shield
-    private readonly SyncVar<float> currentShield = new SyncVar<float>();
+    public readonly SyncVar<float> currentShield = new SyncVar<float>();
     private float MaxShield;
 
     public bool IsDead => currentHealth.Value <= 0;
@@ -48,14 +50,14 @@ public class PlayerHealth : NetworkBehaviour
         MaxShield = maxShield;
 
         //  開始時の設定
-        currentHealth.Value = Mathf.Clamp(health, 0, MaxHealth);
-        currentShield.Value = Mathf.Clamp(shield, 0, MaxShield);
+        SetSyncVar_Health(this, health, maxHealth);
+        SetSyncVar_Shield(this, shield, maxShield);
 
         GameDebug.Log(
             $"PlayerHealth[Initialize]," +
             $"IsServerInitialized:{IsServerInitialized}," +
             $"IsClientInitialized:{IsClientInitialized}," +
-            $"IsOwner:{IsOwner}," + 
+            $"IsOwner:{IsOwner}," +
             $"HP:{currentHealth.Value}," +
             $"Shield{currentShield.Value}");
 
@@ -85,6 +87,9 @@ public class PlayerHealth : NetworkBehaviour
     public override void OnStartClient()
     {
         base.OnStartClient();
+
+        if (!base.IsOwner)
+            return;
 
         //  Actoinの登録
         //  ※SyncVar軽油なので、値が変わると自動で更新される
@@ -212,12 +217,16 @@ public class PlayerHealth : NetworkBehaviour
     }
 
 
-    public void SetHealth(float amount)
+    [ServerRpc]
+    public void SetSyncVar_Health(PlayerHealth script, float _health,float _MaxHealth)
     {
+        script.currentHealth.Value = Mathf.Clamp(_health, 0, _MaxHealth);
     }
 
-    public void SetShield(float amount)
+    [ServerRpc]
+    public void SetSyncVar_Shield(PlayerHealth script, float _shield, float _MaxShield)
     {
+        script.currentShield.Value = Mathf.Clamp(_shield, 0, _MaxShield);
     }
 
 
@@ -259,6 +268,7 @@ public class PlayerHealth : NetworkBehaviour
         OnHealthChanged?.Invoke(MaxHealth, health);
         OnShieldChanged?.Invoke(MaxShield, shield);
     }
+
 
     #region Action
 
@@ -315,4 +325,12 @@ public class PlayerHealth : NetworkBehaviour
     public float GetMaxShield() { return MaxShield; }
 
     #endregion
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.K))
+        {
+            SetSyncVar_Health(this, 50, MaxHealth);
+        }
+    }
 }
