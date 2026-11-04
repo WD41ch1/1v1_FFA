@@ -534,18 +534,8 @@ public class LobbyManager : NetworkBehaviour
             if (data.PlayerId != playerId)
                 continue;
 
-            GameDebug.Server(
-                $"更新前: {data.PlayerName}, " +
-                $"Ready={data.IsReady}"
-            );
-
             data.SetReady(ready);
             participants[i] = data;
-
-            GameDebug.Server(
-                $"更新後: {data.PlayerName}, " +
-                $"Ready={data.IsReady}"
-            );
 
             return;
         }

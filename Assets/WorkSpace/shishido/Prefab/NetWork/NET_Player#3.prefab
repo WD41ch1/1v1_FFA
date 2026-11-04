@@ -2501,6 +2501,7 @@ GameObject:
   - component: {fileID: 4706580476848323470}
   - component: {fileID: 4584395192960155721}
   - component: {fileID: 6857711227472991078}
+  - component: {fileID: 2440286781593958048}
   m_Layer: 0
   m_Name: NET_Player#3
   m_TagString: Untagged
@@ -3343,6 +3344,21 @@ MonoBehaviour:
   transitionTime: 0.15
   sendRate: 15
   remoteSmoothTime: 0.08
+--- !u!114 &2440286781593958048
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7999714468741671046}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c71fd7f855ec523429999fc4e14a1928, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _overrideType: 3
+  _updateHostVisibility: 1
+  _observerConditions: []
 --- !u!1 &8136727905988223057
 GameObject:
   m_ObjectHideFlags: 0
