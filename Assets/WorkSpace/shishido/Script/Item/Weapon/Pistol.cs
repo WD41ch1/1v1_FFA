@@ -56,8 +56,16 @@ public class Pistol : WeaponBase
         Debug.Log("発射");
         Debug.Log(weaponData.weaponDamage);
 
+        Transform muzzlePoint = weaponView.muzzlePoint;
+
         //  弾の生成(現状可視化するためのデバッグ用)
-        BulletShoot(weaponView, GetTarget());
+        owner.BulletShootRequest(
+            this,
+            weaponView.projectilePrefab,
+            muzzlePoint.position,
+            muzzlePoint.rotation,
+            transform.root.parent,
+            GetTarget());
 
         //  弾数消費
         weaponState.currentAmmo--;

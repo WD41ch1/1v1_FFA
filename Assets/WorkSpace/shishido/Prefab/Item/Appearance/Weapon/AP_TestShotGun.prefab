@@ -105,7 +105,7 @@ MonoBehaviour:
   adsPoint: {fileID: 4996469487512398}
   muzzleFlashPrefab: {fileID: 0}
   hitEffectPrefab: {fileID: 0}
-  projectilePrefab: {fileID: 7411188235904062972, guid: 23144aaa9e4f45544bd3e6e27e3e75b0, type: 3}
+  projectilePrefab: {fileID: 1742999984449643430, guid: 23144aaa9e4f45544bd3e6e27e3e75b0, type: 3}
 --- !u!1 &1326079549577358
 GameObject:
   m_ObjectHideFlags: 0

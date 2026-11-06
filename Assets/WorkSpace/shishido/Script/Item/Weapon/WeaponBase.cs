@@ -1,6 +1,8 @@
 using DG.Tweening;
 using FishNet.Example.ColliderRollbacks;
 using FishNet.Object;
+using FishNet.Object.Synchronizing;
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -24,6 +26,23 @@ public abstract class WeaponBase : ItemBase
 
     //  ADSができるかどうかのフラグ(例えば空中にいるときはADSできない など)
     protected bool canADS;
+
+    public readonly SyncVar<int> bulletShootCount = new();
+
+    private void Awake()
+    {
+        bulletShootCount.OnChange += OnchangeShootCount;
+    }
+
+    private void OnchangeShootCount(int prev, int next, bool asServer)
+    {
+        GameDebug.Server($"[OnchangeShootCount]実行回数:{next}");
+    }
+
+    public void AddShootCount()
+    {
+        bulletShootCount.Value++;
+    }
 
     /// <summary>
     /// 射撃処理
@@ -190,26 +209,6 @@ public abstract class WeaponBase : ItemBase
         AmmoCheker();
 
         isReloading = false;
-    }
-
-    protected virtual void BulletShoot(ItemView weaponView, Vector3 target)
-    {
-        if (weaponView == null) return;
-        Transform muzzlePoint = weaponView.muzzlePoint;
-
-        GameObject projectile =
-            Instantiate(
-                weaponView.projectilePrefab,
-                muzzlePoint.position,
-                muzzlePoint.rotation,
-                transform.root.parent
-                );
-
-        projectile.GetComponent<ProjectileBase>()?
-            .Initialize(owner, this, target);
-
-        //  TODO: ※いずれプーリング処理で行う
-        Destroy(projectile, 5.0f);
     }
 
     #region Getter

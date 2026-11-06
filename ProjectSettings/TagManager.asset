@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 2
   tags:
   - PickupItem
+  - CinemachineTarget
   layers:
   - Default
   - TransparentFX
@@ -26,10 +27,10 @@ TagManager:
   - 
   - 
   - 
-  - 
-  - 
-  - 
-  - 
+  - Player_Head
+  - Player_Body
+  - Player_Leg
+  - Player_MainCol
   - 
   - 
   - 

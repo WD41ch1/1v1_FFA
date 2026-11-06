@@ -1,4 +1,6 @@
 
+using UnityEngine;
+
 public class GameConst
 {
     //======================================================
@@ -18,6 +20,11 @@ public class GameConst
     public static readonly float DEFAULT_PLAYER_FOV = 60;
     //  アイテム取得範囲
     public static readonly float PICKUP_DISTANCE = 10f;
+    //  layer
+    public static readonly int PLAYER_HEAD = LayerMask.NameToLayer("Player_Head");
+    public static readonly int PLAYER_BODY = LayerMask.NameToLayer("Player_Body");
+    public static readonly int PLAYER_LEG = LayerMask.NameToLayer("Player_Leg");
+    public static readonly int PLAYER_MAINCOLLIDER = LayerMask.NameToLayer("Player_MainCol");
 
     //======================================================
     //              インベントリ：ホットバー
@@ -40,11 +47,17 @@ public class GameConst
     public static readonly int MAX_AMMO = 999;
     public static readonly int MAX_BILDMAT = 999;
 
-    public static readonly int MODEL_ID_WOOD        = 9101;
-    public static readonly int MODEL_ID_BRICK       = 9102;
-    public static readonly int MODEL_ID_IRON        = 9103;
-    public static readonly int MODEL_ID_SMALLAMMO   = 9201;
-    public static readonly int MODEL_ID_MIDDLEAMMO  = 9202;
-    public static readonly int MODEL_ID_BIGAMMO     = 9203;
-    public static readonly int MODEL_ID_SGAMMO      = 9204;
+    public static readonly int MODEL_ID_WOOD = 9101;
+    public static readonly int MODEL_ID_BRICK = 9102;
+    public static readonly int MODEL_ID_IRON = 9103;
+    public static readonly int MODEL_ID_SMALLAMMO = 9201;
+    public static readonly int MODEL_ID_MIDDLEAMMO = 9202;
+    public static readonly int MODEL_ID_BIGAMMO = 9203;
+    public static readonly int MODEL_ID_SGAMMO = 9204;
+
+    //======================================================
+    //                  Tag関係
+    //======================================================
+
+    public static readonly string PLAYER_TAG = "Player";
 }

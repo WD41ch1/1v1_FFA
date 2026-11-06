@@ -324,7 +324,7 @@ public class PlayerManager : NetworkBehaviour
 
     #endregion
 
-    #region 要求関数
+    #region 素材要求関数
 
     /// <summary>
     /// 弾消費要求
@@ -381,6 +381,134 @@ public class PlayerManager : NetworkBehaviour
 
     #endregion
 
+    #region 射撃要求
+
+    /// <summary>
+    /// 通常弾発射要求
+    /// </summary>
+    /// <param name="_script"></param>
+    /// <param name="_prefab"></param>
+    /// <param name="_position"></param>
+    /// <param name="_rotation"></param>
+    /// <param name="_transform"></param>
+    /// <param name="target"></param>
+    public void BulletShootRequest(
+    WeaponBase _script,
+    NetworkObject _prefab,
+    Vector3 _position,
+    Quaternion _rotation,
+    Transform _transform,
+    Vector3 target)
+    {
+        BulletShoot(
+            this,
+            _script,
+            _prefab,
+            _position,
+            _rotation,
+            _transform,
+            target
+            );
+    }
+
+    /// <summary>
+    /// 通常弾発射処理
+    /// </summary>
+    /// <param name="_owner"></param>
+    /// <param name="script"></param>
+    /// <param name="_prefab"></param>
+    /// <param name="_position"></param>
+    /// <param name="_rotation"></param>
+    /// <param name="_transform"></param>
+    /// <param name="target"></param>
+    [ServerRpc]
+    private void BulletShoot(
+    PlayerManager _owner,
+    WeaponBase script,
+    NetworkObject _prefab,
+    Vector3 _position,
+    Quaternion _rotation,
+    Transform _transform,
+    Vector3 target)
+    {
+        script.AddShootCount();
+        if (_prefab == null) return;
+
+
+        NetworkObject projectile = Instantiate(
+            _prefab,
+            _position,
+            _rotation,
+            _transform
+            );
+
+        ProjectileBase p_Base = projectile.GetComponent<ProjectileBase>();
+            
+        if(projectile != null)
+        {
+            p_Base.Initialize(_owner, script, target);
+        }
+        else
+        {
+            Debug.Log("ProjectileBaseが取得できませんでした");
+        }
+
+        Spawn(projectile);
+
+    }
+
+
+    /// <summary>
+    /// 散弾発射要求
+    /// </summary>
+    /// <param name="_owner"></param>
+    /// <param name="_prefab"></param>
+    /// <param name="_position"></param>
+    /// <param name="_rotation"></param>
+    public void SGBulletShootRequest(
+        WeaponBase script,
+        NetworkObject _prefab,
+        Vector3 _position,
+        Quaternion _rotation)
+    {
+        SGBulletShoot(
+            this,
+            script,
+            _prefab,
+            _position,
+            _rotation);
+    }
+
+    /// <summary>
+    /// 散弾発射処理
+    /// </summary>
+    /// <param name="_owner"></param>
+    /// <param name="_prefab"></param>
+    /// <param name="_position"></param>
+    /// <param name="_rotation"></param>
+    [ServerRpc]
+    public void SGBulletShoot(
+        PlayerManager _owner,
+        WeaponBase script,
+        NetworkObject _prefab,
+        Vector3 _position,
+        Quaternion _rotation)
+    {
+        NetworkObject projectile = Instantiate(
+           _prefab,
+            _position,
+            _rotation
+            );
+
+        projectile.GetComponent<ProjectileBase>()?
+        .Initialize(_owner, script, Vector3.zero);
+
+        Spawn(projectile);
+
+    }
+
+    #endregion
+
     #region checker
 
     public bool ReferenceCheck(Object target, string objectName)
@@ -395,4 +523,11 @@ public class PlayerManager : NetworkBehaviour
 
     #endregion
 
+    #region Getter
+    public bool GetIsOwner()
+    {
+        return IsOwner;
+    }
+
+    #endregion
 }

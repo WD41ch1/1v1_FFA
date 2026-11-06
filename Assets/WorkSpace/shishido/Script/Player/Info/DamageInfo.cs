@@ -6,6 +6,8 @@ public struct DamageInfo
 {
     //  ダメージ値
     public float Damage;
+    //  ダメージ倍率
+    public float DamageMultiplier;
     //  攻撃してきたPlayer
     public PlayerManager Attacker;
     //  ダメージを与えた武器

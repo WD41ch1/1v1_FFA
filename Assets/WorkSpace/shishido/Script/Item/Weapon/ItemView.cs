@@ -1,3 +1,4 @@
+using FishNet.Object;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -20,5 +21,5 @@ public class ItemView : MonoBehaviour
     public GameObject hitEffectPrefab;
 
     [Header("武器用:Projectile")]
-    public GameObject projectilePrefab;
+    public NetworkObject projectilePrefab;
 }

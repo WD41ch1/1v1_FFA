@@ -1,3 +1,4 @@
+using FishNet.Object;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,6 +7,8 @@ public class SGProjectile : ProjectileBase
 {
     public float pelletFireVel = 1;
     private float speed;
+
+    private bool isInitialize = false;
 
     public override void Initialize(PlayerManager _owner, WeaponBase _base, Vector3 pos)
     {
@@ -18,25 +21,15 @@ public class SGProjectile : ProjectileBase
 
         speed = data.ammoSpeed;
 
+        isInitialize = true;
     }
 
     public override void AmmoBehavior()
     {
+        if (!isInitialize) return;
 
         rb.AddForce(transform.forward * speed);
 
-    }
-
-    public override DamageInfo CreateDamageInfo()
-    {
-        DamageInfo info = new DamageInfo();
-
-        info.Damage = data.weaponDamage;
-        info.Attacker = owner;
-        info.Weapon = wBase;
-        info.IsHeadshot = false;
-
-        return info;
     }
 
 }
