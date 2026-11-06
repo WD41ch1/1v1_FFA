@@ -1,6 +1,7 @@
 using FishNet.Connection;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
+using FishNet.Object.Synchronizing.Internal;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -15,10 +16,14 @@ public abstract class ProjectileBase : NetworkBehaviour
     protected Vector3 targetPosition;
 
     protected PlayerManager owner;
-    protected readonly SyncVar<PlayerManager> syncOwner
-        = new SyncVar<PlayerManager>(null);
     protected WeaponBase wBase;
     protected WeaponData data;
+    protected readonly SyncVar<PlayerManager> syncOwner
+        = new SyncVar<PlayerManager>(null);
+    //protected readonly SyncVar<WeaponBase> syncBase
+    //    = new SyncVar<WeaponBase>(null);
+    //protected readonly SyncVar<WeaponData> syncData
+    //    = new SyncVar<WeaponData>(null);
 
     //建築へのダメージに必要なもの
     [Header("建築物へのダメージ")]
@@ -75,11 +80,14 @@ public abstract class ProjectileBase : NetworkBehaviour
     /// <param name="other"></param>
     private void EnemyHit(Collider other)
     {
-        if (syncOwner.Value == null || other == null)
-            return;
-
         if (other.gameObject.tag == PLAYER_TAG)
         {
+
+            Debug.Log("!!!");
+
+            if (syncOwner.Value == null)
+                return;
+
             if (other.gameObject.layer == PLAYER_MAINCOLLIDER)
                 return;
 
@@ -91,13 +99,37 @@ public abstract class ProjectileBase : NetworkBehaviour
             GameObject targetPlayer = other.gameObject;
 
             //  仮のヒット判定
-            PlayerManager target = targetPlayer.GetComponent<PlayerManager>();
+            PlayerManager target = targetPlayer.GetComponentInParent<PlayerManager>();
 
             //  NULLもしくは射撃者なら
-            if (target == null || target == syncOwner.Value) return;
+            if (target == null || target == syncOwner.Value) { 
+                return; 
+            }
+
+#if true
+
+            if (wBase == null || data == null)
+            {
+                GameDebug.Warning($"[EnemyHit]WeaponBaseもしくはItemDataがNULL" +
+                    $"wBase:{wBase},data:{data}");
+                return;
+            }
 
             if (MatchManager.Instance != null)
                 MatchManager.Instance.RequestTakeDamage(syncOwner.Value, target, hitPart, wBase, data);
+
+#else
+            if (syncBase.Value == null || syncData.Value == null)
+            {
+                GameDebug.Warning($"[EnemyHit]WeaponBaseもしくはItemDataがNULL" +
+                    $"wBase:{syncBase.Value},data:{syncData.Value}");
+                return;
+            }
+
+            if (MatchManager.Instance != null)
+                MatchManager.Instance.RequestTakeDamage(syncOwner.Value, target, hitPart, syncBase.Value, syncData.Value);
+
+#endif
         }
     }
 
@@ -132,12 +164,18 @@ public abstract class ProjectileBase : NetworkBehaviour
 
     public void OnTriggerEnter(Collider other)
     {
+        // 自分の弾を識別するキー
+        if (!DoOnce.TryExecute(this))
+            return;
+
         GameDebug.Log(
                 $"[OnTriggerEnter] " +
                 $"InstanceID:{GetInstanceID()} " +
                 $"IsServer:{IsServerInitialized} " +
                 $"Owner:{owner}"
             );
+
+
         // ===== 追加ここから =====
         //建築物へのダメージ処理
         // すでに建築物にヒットしていたら処理しない
@@ -168,4 +206,10 @@ public abstract class ProjectileBase : NetworkBehaviour
 
         EnemyHit(other);
     }
+
+    private void OnTriggerExit(Collider other)
+    {
+        DoOnce.Reset(this);
+    }
+
 }

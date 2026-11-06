@@ -26,14 +26,9 @@ public class MatchManager : nobManagerBase
 
     private void Awake()
     {
-    }
-
-    public override void OnStartServer()
-    {
-        base.OnStartServer();
-
         if (_networkManager == null)
             _networkManager = InstanceFinder.NetworkManager;
+
 
         // 既に存在する場合は重複を防ぐ
         if (Instance != null && Instance != this)
@@ -43,6 +38,11 @@ public class MatchManager : nobManagerBase
         }
 
         Instance = this;
+    }
+
+    public override void OnStartServer()
+    {
+        base.OnStartServer();
 
     }
 

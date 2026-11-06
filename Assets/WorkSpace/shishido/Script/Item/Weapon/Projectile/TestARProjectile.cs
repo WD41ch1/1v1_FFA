@@ -32,8 +32,9 @@ public class TestARProjectile : ProjectileBase
             return false;
 
         owner = _owner;
-        syncOwner.Value = _owner;
         wBase = _base;
+        syncOwner.Value = _owner;
+        //syncBase.Value = _base;
 
         if (wBase.GetWeaponData() == null)
         {
@@ -43,6 +44,8 @@ public class TestARProjectile : ProjectileBase
         {
             //  dataに代入
             data = wBase.GetWeaponData();
+            //syncData.Value = wBase.GetWeaponData();
+
             //  弾速をセット
             speed = data.ammoSpeed;
 
