@@ -1,7 +1,11 @@
+using FishNet.Connection;
 using FishNet.Object;
+using FishNet.Object.Synchronizing;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static GameConst;
 
 public abstract class ProjectileBase : NetworkBehaviour
 {
@@ -21,6 +25,10 @@ public abstract class ProjectileBase : NetworkBehaviour
     // 同じ弾が建築物へ何度もダメージを与えないため
     private bool hasHitBuilding;
 
+    #region override・Onchange
+
+    #endregion
+
     /// <summary>
     /// 初期化
     /// </summary>
@@ -32,15 +40,40 @@ public abstract class ProjectileBase : NetworkBehaviour
     /// </summary>
     public abstract void AmmoBehavior();
 
-    public abstract DamageInfo CreateDamageInfo();
-
     void Update()
     {
         AmmoBehavior();
     }
 
+    private HitPart HitPartCheck(Collider col)
+    {
+        HitPart result = HitPart.Body;
+
+        //  Player出なければ
+        if (col.gameObject.tag != "Player")
+            return HitPart.Invaild;
+
+        if (col.gameObject.layer == PLAYER_HEAD)
+            result = HitPart.Head;
+        else if (col.gameObject.layer == PLAYER_BODY)
+            result = HitPart.Body;
+        else if (col.gameObject.layer == PLAYER_LEG)
+            result = HitPart.Leg;
+        //  何も取れなかった場合胴体判定にする
+        else
+            result = HitPart.Body;
+
+        return result;
+    }
+
     public void OnTriggerEnter(Collider other)
     {
+        GameDebug.Log(
+                $"[OnTriggerEnter] " +
+                $"InstanceID:{GetInstanceID()} " +
+                $"IsServer:{IsServerInitialized} " +
+                $"Owner:{owner}"
+            );
         // ===== 追加ここから =====
         //建築物へのダメージ処理
         // すでに建築物にヒットしていたら処理しない
@@ -69,13 +102,27 @@ public abstract class ProjectileBase : NetworkBehaviour
         }
         // ===== 追加ここまで =====
 
-        //  仮のヒット判定
-        PlayerManager pm = other.gameObject.GetComponent<PlayerManager>();
+        if (other.gameObject.tag == PLAYER_TAG)
+        {
+            if (other.gameObject.layer == PLAYER_MAINCOLLIDER)
+                return;
 
-        //  NULLもしくは射撃者なら
-        if (pm == null || pm == owner) return;
+            HitPart hitPart = HitPartCheck(other);
 
-        pm?.playerHealth.TakeDamage(CreateDamageInfo());
+            if (hitPart == HitPart.Invaild)
+                return;
+
+            GameObject targetPlayer = other.gameObject;
+
+            //  仮のヒット判定
+            PlayerManager target = targetPlayer.GetComponent<PlayerManager>();
+
+            //  NULLもしくは射撃者なら
+            if (owner == null ||
+                target == null || target== owner) return;
+
+            MatchManager.Instance.RequestTakeDamage(owner, target, hitPart, wBase, data);
+
+        }
     }
-
 }

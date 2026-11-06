@@ -1,3 +1,4 @@
+using FishNet.Object;
 using System;
 using UnityEngine;
 
@@ -16,6 +17,14 @@ public class TestARProjectile : ProjectileBase
     /// <param name="pos"></param>
     public override void Initialize(PlayerManager _owner, WeaponBase _base, Vector3 pos)
     {
+        GameDebug.Log(
+            $"[Initialize] " +
+            $"InstanceID:{GetInstanceID()} " +
+            $"IsServer:{IsServerInitialized} " +
+            $"Owner:{owner}"
+        );
+
+
         rb = GetComponent<Rigidbody>();
         rb.useGravity = false;
 
@@ -107,21 +116,5 @@ public class TestARProjectile : ProjectileBase
         );
         
         previousPosition = transform.position;
-    }
-
-    /// <summary>
-    /// ヒット時のダメージ情報作成
-    /// </summary>
-    /// <returns></returns>
-    public override DamageInfo CreateDamageInfo()
-    {
-        DamageInfo info = new DamageInfo();
-
-        info.Damage = data.weaponDamage;
-        info.Attacker = owner;
-        info.Weapon = wBase;
-        info.IsHeadshot = false;
-
-        return info;
     }
 }

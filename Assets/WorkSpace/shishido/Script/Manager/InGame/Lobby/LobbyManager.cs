@@ -603,7 +603,7 @@ public class LobbyManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// 
+    /// allParticipantsReadyの変更通知
     /// </summary>
     /// <param name="prev"></param>
     /// <param name="next"></param>
@@ -620,6 +620,9 @@ public class LobbyManager : NetworkBehaviour
         StartBattle();
     }
 
+    /// <summary>
+    /// シーン遷移
+    /// </summary>
     [Server]
     public void StartBattle()
     {

@@ -72,9 +72,10 @@ public enum BildingMatType
 /// </summary>
 public enum HitPart
 {
-    Head,       //  頭
-    Body,       //  胴体
-    Leg         //  足
+    Invaild = -1,       //  無効
+    Head = 0,           //  頭
+    Body = 1,           //  胴体
+    Leg = 2             //  足
 }
 
 

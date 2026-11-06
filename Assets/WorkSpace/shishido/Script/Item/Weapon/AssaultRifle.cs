@@ -32,7 +32,7 @@ public class AssaultRifle : WeaponBase
 
         itemState = _itemState;
 
-        if(!CheckWeaponState(itemState, out weaponState))
+        if (!CheckWeaponState(itemState, out weaponState))
             return false;
 
         return true;
@@ -40,6 +40,9 @@ public class AssaultRifle : WeaponBase
 
     public override void Fire()
     {
+        if (!owner.GetIsOwner())
+            return;
+
         //  リロード中
         if (isReloading)
             return;
@@ -54,12 +57,17 @@ public class AssaultRifle : WeaponBase
         Debug.Log("発射");
         Debug.Log(weaponData.weaponDamage);
 
+
         Transform muzzlePoint = weaponView.muzzlePoint;
+        if (weaponView.projectilePrefab == null ||
+            muzzlePoint == null)
+        {
+            Debug.Log("何かしらがNULL");
+        }
 
         //  弾の生成(現状可視化するためのデバッグ用)
-        BulletShoot(
+        owner.BulletShootRequest(
             this,
-            owner,
             weaponView.projectilePrefab,
             muzzlePoint.position,
             muzzlePoint.rotation,

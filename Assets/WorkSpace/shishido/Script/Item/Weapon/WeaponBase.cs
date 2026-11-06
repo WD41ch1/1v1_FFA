@@ -39,6 +39,11 @@ public abstract class WeaponBase : ItemBase
         GameDebug.Server($"[OnchangeShootCount]実行回数:{next}");
     }
 
+    public void AddShootCount()
+    {
+        bulletShootCount.Value++;
+    }
+
     /// <summary>
     /// 射撃処理
     /// </summary>
@@ -204,34 +209,6 @@ public abstract class WeaponBase : ItemBase
         AmmoCheker();
 
         isReloading = false;
-    }
-
-    [ServerRpc]
-    public void BulletShoot(
-        WeaponBase script,
-        PlayerManager _owner,
-        NetworkObject _prefab,
-        Vector3 _position,
-        Quaternion _rotation,
-        Transform _transform,
-        Vector3 target)
-    {
-        script.bulletShootCount.Value++;
-        if (_prefab == null) return;
-
-
-        NetworkObject projectile = Instantiate(
-            _prefab,
-            _position,
-            _rotation,
-            _transform
-            );
-
-        projectile.GetComponent<ProjectileBase>()?
-            .Initialize(_owner, this, target);
-
-        Spawn(projectile);
-
     }
 
     #region Getter

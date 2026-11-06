@@ -60,9 +60,8 @@ public class SubmachineGun : WeaponBase
         Transform muzzlePoint = weaponView.muzzlePoint;
 
         //  弾の生成(現状可視化するためのデバッグ用)
-        BulletShoot(
+        owner.BulletShootRequest(
             this,
-            owner,
             weaponView.projectilePrefab,
             muzzlePoint.position,
             muzzlePoint.rotation,

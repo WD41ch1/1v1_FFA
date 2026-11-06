@@ -124,7 +124,8 @@ public class PlayerHealth : NetworkBehaviour
     public DamageResult TakeDamage(DamageInfo damageInfo)
     {
         DamageResult result = new DamageResult();
-        float remainingDamage = damageInfo.Damage;
+        float remainingDamage =
+            damageInfo.Damage * damageInfo.DamageMultiplier;
 
         lastAttacker = damageInfo.Attacker;
 
@@ -218,7 +219,7 @@ public class PlayerHealth : NetworkBehaviour
 
 
     [ServerRpc]
-    public void SetSyncVar_Health(PlayerHealth script, float _health,float _MaxHealth)
+    public void SetSyncVar_Health(PlayerHealth script, float _health, float _MaxHealth)
     {
         script.currentHealth.Value = Mathf.Clamp(_health, 0, _MaxHealth);
     }
