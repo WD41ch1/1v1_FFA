@@ -132,19 +132,7 @@ public class EquipmentManager : NetworkBehaviour
         currentSlot.Value = slotNum;
 
         // 装備成功後に、そのアイテムのアニメーションへ変更
-        ResolveAnimationController();
-
-        if (weaponUpperBodyController != null)
-        {
-            weaponUpperBodyController.SetWeaponType(
-                data.weaponAnimationType);
-        }
-        else
-        {
-            Debug.LogWarning(
-                "PlayerにWeaponUpperBodyControllerを設定してください。",
-                this);
-        }
+        ApplyEquippedAnimation(data);
 
         return true;
     }
@@ -340,4 +328,101 @@ public class EquipmentManager : NetworkBehaviour
             }
         }
     }
+
+    #region 追加：アイテムIDごとの装備アニメーション設定
+
+    [Serializable]
+    public class ItemAnimationSetting
+    {
+        [Tooltip("スロット番号ではなく、ItemDataのitemId")]
+        public int itemId;
+
+        public WeaponAnimationType animationType =
+            WeaponAnimationType.None;
+    }
+
+    [Header("追加：アイテムIDごとの構え")]
+    [Tooltip("ここに登録したIDは、ItemDataの設定より優先します。")]
+    [SerializeField]
+    private ItemAnimationSetting[] itemAnimationSettings =
+        new ItemAnimationSetting[0];
+
+    [Header("追加：装備アニメーションの確認")]
+    [SerializeField]
+    private bool logEquipmentAnimation = true;
+
+    /// <summary>
+    /// このアイテムに使用するアニメーション種類を取得する。
+    /// 射撃・リロード側でも同じ設定を取得できる。
+    /// </summary>
+    public WeaponAnimationType GetAnimationType(ItemData data)
+    {
+        if (data == null)
+            return WeaponAnimationType.None;
+
+        if (itemAnimationSettings != null)
+        {
+            foreach (ItemAnimationSetting setting in itemAnimationSettings)
+            {
+                if (setting != null && setting.itemId == data.itemId)
+                    return setting.animationType;
+            }
+        }
+
+        return data.weaponAnimationType;
+    }
+
+    private void ApplyEquippedAnimation(ItemData data)
+    {
+        if (data == null)
+            return;
+
+        ResolveAnimationController();
+
+        if (weaponUpperBodyController == null)
+        {
+            Debug.LogWarning(
+                "[装備アニメーション] " +
+                "PlayerにWeaponUpperBodyControllerを設定してください。",
+                this);
+            return;
+        }
+
+        if (!weaponUpperBodyController.isActiveAndEnabled)
+        {
+            Debug.LogWarning(
+                "[装備アニメーション] " +
+                "WeaponUpperBodyControllerがOFFです。",
+                this);
+            return;
+        }
+
+        WeaponAnimationType type = GetAnimationType(data);
+
+        if (logEquipmentAnimation)
+        {
+            Debug.Log(
+                $"[装備アニメーション] " +
+                $"Player={name} / " +
+                $"アイテム={data.ItemName} / " +
+                $"ID={data.itemId} / " +
+                $"種類={type} / " +
+                $"通知先={weaponUpperBodyController.name}",
+                this);
+        }
+
+        if (currentItem is WeaponBase &&
+            type == WeaponAnimationType.None)
+        {
+            Debug.LogWarning(
+                $"[装備アニメーション] 武器ID={data.itemId}がNoneです。" +
+                "EquipmentManagerの「アイテムIDごとの構え」に登録するか、" +
+                "ItemDataのWeapon Animation Typeを設定してください。",
+                this);
+        }
+
+        weaponUpperBodyController.SetWeaponType(type);
+    }
+
+    #endregion
 }

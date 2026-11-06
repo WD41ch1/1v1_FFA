@@ -42,6 +42,9 @@ public abstract class WeaponBase : ItemBase
     public void AddShootCount()
     {
         bulletShootCount.Value++;
+
+        //  追加：射撃アニメーション通知
+        NotifyShotAnimation();
     }
 
     /// <summary>
@@ -200,6 +203,10 @@ public abstract class WeaponBase : ItemBase
     protected virtual IEnumerator ReloadAnimation(float reloadTime, int _approvalValue)
     {
         isReloading = true;
+
+        //  追加：リロードアニメーション通知
+        NotifyReloadAnimation();
+
         yield return new WaitForSeconds(reloadTime);
 
         //  弾補充     
@@ -240,7 +247,6 @@ public abstract class WeaponBase : ItemBase
         {
             //  カメラの向いているほうを取得
             Ray ray = owner.cameraController.GetCrosshairRay();
-
             //  仮の目標地点を設定
             targetPosition = ray.origin + ray.direction * 1000f;
         }
@@ -253,12 +259,12 @@ public abstract class WeaponBase : ItemBase
     {
         return weaponData;
     }
-
+    
     public ItemView GetWeaponView()
     {
         return weaponView;
     }
-
+    
     public int GetcurrentAmmo()
     {
         return weaponState.currentAmmo;
@@ -268,6 +274,7 @@ public abstract class WeaponBase : ItemBase
 
     #region checker
 
+    
     public bool CheckWeaponState(InventoryItem item, out WeaponState state)
     {
         state = null;
@@ -297,6 +304,67 @@ public abstract class WeaponBase : ItemBase
 
         state = weaponState;
         return true;
+    }
+
+    #endregion
+
+    #region 追加：射撃・リロードのアニメーション通知
+
+    //射撃通知
+    public event Action ShotAnimationRequested;
+    //リロード通知
+    public event Action ReloadAnimationRequested;
+
+    private WeaponUpperBodyController GetAnimationController()
+    {
+        if (owner == null)
+            return null;
+
+        WeaponUpperBodyController controller =
+            owner.GetComponent<WeaponUpperBodyController>();
+
+        if (controller == null)
+        {
+            controller =
+                owner.GetComponentInChildren<WeaponUpperBodyController>(true);
+        }
+
+        return controller;
+    }
+
+    private void NotifyShotAnimation()
+    {
+        ShotAnimationRequested?.Invoke();
+
+        if (weaponData == null)
+            return;
+
+        WeaponUpperBodyController controller =
+            GetAnimationController();
+
+        if (controller != null)
+        {
+            controller.NotifyWeaponShot(
+                weaponData.weaponAnimationType);
+        }
+    }
+
+    
+    private void NotifyReloadAnimation()
+    {
+        ReloadAnimationRequested?.Invoke();
+
+        if (weaponData == null)
+            return;
+
+        WeaponUpperBodyController controller =
+            GetAnimationController();
+
+        if (controller != null)
+        {
+            controller.NotifyWeaponReload(
+                weaponData.weaponAnimationType);
+        }
     }
 
     #endregion

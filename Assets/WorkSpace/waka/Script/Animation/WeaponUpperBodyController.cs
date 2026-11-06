@@ -432,4 +432,147 @@ public class WeaponUpperBodyController : NetworkBehaviour
     {
         ClearWeapon();
     }
+
+    #region 追加：射撃・リロードの再生と同期
+
+    [Header("アサルトの射撃・リロードステート名")]
+    [SerializeField]
+    private string assaultShootState =
+        "HumanF@AssaultRifle_Aim01_Shoot01";
+
+    [SerializeField]
+    private string assaultReloadState =
+        "HumanF@AssaultRifle_Reload01";
+
+    [Header("ピストルの射撃・リロードステート名")]
+    [SerializeField] private string pistolShootState;
+    [SerializeField] private string pistolReloadState;
+
+    /// <summary>
+    /// 武器の発射成功時に呼ぶ。
+    /// </summary>
+    public void NotifyWeaponShot(WeaponAnimationType type)
+    {
+        SendWeaponAction(type, false);
+    }
+
+    /// <summary>
+    /// 武器のリロード開始時に呼ぶ。
+    /// </summary>
+    public void NotifyWeaponReload(WeaponAnimationType type)
+    {
+        SendWeaponAction(type, true);
+    }
+
+    private void SendWeaponAction(
+        WeaponAnimationType type,
+        bool reload)
+    {
+        if (!isActiveAndEnabled)
+            return;
+
+        if (type != WeaponAnimationType.Pistol &&
+            type != WeaponAnimationType.AssaultRifle)
+        {
+            return;
+        }
+
+        if (IsServerInitialized)
+        {
+            // サーバーで発射処理された場合はこちら。
+            WeaponActionObserversRpc(type, reload);
+        }
+        else if (IsClientInitialized && IsOwner)
+        {
+            // 所有者の画面でリロード処理された場合はこちら。
+            WeaponActionServerRpc(type, reload);
+        }
+    }
+
+    // このPlayerの所有者だけが要求できる。
+    // アニメーションの通知専用。弾数・ダメージは変更しない。
+    [ServerRpc]
+    private void WeaponActionServerRpc(
+        WeaponAnimationType type,
+        bool reload)
+    {
+        if (type != WeaponAnimationType.Pistol &&
+            type != WeaponAnimationType.AssaultRifle)
+        {
+            return;
+        }
+
+        WeaponActionObserversRpc(type, reload);
+    }
+
+    // 過去の射撃を途中参加者へ再生しない。
+    [ObserversRpc]
+    private void WeaponActionObserversRpc(
+        WeaponAnimationType type,
+        bool reload)
+    {
+        PlayWeaponAction(type, reload);
+    }
+
+    private void PlayWeaponAction(
+        WeaponAnimationType type,
+        bool reload)
+    {
+        if (!isActiveAndEnabled || !InitializeAnimator())
+            return;
+
+        // すでに武器を外した・別の種類に持ち替えた場合は再生しない。
+        WeaponAnimationType equippedType =
+            IsOwner ? requestedType : networkWeaponType.Value;
+
+        if (equippedType != type)
+            return;
+
+        string stateName;
+
+        switch (type)
+        {
+            case WeaponAnimationType.AssaultRifle:
+                stateName = reload
+                    ? assaultReloadState
+                    : assaultShootState;
+                break;
+
+            case WeaponAnimationType.Pistol:
+                stateName = reload
+                    ? pistolReloadState
+                    : pistolShootState;
+                break;
+
+            default:
+                return;
+        }
+
+        if (string.IsNullOrWhiteSpace(stateName))
+        {
+            Debug.LogWarning(
+                $"{type}の{(reload ? "リロード" : "射撃")}" +
+                "ステート名を設定してください。",
+                this);
+            return;
+        }
+
+        int stateHash =
+            Animator.StringToHash(layerName + "." + stateName);
+
+        if (!animator.HasState(layerIndex, stateHash))
+        {
+            Debug.LogWarning(
+                $"Animatorに「{layerName}.{stateName}」がありません。",
+                this);
+            return;
+        }
+
+        ApplyWeaponVisual(type);
+
+        // 連射時も、その都度アニメーションを先頭から再生する。
+        animator.Play(stateHash, layerIndex, 0f);
+    }
+
+    #endregion
 }
