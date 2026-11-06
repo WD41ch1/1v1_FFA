@@ -442,19 +442,18 @@ public class PlayerManager : NetworkBehaviour
             _transform
             );
 
+        Spawn(projectile);
+
         ProjectileBase p_Base = projectile.GetComponent<ProjectileBase>();
-            
-        if(projectile != null)
+
+        if (projectile != null)
         {
             p_Base.Initialize(_owner, script, target);
         }
         else
         {
-            Debug.Log("ProjectileBaseが取得できませんでした");
+            GameDebug.ServerWarning("ProjectileBaseが取得できませんでした");
         }
-
-        Spawn(projectile);
-
     }
 
 
@@ -500,10 +499,27 @@ public class PlayerManager : NetworkBehaviour
             _rotation
             );
 
-        projectile.GetComponent<ProjectileBase>()?
-        .Initialize(_owner, script, Vector3.zero);
+        ProjectileBase p_Base = projectile.GetComponent<ProjectileBase>();
+        bool CompleteInit = false;
 
-        Spawn(projectile);
+        if (projectile != null)
+        {
+            CompleteInit = p_Base.Initialize(_owner, script, Vector3.zero);
+        }
+        else
+        {
+            GameDebug.ServerWarning("ProjectileBaseが取得できませんでした");
+        }
+
+        //  弾の初期化が完了していれば
+        if (CompleteInit)
+        {
+            Spawn(projectile);
+        }
+        else
+        {
+            GameDebug.ServerWarning("SGProjectileの初期化が完了しておらずSpawnできませんでした");
+        }
 
     }
 

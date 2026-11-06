@@ -10,18 +10,32 @@ public class SGProjectile : ProjectileBase
 
     private bool isInitialize = false;
 
-    public override void Initialize(PlayerManager _owner, WeaponBase _base, Vector3 pos)
+    public override bool Initialize(PlayerManager _owner, WeaponBase _base, Vector3 pos)
     {
         rb = GetComponent<Rigidbody>();
         rb.useGravity = false;
 
+
+        if (_owner == null || _base == null)
+            return false;
+
         owner = _owner;
         wBase = _base;
-        data = wBase.GetWeaponData();
 
-        speed = data.ammoSpeed;
+
+        if (wBase.GetWeaponData() == null)
+        {
+            return false;
+        }
+        else
+        {
+            speed = data.ammoSpeed;
+        }
 
         isInitialize = true;
+
+        //  初期化完了を通知
+        return true;
     }
 
     public override void AmmoBehavior()
