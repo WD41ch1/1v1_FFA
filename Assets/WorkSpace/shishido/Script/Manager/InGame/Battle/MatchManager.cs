@@ -6,7 +6,7 @@ using FishNet.Object;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MatchManager : NetworkBehaviour
+public class MatchManager : nobManagerBase
 {
     #region public
     public static MatchManager Instance;
@@ -26,6 +26,12 @@ public class MatchManager : NetworkBehaviour
 
     private void Awake()
     {
+    }
+
+    public override void OnStartServer()
+    {
+        base.OnStartServer();
+
         if (_networkManager == null)
             _networkManager = InstanceFinder.NetworkManager;
 
@@ -37,6 +43,7 @@ public class MatchManager : NetworkBehaviour
         }
 
         Instance = this;
+
     }
 
     #endregion

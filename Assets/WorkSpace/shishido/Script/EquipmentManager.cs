@@ -97,8 +97,11 @@ public class EquipmentManager : NetworkBehaviour
         bool asServer)
     {
         OnEquipChanged?.Invoke(next);
-    }
+        if(OnEquipChanged == null) return;
 
+        //  UIに通知
+        OnEquipChanged.Invoke(next);
+    }
     /// <summary>
     /// 指定スロットのアイテムを装備する。
     /// </summary>

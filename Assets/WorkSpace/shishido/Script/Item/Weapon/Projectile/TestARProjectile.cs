@@ -15,7 +15,7 @@ public class TestARProjectile : ProjectileBase
     /// <param name="_owner"></param>
     /// <param name="_base"></param>
     /// <param name="pos"></param>
-    public override void Initialize(PlayerManager _owner, WeaponBase _base, Vector3 pos)
+    public override bool Initialize(PlayerManager _owner, WeaponBase _base, Vector3 pos)
     {
         GameDebug.Log(
             $"[Initialize] " +
@@ -24,25 +24,37 @@ public class TestARProjectile : ProjectileBase
             $"Owner:{owner}"
         );
 
-
         rb = GetComponent<Rigidbody>();
         rb.useGravity = false;
 
+
+        if (_owner == null || _base == null)
+            return false;
+
         owner = _owner;
+        syncOwner.Value = _owner;
         wBase = _base;
-        data = wBase.GetWeaponData();
 
-        speed = data.ammoSpeed;
+        if (wBase.GetWeaponData() == null)
+        {
+            return false;
+        }
+        else
+        {
+            //  dataに代入
+            data = wBase.GetWeaponData();
+            //  弾速をセット
+            speed = data.ammoSpeed;
 
-        targetPosition = pos;
+            targetPosition = pos;
+            direction =
+                (targetPosition - transform.position).normalized;
+            transform.forward = direction;
+            previousPosition = transform.position;
+        }
 
-        direction =
-            (targetPosition - transform.position).normalized;
-
-        transform.forward = direction;
-
-        //  テスト用
-        previousPosition = transform.position;
+        //  初期化完了を通知
+        return true;
     }
 
     /// <summary>
@@ -53,7 +65,7 @@ public class TestARProjectile : ProjectileBase
         //  テスト用
         Vector3 currentPosition = transform.position;
         float moveDistance = speed * Time.deltaTime;
-        
+
         if (moveDistance <= 0f) return;
 
         // 弾が移動する区間を調べる
@@ -114,7 +126,7 @@ public class TestARProjectile : ProjectileBase
             Color.red,
             1f
         );
-        
+
         previousPosition = transform.position;
     }
 }
