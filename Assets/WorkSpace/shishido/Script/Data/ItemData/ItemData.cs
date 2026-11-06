@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public enum WeaponAnimationType
@@ -10,25 +8,26 @@ public enum WeaponAnimationType
     Pickaxe = 3
 }
 
-
 [CreateAssetMenu]
 public class ItemData : ScriptableObject
 {
     public int itemId;
 
-    [Header("--inventory表示アイコン--")]
     [Header("inventory表示アイコン")]
     public Sprite itemIcon;
 
     [Header("レアリティバックグラウンドカラー")]
     public Sprite rarityBackGroundIcon;
 
-    [Header("--基本情報--")]
     [Header("アイテム名")]
     public string ItemName;
 
     [Header("アイテムのタイプ")]
     public BerItemType itemType;
+
+    [Header("装備時のアニメーション種類")]
+    public WeaponAnimationType weaponAnimationType =
+        WeaponAnimationType.None;
 
     [Header("Prefab")]
     public GameObject AppearancePrefab;
@@ -44,5 +43,4 @@ public class ItemData : ScriptableObject
     /// </summary>
     public virtual int MaxStack =>
         Mathf.Max(1, maxStack);
-
 }

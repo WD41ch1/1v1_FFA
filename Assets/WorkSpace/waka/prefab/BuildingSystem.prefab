@@ -48,7 +48,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1cfd8ed0adae34b4ca85545384369b76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  input: {fileID: 0}
   wallBuilder: {fileID: 3077657103043195030}
   rampBuilder: {fileID: 4351910751405210728}
   floorBuilder: {fileID: 5034936294660844431}

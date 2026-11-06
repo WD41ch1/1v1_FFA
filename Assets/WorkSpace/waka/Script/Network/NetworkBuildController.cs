@@ -48,6 +48,39 @@ public class NetworkBuildController : NetworkBehaviour
         inventory = GetComponent<InventoryManager>();
     }
 
+    private bool TryGetOccupancySettings(
+        BuildingSystem.BuildType type,
+        out float gridSize,
+        out float pivotFromBottom)
+    {
+        gridSize = 0f;
+        pivotFromBottom = 0f;
+
+        if (type == BuildingSystem.BuildType.Ramp)
+        {
+            if (ramp == null)
+                return false;
+
+            gridSize = ramp.gridSize;
+        }
+        else if (type == BuildingSystem.BuildType.Cone)
+        {
+            if (cone == null)
+                return false;
+
+            gridSize = cone.gridSize;
+            pivotFromBottom = cone.conePivotFromBottom;
+        }
+        else
+        {
+            return true;
+        }
+
+        return Finite(gridSize) &&
+               gridSize > 0f &&
+               Finite(pivotFromBottom);
+    }
+
     public void RequestBuild(
         BuildingSystem.BuildType type,
         Vector3 position,
@@ -57,12 +90,38 @@ public class NetworkBuildController : NetworkBehaviour
             return;
 
         if (!TryGetDefinition(
-                type,
-                out GameObject prefab,
-                out LayerMask ground,
-                out BildingMatType material,
-                out int cost))
+            type,
+            out GameObject prefab,
+            out LayerMask ground,
+            out BildingMatType material,
+            out int cost))
         {
+            return;
+        }
+
+        if (!TryGetOccupancySettings(
+            type,
+            out float gridSize,
+            out float pivotFromBottom))
+        {
+            Debug.LogWarning(
+                "階段・屋根のGrid SizeとPivot設定を確認してください。",
+                this);
+            return;
+        }
+
+        // 材料を消費する前に、受信済みの建築記録で確認
+        if (NetworkBuildPiece.Occupied(
+            type,
+            position,
+            rotation,
+            gridSize,
+            pivotFromBottom,
+            false))
+        {
+            Debug.LogWarning(
+                "建築できません：その場所は既存の建築が使用しています。",
+                this);
             return;
         }
 
@@ -74,9 +133,9 @@ public class NetworkBuildController : NetworkBehaviour
         }
 
         if (!inventory.TryConsumeBildMat(
-                material,
-                cost,
-                out int consumed))
+            material,
+            cost,
+            out int consumed))
         {
             return;
         }
@@ -121,9 +180,7 @@ public class NetworkBuildController : NetworkBehaviour
         if (Time.time < nextServerTime)
         {
             BuildResultTargetRpc(
-                Owner,
-                requestId,
-                false,
+                Owner, requestId, false,
                 "建築間隔が短すぎます。");
             return;
         }
@@ -145,30 +202,33 @@ public class NetworkBuildController : NetworkBehaviour
             maxBuildDistance)
         {
             BuildResultTargetRpc(
-                Owner,
-                requestId,
-                false,
+                Owner, requestId, false,
                 "Prefab設定または建築距離を確認してください。");
             return;
         }
 
-        NetworkObject prefabNetworkObject =
-            prefab.GetComponent<NetworkObject>();
-
-        if (prefabNetworkObject == null ||
+        if (prefab.GetComponent<NetworkObject>() == null ||
             prefab.GetComponent<NetworkBuildPiece>() == null ||
             ground.value == 0)
         {
             BuildResultTargetRpc(
-                Owner,
-                requestId,
-                false,
+                Owner, requestId, false,
                 "完成PrefabにNetworkObject・NetworkBuildPieceと" +
                 "Ground Layerの設定が必要です。");
             return;
         }
 
-        // 屋根はBuildConeの角度を使用する。
+        if (!TryGetOccupancySettings(
+            type,
+            out float gridSize,
+            out float pivotFromBottom))
+        {
+            BuildResultTargetRpc(
+                Owner, requestId, false,
+                "階段・屋根のGrid SizeとPivot設定を確認してください。");
+            return;
+        }
+
         float placementYaw =
             type == BuildingSystem.BuildType.Cone
                 ? cone.coneRotationY
@@ -177,9 +237,7 @@ public class NetworkBuildController : NetworkBehaviour
         if (!Finite(placementYaw))
         {
             BuildResultTargetRpc(
-                Owner,
-                requestId,
-                false,
+                Owner, requestId, false,
                 "回転設定が不正です。");
             return;
         }
@@ -189,16 +247,26 @@ public class NetworkBuildController : NetworkBehaviour
 
         Physics.SyncTransforms();
 
+        // サーバーの記録を使って最終判定
         if (NetworkBuildPiece.Occupied(
-                type,
-                position,
-                rotation) ||
-            !CanPlace(type, position, rotation))
+            type,
+            position,
+            rotation,
+            gridSize,
+            pivotFromBottom,
+            true))
         {
             BuildResultTargetRpc(
-                Owner,
-                requestId,
-                false,
+                Owner, requestId, false,
+                "その場所は使用済みです。" +
+                "階段と屋根は同じマス・同じ高さに重ねられません。");
+            return;
+        }
+
+        if (!CanPlace(type, position, rotation))
+        {
+            BuildResultTargetRpc(
+                Owner, requestId, false,
                 "サーバー側の設置条件を満たしません。");
             return;
         }
@@ -208,12 +276,13 @@ public class NetworkBuildController : NetworkBehaviour
 
         if (builder == null ||
             !builder.IsServerInitialized ||
+            !builder.IsSpawned ||
+            builder.Owner == null ||
+            !builder.Owner.IsActive ||
             string.IsNullOrEmpty(builder.PlayerId))
         {
             BuildResultTargetRpc(
-                Owner,
-                requestId,
-                false,
+                Owner, requestId, false,
                 "PlayerルートのNetworkPlayerTeamと" +
                 "初期化状態を確認してください。");
             return;
@@ -225,10 +294,14 @@ public class NetworkBuildController : NetworkBehaviour
         NetworkBuildPiece piece =
             placed.GetComponent<NetworkBuildPiece>();
 
-        // 建築者と建築時点のチームを登録する。
-        piece.Configure(type, ground, builder);
+        // Spawn前に、種類・占有マス・建築者を登録
+        piece.Configure(
+            type,
+            ground,
+            builder,
+            gridSize,
+            pivotFromBottom);
 
-        // 建築自体のネットワーク所有者は付けない。
         Spawn(placed);
 
         Physics.SyncTransforms();
@@ -238,18 +311,13 @@ public class NetworkBuildController : NetworkBehaviour
             Destroy(placed);
 
             BuildResultTargetRpc(
-                Owner,
-                requestId,
-                false,
+                Owner, requestId, false,
                 "Spawn失敗。Prefab登録を確認してください。");
             return;
         }
 
         BuildResultTargetRpc(
-            Owner,
-            requestId,
-            true,
-            "");
+            Owner, requestId, true, "");
     }
 
     [TargetRpc]
@@ -283,10 +351,8 @@ public class NetworkBuildController : NetworkBehaviour
 
     public override void OnStopClient()
     {
-        // 接続断時はサーバーの成否が不明なので自動返金しない。
         pending = false;
         reservedAmount = 0;
-
         base.OnStopClient();
     }
 
@@ -305,31 +371,19 @@ public class NetworkBuildController : NetworkBehaviour
         {
             case BuildingSystem.BuildType.Wall:
                 return wall != null &&
-                       wall.ServerCanPlace(
-                           position,
-                           rotation,
-                           transform);
+                    wall.ServerCanPlace(position, rotation, transform);
 
             case BuildingSystem.BuildType.Ramp:
                 return ramp != null &&
-                       ramp.ServerCanPlace(
-                           position,
-                           rotation,
-                           transform);
+                    ramp.ServerCanPlace(position, rotation, transform);
 
             case BuildingSystem.BuildType.Floor:
                 return floor != null &&
-                       floor.ServerCanPlace(
-                           position,
-                           rotation,
-                           transform);
+                    floor.ServerCanPlace(position, rotation, transform);
 
             case BuildingSystem.BuildType.Cone:
                 return cone != null &&
-                       cone.ServerCanPlace(
-                           position,
-                           rotation,
-                           transform);
+                    cone.ServerCanPlace(position, rotation, transform);
 
             default:
                 return false;

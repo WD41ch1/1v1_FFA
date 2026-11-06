@@ -3062,11 +3062,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e03644c7bb4ae74c88681fab8718e6d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 3890100773366206426}
+  _networkObjectCache: {fileID: 0}
   pickel: {fileID: 11400000, guid: 659ad35d1007c8649b911de55e5c8426, type: 2}
   AmmodropObj: {fileID: 584293302234795832, guid: d0c011e2874b6a646ab3d13550880813, type: 3}
   MaterialdropObj: {fileID: 3564781315763711787, guid: ea5437e65bbc0a64eb4dd2e602469e47, type: 3}
   ItemdropObj: {fileID: 625260886240656399, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
   slots: []
+  references:
+    version: 2
+    RefIds: []
 --- !u!114 &6618349034464132242
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3083,6 +3089,7 @@ MonoBehaviour:
   _addedNetworkObject: {fileID: 3890100773366206426}
   _networkObjectCache: {fileID: 3890100773366206426}
   itemSocket: {fileID: 2988882518008931876}
+  weaponUpperBodyController: {fileID: 0}
 --- !u!114 &6470015901775650543
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3111,9 +3118,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 564a2910d73468148af921e7e91abe3d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _componentIndexCache: 255
-  _addedNetworkObject: {fileID: 3890100773366206426}
-  _networkObjectCache: {fileID: 0}
   canvasPrefab: {fileID: 5154976365679985728, guid: 32e0bca70d3e0a94aa923a7b382cfb00, type: 3}
 --- !u!114 &2137823967972275950
 MonoBehaviour:
@@ -3149,7 +3153,7 @@ MonoBehaviour:
   _componentIndexCache: 3
   _addedNetworkObject: {fileID: 3890100773366206426}
   _networkObjectCache: {fileID: 3890100773366206426}
-  isLocalDebug: 0
+  isShowLog: 1
   _cameraPrefab: {fileID: 1115277162502803027, guid: bda6f13cf259cee40a3e601ce867bfa7, type: 3}
   _cameraHolder: {fileID: 1044011579711449581}
   canvasPrefab: {fileID: 5154976365679985728, guid: 32e0bca70d3e0a94aa923a7b382cfb00, type: 3}

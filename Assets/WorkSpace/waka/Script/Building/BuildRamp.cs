@@ -809,45 +809,41 @@ public class BuildRamp : MonoBehaviour
     /// 下にあるFloorは重複扱いにならない。
     /// </summary>
     private bool IsOverlappingRamp(
-        Vector3 position,
-        Quaternion rotation
-    )
+     Vector3 position,
+     Quaternion rotation)
     {
-        // Ramp Layerが未設定ならこの判定を行わない
-        if (rampLayer.value == 0)
+        // 受信済みの建築記録で、階段・屋根の両方を確認
+        if (NetworkBuildPiece.Occupied(
+            BuildingSystem.BuildType.Ramp,
+            position,
+            rotation,
+            gridSize,
+            0f,
+            false))
         {
-            return false;
+            return true;
         }
 
-        Vector3 center =
-            position +
-            Vector3.up * (gridSize / 2f);
+        // 既存のCollider判定も維持する
+        if (rampLayer.value == 0)
+            return false;
 
-        Vector3 halfExtents = new Vector3(
-            gridSize / 2f - 0.15f,
-            gridSize / 2f - 0.15f,
-            gridSize / 2f - 0.15f
-        );
+        Vector3 center =
+            position + Vector3.up * (gridSize / 2f);
+
+        float half = Mathf.Max(gridSize / 2f - 0.15f, 0.01f);
 
         Collider[] hits = Physics.OverlapBox(
             center,
-            halfExtents,
+            new Vector3(half, half, half),
             rotation,
             rampLayer,
-            QueryTriggerInteraction.Ignore
-        );
+            QueryTriggerInteraction.Ignore);
 
         foreach (Collider hit in hits)
         {
-            if (IsPreviewCollider(hit))
-            {
+            if (IsPreviewCollider(hit) || IsPlayerCollider(hit))
                 continue;
-            }
-
-            if (IsPlayerCollider(hit))
-            {
-                continue;
-            }
 
             return true;
         }
