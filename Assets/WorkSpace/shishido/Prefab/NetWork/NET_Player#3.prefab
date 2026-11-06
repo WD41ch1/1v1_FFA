@@ -3340,7 +3340,17 @@ MonoBehaviour:
   _addedNetworkObject: {fileID: 3890100773366206426}
   _networkObjectCache: {fileID: 3890100773366206426}
   itemSocket: {fileID: 2988882518008931876}
-  weaponUpperBodyController: {fileID: 0}
+  weaponUpperBodyController: {fileID: 6857711227472991078}
+  itemAnimationSettings:
+  - itemId: 1001
+    animationType: 2
+  - itemId: 1002
+    animationType: 1
+  - itemId: 1003
+    animationType: 2
+  - itemId: 1004
+    animationType: 2
+  logEquipmentAnimation: 1
 --- !u!114 &6470015901775650543
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3459,6 +3469,10 @@ MonoBehaviour:
   transitionTime: 0.15
   sendRate: 15
   remoteSmoothTime: 0.08
+  assaultShootState: HumanF@AssaultRifle_Aim01_Shoot01
+  assaultReloadState: HumanF@AssaultRifle_Reload01
+  pistolShootState: 
+  pistolReloadState: 
 --- !u!114 &3652847014429532586
 MonoBehaviour:
   m_ObjectHideFlags: 0
