@@ -3345,7 +3345,7 @@ MonoBehaviour:
   - itemId: 1001
     animationType: 2
   - itemId: 1002
-    animationType: 1
+    animationType: 2
   - itemId: 1003
     animationType: 2
   - itemId: 1004
