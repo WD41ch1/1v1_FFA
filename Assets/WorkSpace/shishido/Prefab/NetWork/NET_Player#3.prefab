@@ -2710,7 +2710,6 @@ GameObject:
   - component: {fileID: 8570083074130879552}
   - component: {fileID: -4276482007876789280}
   - component: {fileID: 2686211574380882674}
-  - component: {fileID: 8482252977883424735}
   - component: {fileID: 3830073925755514194}
   - component: {fileID: 3278360314800298617}
   - component: {fileID: 898863480700411928}
@@ -2769,7 +2768,7 @@ Animator:
   m_Controller: {fileID: 9100000, guid: 141b75ea62aab9247abfe6e83a69a720, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 0
-  m_ApplyRootMotion: 1
+  m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_WarningMessage: 
@@ -3239,20 +3238,6 @@ MonoBehaviour:
   m_DefaultActionMap: Player
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
---- !u!114 &8482252977883424735
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7999714468741671046}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e913df809ae22294b9fdda538b302853, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  moveSpeed: 5
-  animator: {fileID: 763599559602741837}
 --- !u!114 &3830073925755514194
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3301,6 +3286,12 @@ MonoBehaviour:
   animator: {fileID: 763599559602741837}
   maxGroundAngle: 55
   inputDeadZone: 0.1
+  playerCapsule: {fileID: -4276482007876789280}
+  crouchMoveSpeed: 2
+  crouchHeightRatio: 0.6
+  standObstacleLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!114 &898863480700411928
 MonoBehaviour:
   m_ObjectHideFlags: 0

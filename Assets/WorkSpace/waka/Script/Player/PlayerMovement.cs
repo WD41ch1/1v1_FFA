@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 using FishNet.Object;
 
 public class PlayerMovement : NetworkBehaviour
@@ -54,14 +55,11 @@ public class PlayerMovement : NetworkBehaviour
     {
         base.OnStartClient();
 
-        if (base.IsOwner)
+        if (!IsOwner)
         {
+            enabled = false;
+        }
 
-        }
-        else
-        {
-            GetComponent<PlayerMovement>().enabled = false;
-        }
 #if UNITY_EDITOR
         // Unity Editorでのみ
         GameDebug.Log($"{gameObject.name}:Editer");
@@ -69,14 +67,16 @@ public class PlayerMovement : NetworkBehaviour
         // Editor以外（ビルド時）でのみ
         GameDebug.Log($"{gameObject.name}:ビルド");
 #endif
-
     }
 
     private Vector2 GetMoveInput()
     {
-        Vector2 value = Vector2.ClampMagnitude(input.MoveInput, 1f);
+        Vector2 value =
+            Vector2.ClampMagnitude(input.MoveInput, 1f);
+
         return value.sqrMagnitude <= inputDeadZone * inputDeadZone
-            ? Vector2.zero : value;
+            ? Vector2.zero
+            : value;
     }
 
     private void UpdateGrounded()
@@ -86,9 +86,12 @@ public class PlayerMovement : NetworkBehaviour
 
         if (Time.time < ignoreGroundUntil ||
             (isJumping && rb.velocity.y > 0f))
+        {
             return;
+        }
 
         const float lift = 0.2f;
+
         if (Physics.Raycast(
             groundCheck.position + Vector3.up * lift,
             Vector3.down,
@@ -156,6 +159,16 @@ public class PlayerMovement : NetworkBehaviour
     {
         rb = GetComponent<Rigidbody>();
 
+        if (rb == null)
+        {
+            Debug.LogError(
+                "PlayerMovementにRigidbodyが必要です。",
+                this);
+
+            enabled = false;
+            return;
+        }
+
         // 転倒防止
         rb.freezeRotation = true;
 
@@ -163,6 +176,9 @@ public class PlayerMovement : NetworkBehaviour
         {
             animator = GetComponentInChildren<Animator>();
         }
+
+        // 追加：しゃがみの初期化
+        InitializeCrouch();
     }
 
     private void FixedUpdate()
@@ -170,7 +186,7 @@ public class PlayerMovement : NetworkBehaviour
         if (!IsOwner)
             return;
 
-        if ( myPlayer == null || !myPlayer.IsInitialized ||
+        if (myPlayer == null || !myPlayer.IsInitialized ||
             rb == null || input == null ||
             cameraTransform == null || groundCheck == null)
         {
@@ -180,9 +196,18 @@ public class PlayerMovement : NetworkBehaviour
 
         UpdateGrounded();
 
+        // 追加：左Ctrlによるしゃがみ
+        UpdateCrouch();
+
+        // 追加：しゃがみ中はジャンプしない。
+        bool jumpRequested =
+            input.JumpPressed && !isCrouching;
+
         // 移動・ジャンプ・足場消失時は固定を解除する。
-        bool shouldLock = isGrounded &&
-            GetMoveInput() == Vector2.zero && !input.JumpPressed;
+        bool shouldLock =
+            isGrounded &&
+            GetMoveInput() == Vector2.zero &&
+            !jumpRequested;
 
         if (!shouldLock)
             UnlockPosition();
@@ -196,9 +221,14 @@ public class PlayerMovement : NetworkBehaviour
         if (shouldLock && isGrounded)
             LockPosition();
     }
+
     private void Move()
     {
         Vector2 moveInput = GetMoveInput();
+
+        // 追加：しゃがみ中は移動速度を下げる。
+        float currentMoveSpeed =
+            isCrouching ? crouchMoveSpeed : moveSpeed;
 
         // カメラのY回転だけ使う
         Quaternion cameraYawRotation =
@@ -226,14 +256,16 @@ public class PlayerMovement : NetworkBehaviour
             Vector3 slopeDirection =
                 Vector3.ProjectOnPlane(moveDirection, groundNormal);
 
-            rb.velocity = slopeDirection.normalized *
-                moveInput.magnitude * moveSpeed;
+            rb.velocity =
+                slopeDirection.normalized *
+                moveInput.magnitude *
+                currentMoveSpeed;
         }
         else
         {
             Vector3 velocity = rb.velocity;
-            velocity.x = moveDirection.x * moveSpeed;
-            velocity.z = moveDirection.z * moveSpeed;
+            velocity.x = moveDirection.x * currentMoveSpeed;
+            velocity.z = moveDirection.z * currentMoveSpeed;
             rb.velocity = velocity;
         }
 
@@ -248,24 +280,21 @@ public class PlayerMovement : NetworkBehaviour
                 SpeedHash,
                 animationInput.magnitude,
                 0.1f,
-                Time.fixedDeltaTime
-            );
+                Time.fixedDeltaTime);
 
             // 左：-1、右：1、停止：0
             animator.SetFloat(
                 MoveXHash,
                 animationInput.x,
                 0.1f,
-                Time.fixedDeltaTime
-            );
+                Time.fixedDeltaTime);
 
             // 後退：-1、前進：1、停止：0
             animator.SetFloat(
                 MoveYHash,
                 animationInput.y,
                 0.1f,
-                Time.fixedDeltaTime
-            );
+                Time.fixedDeltaTime);
         }
 
         // 移動中は体をカメラ正面へ向ける
@@ -278,9 +307,7 @@ public class PlayerMovement : NetworkBehaviour
                 Quaternion.Slerp(
                     rb.rotation,
                     targetRotation,
-                    moveRotateSpeed * Time.fixedDeltaTime
-                )
-            );
+                    moveRotateSpeed * Time.fixedDeltaTime));
         }
     }
 
@@ -304,12 +331,10 @@ public class PlayerMovement : NetworkBehaviour
         bodyForward.y = 0f;
         bodyForward.Normalize();
 
-        float angle =
-            Vector3.SignedAngle(
-                bodyForward,
-                cameraForward,
-                Vector3.up
-            );
+        float angle = Vector3.SignedAngle(
+            bodyForward,
+            cameraForward,
+            Vector3.up);
 
         float absAngle = Mathf.Abs(angle);
 
@@ -328,16 +353,15 @@ public class PlayerMovement : NetworkBehaviour
             Quaternion.Slerp(
                 rb.rotation,
                 targetRotation,
-                idleRotateSpeed * Time.fixedDeltaTime
-            )
-        );
+                idleRotateSpeed * Time.fixedDeltaTime));
     }
 
     private void Jump()
     {
-        if (input.JumpPressed && isGrounded)
+        if (input.JumpPressed && isGrounded && !isCrouching)
         {
             UnlockPosition();
+
             isGrounded = false;
             isJumping = true;
             ignoreGroundUntil = Time.time + 0.15f;
@@ -346,7 +370,9 @@ public class PlayerMovement : NetworkBehaviour
             velocity.y = 0f;
             rb.velocity = velocity;
 
-            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+            rb.AddForce(
+                Vector3.up * jumpForce,
+                ForceMode.Impulse);
         }
 
         input.ResetJump();
@@ -362,4 +388,187 @@ public class PlayerMovement : NetworkBehaviour
                 ForceMode.Acceleration);
         }
     }
+
+    #region 追加：左Ctrlでしゃがむ
+
+    [Header("しゃがみ")]
+    [SerializeField] private CapsuleCollider playerCapsule;
+
+    [Min(0f)]
+    [SerializeField] private float crouchMoveSpeed = 2f;
+
+    [Tooltip("通常の高さに対する、しゃがみ中の高さの割合")]
+    [Range(0.3f, 1f)]
+    [SerializeField] private float crouchHeightRatio = 0.6f;
+
+    [Tooltip("立ち上がりを妨げる地面・建築・障害物のLayer")]
+    [SerializeField] private LayerMask standObstacleLayers = ~0;
+
+    private static readonly int CrouchHash =
+        Animator.StringToHash("IsCrouching");
+
+    private float standingHeight;
+    private Vector3 standingCenter;
+    private bool crouchReady;
+    private bool hasCrouchParameter;
+    private bool isCrouching;
+
+    public bool IsCrouching => isCrouching;
+
+    private void InitializeCrouch()
+    {
+        if (playerCapsule == null)
+            playerCapsule = GetComponent<CapsuleCollider>();
+
+        if (playerCapsule == null || playerCapsule.direction != 1)
+        {
+            Debug.LogWarning(
+                "しゃがみにはY-Axis方向のCapsuleColliderが必要です。",
+                this);
+            return;
+        }
+
+        standingHeight = playerCapsule.height;
+        standingCenter = playerCapsule.center;
+        crouchReady = true;
+
+        if (animator != null)
+        {
+            foreach (AnimatorControllerParameter parameter in animator.parameters)
+            {
+                if (parameter.nameHash == CrouchHash &&
+                    parameter.type == AnimatorControllerParameterType.Bool)
+                {
+                    hasCrouchParameter = true;
+                    break;
+                }
+            }
+
+            if (!hasCrouchParameter)
+            {
+                Debug.LogWarning(
+                    "AnimatorにBool型のIsCrouchingを追加してください。" +
+                    "追加するまでは、当たり判定と移動速度だけ変わります。",
+                    this);
+            }
+        }
+    }
+
+    private void UpdateCrouch()
+    {
+        if (!crouchReady)
+            return;
+
+        // Input Systemで左Ctrlを取得。
+        bool crouchHeld =
+            Application.isFocused &&
+            Keyboard.current != null &&
+            Keyboard.current.leftCtrlKey.isPressed;
+
+        if (crouchHeld)
+        {
+            // 地面にいるときだけ、しゃがみ始める。
+            if (isGrounded && !isCrouching)
+            {
+                SetCrouching(true);
+            }
+        }
+        else if (isCrouching)
+        {
+            // 頭上に障害物がある間は立ち上がらない。
+            if (CanStandUp())
+            {
+                SetCrouching(false);
+            }
+        }
+
+        if (animator != null && hasCrouchParameter)
+        {
+            animator.SetBool(CrouchHash, isCrouching);
+        }
+    }
+
+    private void SetCrouching(bool crouching)
+    {
+        isCrouching = crouching;
+
+        if (crouching)
+        {
+            float height = Mathf.Clamp(
+                standingHeight * crouchHeightRatio,
+                playerCapsule.radius * 2f,
+                standingHeight);
+
+            // 足元の高さを保ったまま、中心を下げる。
+            Vector3 center = standingCenter;
+            center.y -= (standingHeight - height) * 0.5f;
+
+            playerCapsule.height = height;
+            playerCapsule.center = center;
+        }
+        else
+        {
+            playerCapsule.height = standingHeight;
+            playerCapsule.center = standingCenter;
+        }
+    }
+
+    private bool CanStandUp()
+    {
+        Transform capsuleTransform = playerCapsule.transform;
+        Vector3 scale = capsuleTransform.lossyScale;
+
+        float radius =
+            playerCapsule.radius *
+            Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.z));
+
+        float height = Mathf.Max(
+            standingHeight * Mathf.Abs(scale.y),
+            radius * 2f);
+
+        Vector3 center =
+            capsuleTransform.TransformPoint(standingCenter);
+
+        Vector3 up = capsuleTransform.up;
+
+        float halfSegment =
+            Mathf.Max(0f, height * 0.5f - radius);
+
+        Vector3 bottom = center - up * halfSegment;
+        Vector3 top = center + up * halfSegment;
+
+        // 地面に接しているだけで立てなくなることを避けるため、
+        // 検査用の半径を少しだけ小さくする。
+        float margin = Mathf.Min(0.02f, radius * 0.1f);
+        float checkRadius = Mathf.Max(0.001f, radius - margin);
+
+        Collider[] hits = Physics.OverlapCapsule(
+            bottom,
+            top,
+            checkRadius,
+            standObstacleLayers,
+            QueryTriggerInteraction.Ignore);
+
+        foreach (Collider hit in hits)
+        {
+            if (hit == null)
+                continue;
+
+            // 自分自身や子オブジェクトは除外する。
+            if (hit == playerCapsule ||
+                hit.attachedRigidbody == rb ||
+                hit.transform == transform ||
+                hit.transform.IsChildOf(transform))
+            {
+                continue;
+            }
+
+            // 立ったときの範囲に障害物がある。
+            return false;
+        }
+
+        return true;
+    }
+
+    #endregion
 }
