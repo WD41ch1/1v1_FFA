@@ -10,7 +10,7 @@ public class SGProjectile : ProjectileBase
 
     private bool isInitialize = false;
 
-    public override bool Initialize(PlayerManager _owner, WeaponBase _base, Vector3 pos)
+    public override bool Initialize(PlayerManager _owner, WeaponBase _base, WeaponDamageSyncData _syncData, Vector3 pos)
     {
         rb = GetComponent<Rigidbody>();
         rb.useGravity = false;
@@ -21,15 +21,20 @@ public class SGProjectile : ProjectileBase
 
         owner = _owner;
         wBase = _base;
+        syncOwner.Value = _owner;
+        syncWeaponData.Value = _syncData;
 
-
-        if (wBase.GetWeaponData() == null)
+        if (!syncWeaponData.Value.IsValid)
         {
+            GameDebug.Warning(
+                $"[Projectile.Initialize]syncWeaponDataのデータが見つからなかったため" +
+                $"初期化できませんでした", isShowLog);
             return false;
         }
         else
         {
-            speed = data.ammoSpeed;
+            //  弾速をセット
+            speed = syncWeaponData.Value.ammoSpeed;
         }
 
         isInitialize = true;

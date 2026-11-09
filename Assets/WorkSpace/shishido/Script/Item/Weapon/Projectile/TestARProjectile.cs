@@ -15,13 +15,14 @@ public class TestARProjectile : ProjectileBase
     /// <param name="_owner"></param>
     /// <param name="_base"></param>
     /// <param name="pos"></param>
-    public override bool Initialize(PlayerManager _owner, WeaponBase _base, Vector3 pos)
+    public override bool Initialize(PlayerManager _owner, WeaponBase _base, WeaponDamageSyncData _syncData, Vector3 pos)
     {
         GameDebug.Log(
             $"[Initialize] " +
             $"InstanceID:{GetInstanceID()} " +
             $"IsServer:{IsServerInitialized} " +
-            $"Owner:{owner}"
+            $"Owner:{owner}",
+            isShowLog
         );
 
         rb = GetComponent<Rigidbody>();
@@ -34,20 +35,19 @@ public class TestARProjectile : ProjectileBase
         owner = _owner;
         wBase = _base;
         syncOwner.Value = _owner;
-        //syncBase.Value = _base;
+        syncWeaponData.Value = _syncData;
 
-        if (wBase.GetWeaponData() == null)
+        if (!syncWeaponData.Value.IsValid)
         {
+            GameDebug.Warning(
+                $"[Projectile.Initialize]syncWeaponDataのデータが見つからなかったため" +
+                $"初期化できませんでした");
             return false;
         }
         else
         {
-            //  dataに代入
-            data = wBase.GetWeaponData();
-            //syncData.Value = wBase.GetWeaponData();
-
             //  弾速をセット
-            speed = data.ammoSpeed;
+            speed = syncWeaponData.Value.ammoSpeed;
 
             targetPosition = pos;
             direction =

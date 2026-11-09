@@ -91,11 +91,10 @@ public class MatchManager : nobManagerBase
         PlayerManager attacker,
         PlayerManager target,
         HitPart hit,
-        WeaponBase weapon,
-        WeaponData data
+        WeaponDamageSyncData data
         )
     {
-        DamageInfo info = CreateDamageInfo(attacker, hit, weapon, data);
+        DamageInfo info = CreateDamageInfo(attacker, hit,  data);
 
         target.playerHealth.TakeDamage(info);
     }
@@ -104,7 +103,7 @@ public class MatchManager : nobManagerBase
     /// ヒット時のダメージ情報作成
     /// </summary>
     /// <returns></returns>
-    public DamageInfo CreateDamageInfo(PlayerManager attacker, HitPart hit, WeaponBase weapon, WeaponData data)
+    public DamageInfo CreateDamageInfo(PlayerManager attacker, HitPart hit, WeaponData data)
     {
         DamageInfo info = new DamageInfo();
 
@@ -112,7 +111,17 @@ public class MatchManager : nobManagerBase
         info.DamageMultiplier =
             SetDamageMultiplier(hit, data, out info.IsHeadshot);
         info.Attacker = attacker;
-        info.Weapon = weapon;
+
+        return info;
+    }
+    public DamageInfo CreateDamageInfo(PlayerManager attacker, HitPart hit, WeaponDamageSyncData data)
+    {
+        DamageInfo info = new DamageInfo();
+
+        info.Damage = data.damage;
+        info.DamageMultiplier =
+            SetDamageMultiplier(hit, data, out info.IsHeadshot);
+        info.Attacker = attacker;
 
         return info;
     }
@@ -123,6 +132,28 @@ public class MatchManager : nobManagerBase
     /// <param name="hit"></param>
     /// <returns></returns>
     private float SetDamageMultiplier(HitPart hit, WeaponData data, out bool headShot)
+    {
+        float multiplier = 1f;
+
+        headShot = false;
+
+        switch (hit)
+        {
+            case HitPart.Head:
+                multiplier = data.headMultiplier;
+                headShot = true;
+                break;
+            case HitPart.Body:
+                multiplier = data.bodyMultiplier;
+                break;
+            case HitPart.Leg:
+                multiplier = data.legMultiplier;
+                break;
+        }
+
+        return multiplier;
+    }
+    private float SetDamageMultiplier(HitPart hit, WeaponDamageSyncData data, out bool headShot)
     {
         float multiplier = 1f;
 

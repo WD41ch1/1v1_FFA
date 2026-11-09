@@ -10,8 +10,6 @@ public struct DamageInfo
     public float DamageMultiplier;
     //  攻撃してきたPlayer
     public PlayerManager Attacker;
-    //  ダメージを与えた武器
-    public WeaponBase Weapon;
     //  ヘッドショットかどうか
     public bool IsHeadshot;
 }

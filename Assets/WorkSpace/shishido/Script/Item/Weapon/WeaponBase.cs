@@ -36,7 +36,7 @@ public abstract class WeaponBase : ItemBase
 
     private void OnchangeShootCount(int prev, int next, bool asServer)
     {
-        GameDebug.Server($"[OnchangeShootCount]実行回数:{next}");
+        GameDebug.Server($"[OnchangeShootCount]実行回数:{next}",false);
     }
 
     public void AddShootCount()
@@ -232,8 +232,8 @@ public abstract class WeaponBase : ItemBase
         //  Ray(カメラ)を飛ばし当たったものを取得
         bool isRayHit = owner.cameraController.GetCrosshairTarget(out target);
 
-        // 何かに当たった
-        if (isRayHit)
+        // 何かに当たってかつ自身出なければ
+        if (isRayHit && !CheckHitMe(target))
         {
             //  発射位置
             Transform muzzlePoint = weaponView.muzzlePoint;
@@ -259,12 +259,12 @@ public abstract class WeaponBase : ItemBase
     {
         return weaponData;
     }
-    
+
     public ItemView GetWeaponView()
     {
         return weaponView;
     }
-    
+
     public int GetcurrentAmmo()
     {
         return weaponState.currentAmmo;
@@ -274,7 +274,7 @@ public abstract class WeaponBase : ItemBase
 
     #region checker
 
-    
+
     public bool CheckWeaponState(InventoryItem item, out WeaponState state)
     {
         state = null;
@@ -304,6 +304,18 @@ public abstract class WeaponBase : ItemBase
 
         state = weaponState;
         return true;
+    }
+
+    private bool CheckHitMe(RaycastHit _target)
+    {
+        bool result = false;
+        PlayerManager targetManger =
+            _target.collider.gameObject.GetComponentInParent<PlayerManager>();
+
+        if (targetManger == owner)
+            result = true;
+
+        return result;
     }
 
     #endregion
@@ -349,7 +361,7 @@ public abstract class WeaponBase : ItemBase
         }
     }
 
-    
+
     private void NotifyReloadAnimation()
     {
         ReloadAnimationRequested?.Invoke();
