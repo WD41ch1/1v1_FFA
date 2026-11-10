@@ -166,7 +166,9 @@ public abstract class WeaponBase : ItemBase
         Camera camera = owner.cameraController.PlayerCamera;
         if (camera == null) return;
 
-        camera.DOFieldOfView(weaponData.adsMultiplier, weaponData.adsSpeed);
+        camera.DOFieldOfView(
+            weaponData.adsMultiplier,
+            weaponData.adsSpeed);
 
         //camera.transform.DOMove(weaponView.adsPoint.position, 0.2f);
         //camera.transform.DORotate(weaponView.adsPoint.eulerAngles, 0.2f);
@@ -194,13 +196,16 @@ public abstract class WeaponBase : ItemBase
             weaponData.itemType
         );
     }
+
     /// <summary>
     /// リロードコルーチン
     /// </summary>
     /// <param name="reloadTime"></param>
     /// <param name="_approvalValue"></param>
     /// <returns></returns>
-    protected virtual IEnumerator ReloadAnimation(float reloadTime, int _approvalValue)
+    protected virtual IEnumerator ReloadAnimation(
+        float reloadTime,
+        int _approvalValue)
     {
         isReloading = true;
 
@@ -209,7 +214,7 @@ public abstract class WeaponBase : ItemBase
 
         yield return new WaitForSeconds(reloadTime);
 
-        //  弾補充     
+        //  弾補充
         weaponState.currentAmmo += _approvalValue;
 
         //  HotBerSlotの更新
@@ -230,7 +235,8 @@ public abstract class WeaponBase : ItemBase
         Vector3 targetPosition;
 
         //  Ray(カメラ)を飛ばし当たったものを取得
-        bool isRayHit = owner.cameraController.GetCrosshairTarget(out target);
+        bool isRayHit =
+            owner.cameraController.GetCrosshairTarget(out target);
 
         // 何かに当たった
         if (isRayHit)
@@ -247,6 +253,7 @@ public abstract class WeaponBase : ItemBase
         {
             //  カメラの向いているほうを取得
             Ray ray = owner.cameraController.GetCrosshairRay();
+
             //  仮の目標地点を設定
             targetPosition = ray.origin + ray.direction * 1000f;
         }
@@ -259,12 +266,12 @@ public abstract class WeaponBase : ItemBase
     {
         return weaponData;
     }
-    
+
     public ItemView GetWeaponView()
     {
         return weaponView;
     }
-    
+
     public int GetcurrentAmmo()
     {
         return weaponState.currentAmmo;
@@ -274,8 +281,10 @@ public abstract class WeaponBase : ItemBase
 
     #region checker
 
-    
-    public bool CheckWeaponState(InventoryItem item, out WeaponState state)
+
+    public bool CheckWeaponState(
+        InventoryItem item,
+        out WeaponState state)
     {
         state = null;
 
@@ -312,6 +321,7 @@ public abstract class WeaponBase : ItemBase
 
     //射撃通知
     public event Action ShotAnimationRequested;
+
     //リロード通知
     public event Action ReloadAnimationRequested;
 
@@ -332,6 +342,20 @@ public abstract class WeaponBase : ItemBase
         return controller;
     }
 
+    // 構えと同じ、EquipmentManagerのID別設定を使う。
+    private WeaponAnimationType GetWeaponAnimationType()
+    {
+        if (weaponData == null)
+            return WeaponAnimationType.None;
+
+        if (owner != null && owner.equipmentManager != null)
+        {
+            return owner.equipmentManager.GetAnimationType(weaponData);
+        }
+
+        return weaponData.weaponAnimationType;
+    }
+
     private void NotifyShotAnimation()
     {
         ShotAnimationRequested?.Invoke();
@@ -342,14 +366,28 @@ public abstract class WeaponBase : ItemBase
         WeaponUpperBodyController controller =
             GetAnimationController();
 
-        if (controller != null)
+        if (controller == null)
         {
-            controller.NotifyWeaponShot(
-                weaponData.weaponAnimationType);
+            Debug.LogWarning(
+                "[武器アニメーション] 射撃の通知先が見つかりません。",
+                this);
+            return;
         }
+
+        WeaponAnimationType type = GetWeaponAnimationType();
+
+        if (type == WeaponAnimationType.None)
+        {
+            Debug.LogWarning(
+                $"[武器アニメーション] 射撃：ID={weaponData.itemId}がNoneです。" +
+                "PlayerのEquipmentManagerのID別設定を確認してください。",
+                this);
+            return;
+        }
+
+        controller.NotifyWeaponShot(type);
     }
 
-    
     private void NotifyReloadAnimation()
     {
         ReloadAnimationRequested?.Invoke();
@@ -360,11 +398,26 @@ public abstract class WeaponBase : ItemBase
         WeaponUpperBodyController controller =
             GetAnimationController();
 
-        if (controller != null)
+        if (controller == null)
         {
-            controller.NotifyWeaponReload(
-                weaponData.weaponAnimationType);
+            Debug.LogWarning(
+                "[武器アニメーション] リロードの通知先が見つかりません。",
+                this);
+            return;
         }
+
+        WeaponAnimationType type = GetWeaponAnimationType();
+
+        if (type == WeaponAnimationType.None)
+        {
+            Debug.LogWarning(
+                $"[武器アニメーション] リロード：ID={weaponData.itemId}がNoneです。" +
+                "PlayerのEquipmentManagerのID別設定を確認してください。",
+                this);
+            return;
+        }
+
+        controller.NotifyWeaponReload(type);
     }
 
     #endregion
