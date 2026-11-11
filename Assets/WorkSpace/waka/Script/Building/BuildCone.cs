@@ -3,14 +3,16 @@ using UnityEngine;
 using static GameConst;
 
 /// <summary>
-/// コーン建築を担当する独立クラス
+/// 屋根建築を担当するクラス
 ///
 /// ・床と同じグリッドへ配置
-/// ・カメラ方向の隣接1マスへ配置（視線の命中位置は使用しない）
-/// ・上向きで前方1マス・1段上、下向きで足元へ配置
-/// ・床の上へ重ねて建築可能
-/// ・Cone同士の重複は禁止
-/// ・Prefabの向きをY回転で補正可能
+/// ・下向き：Playerの足元
+/// ・正面：カメラ方向の隣接マス
+/// ・上向き：Playerと同じマスの1段上
+/// ・地面または既存建築につながる場合だけ候補を表示
+/// ・床の上に重ねて配置可能
+/// ・既存の屋根、階段との占有判定を維持
+/// ・生成と建材消費はNetworkBuildControllerへ要求
 /// </summary>
 public class BuildCone : MonoBehaviour
 {
@@ -21,10 +23,11 @@ public class BuildCone : MonoBehaviour
     public Transform player;
 
     [Header("建材消費")]
-    [Tooltip("建材を消費するPlayer。未設定ならPlayer参照の親から取得")]
+    [Tooltip("未設定ならPlayer参照の親から取得")]
     public PlayerManager playerManager;
-    [Tooltip("消費する建材の種類。Inspectorで選択してください")]
+
     public BildingMatType materialType;
+
     [Min(1)]
     public int materialCost = 10;
 
@@ -37,16 +40,15 @@ public class BuildCone : MonoBehaviour
     public Material cannotBuildMaterial;
 
     [Header("Layer")]
-    [Tooltip("地面のLayer")]
     public LayerMask groundLayer;
 
-    [Tooltip("Wall・Ramp・Floor・Coneなどの建築Layer")]
+    [Tooltip("完成した壁・階段・床・屋根など、すべての建築Layer")]
     public LayerMask buildLayer;
 
     [Tooltip("完成した床だけのLayer")]
     public LayerMask floorLayer;
 
-    [Tooltip("完成したConeだけのLayer")]
+    [Tooltip("完成した屋根だけのLayer")]
     public LayerMask coneLayer;
 
     [Header("グリッド設定")]
@@ -56,20 +58,20 @@ public class BuildCone : MonoBehaviour
     public float buildDistance = 6f;
 
     [Header("Cone設定")]
-    [Tooltip("Cone底面からPrefabのPivotまでの高さ")]
+    [Tooltip("屋根の底面からPrefabのPivotまでの高さ")]
     public float conePivotFromBottom = 0f;
 
-    [Tooltip("Cone全体の高さ")]
+    [Tooltip("屋根全体の高さ")]
     public float coneHeight = 2f;
 
-    [Tooltip("床と向きを合わせる回転。画像のConeなら45")]
+    [Tooltip("Prefabの向きを補正するY回転")]
     public float coneRotationY = 45f;
 
     [Header("視線設定")]
     [Range(-1f, 0f)]
     public float lookDownThreshold = -0.45f;
 
-    [Tooltip("この値より上を向くと、前方1マス・現在の建築階層の1段上を候補にする")]
+    [Tooltip("この値より上を向くと、現在のマスの1段上を候補にする")]
     [Range(0f, 1f)]
     public float lookUpThreshold = 0.3f;
 
@@ -77,10 +79,12 @@ public class BuildCone : MonoBehaviour
     public float connectionThickness = 0.2f;
 
     private GameObject currentPreview;
-
     private PlayerMovement playerMovement;
 
-    // 同じPlayerが使用する生成済みカメラを取得する
+    private readonly HashSet<string> builtPositions =
+        new HashSet<string>();
+
+    // 同じPlayerが使用する生成済みカメラを取得する。
     private bool TryResolvePlayerCamera()
     {
         if (playerMovement == null)
@@ -101,7 +105,9 @@ public class BuildCone : MonoBehaviour
         }
 
         Transform cameraTransform = playerMovement.cameraTransform;
-        Camera generatedCamera = cameraTransform.GetComponent<Camera>();
+
+        Camera generatedCamera =
+            cameraTransform.GetComponent<Camera>();
 
         if (generatedCamera == null)
         {
@@ -110,20 +116,12 @@ public class BuildCone : MonoBehaviour
         }
 
         if (generatedCamera == null)
-        {
             return false;
-        }
 
         playerCamera = generatedCamera;
         return true;
     }
 
-    private readonly HashSet<string> builtPositions =
-        new HashSet<string>();
-
-    /// <summary>
-    /// プレビューを生成
-    /// </summary>
     public void ShowPreview()
     {
         HidePreview();
@@ -131,48 +129,40 @@ public class BuildCone : MonoBehaviour
         if (conePreviewPrefab == null)
         {
             Debug.LogError(
-                "BuildCone: Cone Preview Prefabが未設定です"
-            );
+                "BuildCone: Cone Preview Prefabが未設定です",
+                this);
             return;
         }
 
-        currentPreview =
-            Instantiate(conePreviewPrefab);
-        foreach (Collider col in currentPreview.GetComponentsInChildren<Collider>(true))
+        currentPreview = Instantiate(conePreviewPrefab);
+
+        foreach (Collider col in
+                 currentPreview.GetComponentsInChildren<Collider>(true))
+        {
             col.enabled = false;
+        }
 
         currentPreview.SetActive(true);
     }
 
-    /// <summary>
-    /// プレビューを削除
-    /// </summary>
     public void HidePreview()
     {
         if (currentPreview == null)
-        {
             return;
-        }
 
         Destroy(currentPreview);
         currentPreview = null;
     }
 
-    /// <summary>
-    /// プレビューを更新
-    /// </summary>
     public void UpdatePreview()
     {
         if (currentPreview == null)
-        {
             return;
-        }
 
         bool hasCandidate = TryGetBuildPoint(
             out Vector3 position,
             out Quaternion rotation,
-            out bool canBuild
-        );
+            out bool canBuild);
 
         if (!hasCandidate)
         {
@@ -184,50 +174,70 @@ public class BuildCone : MonoBehaviour
 
         currentPreview.transform.SetPositionAndRotation(
             position,
-            rotation
-        );
+            rotation);
 
         SetPreviewMaterial(canBuild && HasEnoughMaterials());
     }
 
-    /// <summary>
-    /// Coneを建築
-    /// </summary>
     public void Build()
     {
         Physics.SyncTransforms();
-        if (!TryGetBuildPoint(out Vector3 position,
-                out Quaternion rotation, out bool canBuild) || !canBuild)
+
+        if (!TryGetBuildPoint(
+                out Vector3 position,
+                out Quaternion rotation,
+                out bool canBuild) ||
+            !canBuild)
+        {
             return;
+        }
 
         NetworkBuildController network =
             GetComponentInParent<NetworkBuildController>();
+
         if (network == null && player != null)
-            network = player.GetComponentInParent<NetworkBuildController>();
+        {
+            network =
+                player.GetComponentInParent<NetworkBuildController>();
+        }
+
         if (network == null)
         {
-            Debug.LogError("PlayerにNetworkBuildControllerを追加してください。", this);
+            Debug.LogError(
+                "PlayerにNetworkBuildControllerを追加してください。",
+                this);
             return;
         }
-        network.RequestBuild(BuildingSystem.BuildType.Cone, position, rotation);
+
+        network.RequestBuild(
+            BuildingSystem.BuildType.Cone,
+            position,
+            rotation);
     }
 
-    // サーバーでは相手のカメラを使わず、送られた設置位置を検証。
+    // サーバーで送られた設置位置を検証する。
     public bool ServerCanPlace(
-     Vector3 position,
-     Quaternion rotation,
-     Transform playerRoot)
+        Vector3 position,
+        Quaternion rotation,
+        Transform playerRoot)
     {
         player = playerRoot;
+
+        if (player == null)
+            return false;
 
         bool connected = IsConnected(position);
         bool overlapping = IsOverlappingCone(position);
         bool playerOverlap = IsOverlappingPlayer(position);
+
         bool behind =
             !IsSamePlayerGrid(position) && IsBehindPlayer(position);
 
         bool allowed =
-            connected && !overlapping && !playerOverlap && !behind;
+            connected &&
+            !overlapping &&
+            !playerOverlap &&
+            !behind;
 
         if (!allowed)
         {
@@ -245,257 +255,203 @@ public class BuildCone : MonoBehaviour
 
         return allowed;
     }
-    private bool TryGetMaterialInventory(out InventoryManager inventory)
+
+    private bool TryGetMaterialInventory(
+        out InventoryManager inventory)
     {
         inventory = null;
-        if (playerManager == null && player != null)
-            playerManager = player.GetComponentInParent<PlayerManager>();
 
-        if (playerManager == null) return false;
-        // PlayerManagerの初期化済みの参照を使う。
+        if (playerManager == null && player != null)
+        {
+            playerManager =
+                player.GetComponentInParent<PlayerManager>();
+        }
+
+        if (playerManager == null)
+            return false;
+
         inventory = playerManager.inventoryManager;
         return inventory != null;
     }
 
     private bool HasEnoughMaterials()
     {
-        InventoryManager inventory;
         return materialCost > 0 &&
-            TryGetMaterialInventory(out inventory) &&
-            inventory.GetMat(materialType) >= materialCost;
+               TryGetMaterialInventory(out InventoryManager inventory) &&
+               inventory.GetMat(materialType) >= materialCost;
     }
 
+    // 元の消費処理を保持。
+    // Build()ではNetworkBuildControllerへ要求するため、ここでは呼ばない。
     private bool TryPayMaterials()
     {
-        InventoryManager inventory;
-        if (materialCost <= 0 || !TryGetMaterialInventory(out inventory))
+        if (materialCost <= 0 ||
+            !TryGetMaterialInventory(out InventoryManager inventory))
         {
             Debug.LogWarning(
-                "BuildCone: Player ManagerとInventory Managerの参照、およびMaterial Cost（1以上）を確認してください。",
+                "BuildCone: Player Manager、Inventory Manager、" +
+                "Material Costを確認してください。",
                 this);
             return false;
         }
 
-        // 既存の消費APIは不足分だけでも消費するため、必ず先に必要数を確認。
-        // 確認と消費の間に待機や別の処理を挟まない。
-        if (inventory.GetMat(materialType) < materialCost) return false;
+        if (inventory.GetMat(materialType) < materialCost)
+            return false;
 
-        int consumed;
-        return playerManager.TryConsumeBildMat(materialType, materialCost, out consumed)
-            && consumed == materialCost;
+        return playerManager.TryConsumeBildMat(
+                   materialType,
+                   materialCost,
+                   out int consumed) &&
+               consumed == materialCost;
     }
 
-    /// <summary>
-    /// 建築候補を取得
-    /// </summary>
     private bool TryGetBuildPoint(
         out Vector3 position,
         out Quaternion rotation,
-        out bool canBuild
-    )
+        out bool canBuild)
     {
         position = Vector3.zero;
 
         rotation = Quaternion.Euler(
             0f,
             coneRotationY,
-            0f
-        );
+            0f);
 
         canBuild = false;
 
-        if (!TryResolvePlayerCamera() || player == null)
+        if (player == null ||
+            gridSize <= 0f ||
+            !TryResolvePlayerCamera())
         {
             return false;
         }
 
-        // 視線の命中位置は使わず、上下の向きで候補階層を切り替える。
-        // Playerのいるマスから、カメラ側の隣接1マスに統一する。
         Vector3 forward = GetSnappedPlayerForward();
+
         if (forward.sqrMagnitude <= 0.001f)
-        {
             return false;
-        }
 
         Vector3 playerGrid = new Vector3(
             Mathf.Round(player.position.x / gridSize) * gridSize,
             GetPlayerBuildLevel(),
-            Mathf.Round(player.position.z / gridSize) * gridSize
-        );
+            Mathf.Round(player.position.z / gridSize) * gridSize);
 
         float lookY = playerCamera.transform.forward.y;
+
         bool lookingDown = lookY < lookDownThreshold;
         bool lookingUp = lookY > lookUpThreshold;
 
         Vector3 buildPoint;
-        if (lookingDown)
+
+        // 修正：上向きなら隣のマスではなく、自分のマスの真上。
+        if (lookingUp)
+        {
+            buildPoint = playerGrid + Vector3.up * gridSize;
+        }
+        else if (lookingDown)
         {
             buildPoint = playerGrid;
         }
         else
         {
             buildPoint = playerGrid + forward * gridSize;
-            if (lookingUp)
-            {
-                // 高さだけを1段上げる。接続判定は必ず下で実行する。
-                buildPoint.y += gridSize;
-            }
         }
 
-        position =
-            GetConeGridPosition(buildPoint);
+        position = GetConeGridPosition(buildPoint);
 
-        /*
-         * 地面・床・既存建築のどれにも
-         * 接続していない場合は候補を非表示。
-         */
+        // 接続がなければ候補を表示しない。
         if (!IsConnected(position))
-        {
             return false;
-        }
 
         canBuild = true;
 
-        // Playerより後ろのマスは建築不可
-        if (!IsSamePlayerGrid(position) &&
-            IsBehindPlayer(position))
-        {
+        // 同じXZマスなら、真下・真上とも後方判定をしない。
+        if (!IsSamePlayerGrid(position) && IsBehindPlayer(position))
             canBuild = false;
-        }
 
-        string key = GetBuildKey(position);
-
-        // このスクリプトが配置したConeと重複
-        if (builtPositions.Contains(key))
-        {
+        if (builtPositions.Contains(GetBuildKey(position)))
             canBuild = false;
-        }
 
-        // シーン内の完成済みConeと重複
         if (IsOverlappingCone(position))
-        {
             canBuild = false;
-        }
 
-        // Player本体または子のColliderと重なる場合は建築不可。
         if (IsOverlappingPlayer(position))
-        {
             canBuild = false;
-        }
 
         return true;
     }
 
-    /// <summary>
-    /// 床と同じグリッドへ変換
-    /// </summary>
-    private Vector3 GetConeGridPosition(
-        Vector3 buildPoint
-    )
+    private Vector3 GetConeGridPosition(Vector3 buildPoint)
     {
         float gridX =
-            Mathf.Round(buildPoint.x / gridSize) *
-            gridSize;
+            Mathf.Round(buildPoint.x / gridSize) * gridSize;
 
         float gridZ =
-            Mathf.Round(buildPoint.z / gridSize) *
-            gridSize;
+            Mathf.Round(buildPoint.z / gridSize) * gridSize;
 
         float buildLevel =
-            Mathf.Round(buildPoint.y / gridSize) *
-            gridSize;
-
-        /*
-         * Coneの底面を0、4、8...へ合わせる。
-         * Transform位置はPivot分だけ上へ移動する。
-         */
-        float pivotY =
-            buildLevel +
-            conePivotFromBottom;
+            Mathf.Round(buildPoint.y / gridSize) * gridSize;
 
         return new Vector3(
             gridX,
-            pivotY,
-            gridZ
-        );
+            buildLevel + conePivotFromBottom,
+            gridZ);
     }
 
-    /// <summary>
-    /// Playerの足元に近い建築階層を取得
-    /// </summary>
     private float GetPlayerBuildLevel()
     {
-        float playerBottomY =
-            player.position.y;
+        float playerBottomY = player.position.y;
 
-        Collider playerCollider =
-            player.GetComponent<Collider>();
+        Collider playerCollider = player.GetComponent<Collider>();
 
         if (playerCollider != null)
-        {
-            playerBottomY =
-                playerCollider.bounds.min.y;
-        }
+            playerBottomY = playerCollider.bounds.min.y;
 
-        return Mathf.Round(
-            playerBottomY / gridSize
-        ) * gridSize;
+        return Mathf.Round(playerBottomY / gridSize) * gridSize;
     }
 
-    /// <summary>
-    /// カメラの向きを前後左右へ丸める
-    /// </summary>
     private Vector3 GetSnappedPlayerForward()
     {
-        Vector3 forward = playerCamera.transform.forward;
+        // サーバーなど、カメラ参照がない場合はPlayerの向きを使う。
+        Transform directionSource =
+            playerCamera != null ? playerCamera.transform : player;
+
+        if (directionSource == null)
+            return Vector3.forward;
+
+        Vector3 forward = directionSource.forward;
         forward.y = 0f;
 
         if (forward.sqrMagnitude <= 0.001f)
         {
             forward = Quaternion.Euler(
-                0f, playerCamera.transform.eulerAngles.y, 0f
-            ) * Vector3.forward;
+                0f,
+                directionSource.eulerAngles.y,
+                0f) * Vector3.forward;
         }
 
         forward.Normalize();
 
-        if (Mathf.Abs(forward.x) >
-            Mathf.Abs(forward.z))
-        {
-            return new Vector3(
-                Mathf.Sign(forward.x),
-                0f,
-                0f
-            );
-        }
+        if (Mathf.Abs(forward.x) > Mathf.Abs(forward.z))
+            return new Vector3(Mathf.Sign(forward.x), 0f, 0f);
 
-        return new Vector3(
-            0f,
-            0f,
-            Mathf.Sign(forward.z)
-        );
+        return new Vector3(0f, 0f, Mathf.Sign(forward.z));
     }
 
-    /// <summary>
-    /// 地面・床・既存建築への接続判定
-    /// </summary>
     private bool IsConnected(Vector3 conePosition)
     {
         float coneBaseY =
-            conePosition.y -
-            conePivotFromBottom;
+            conePosition.y - conePivotFromBottom;
 
         Vector3 checkCenter = new Vector3(
             conePosition.x,
             coneBaseY - connectionThickness,
-            conePosition.z
-        );
+            conePosition.z);
 
         Vector3 halfExtents = new Vector3(
             gridSize / 2f - 0.15f,
             connectionThickness,
-            gridSize / 2f - 0.15f
-        );
+            gridSize / 2f - 0.15f);
 
         int connectionMask =
             groundLayer.value |
@@ -508,15 +464,12 @@ public class BuildCone : MonoBehaviour
             halfExtents,
             Quaternion.identity,
             connectionMask,
-            QueryTriggerInteraction.Ignore
-        );
+            QueryTriggerInteraction.Ignore);
 
         foreach (Collider hit in hits)
         {
             if (IsPreviewCollider(hit) || IsPlayerCollider(hit))
-            {
                 continue;
-            }
 
             return true;
         }
@@ -524,25 +477,17 @@ public class BuildCone : MonoBehaviour
         return IsConnectedBeside(conePosition);
     }
 
-    /// <summary>
-    /// 前後左右に建築物があるか確認
-    /// </summary>
-    private bool IsConnectedBeside(
-        Vector3 conePosition
-    )
+    private bool IsConnectedBeside(Vector3 conePosition)
     {
         float coneBaseY =
-            conePosition.y -
-            conePivotFromBottom;
+            conePosition.y - conePivotFromBottom;
 
-        float halfGrid =
-            gridSize / 2f;
+        float halfGrid = gridSize / 2f;
 
         Vector3 basePosition = new Vector3(
             conePosition.x,
             coneBaseY,
-            conePosition.z
-        );
+            conePosition.z);
 
         Vector3[] centers =
         {
@@ -559,39 +504,27 @@ public class BuildCone : MonoBehaviour
 
         for (int i = 0; i < centers.Length; i++)
         {
-            Vector3 halfExtents;
-
-            if (i < 2)
-            {
-                halfExtents = new Vector3(
+            Vector3 halfExtents = i < 2
+                ? new Vector3(
                     halfGrid - 0.15f,
                     connectionThickness,
-                    connectionThickness
-                );
-            }
-            else
-            {
-                halfExtents = new Vector3(
+                    connectionThickness)
+                : new Vector3(
                     connectionThickness,
                     connectionThickness,
-                    halfGrid - 0.15f
-                );
-            }
+                    halfGrid - 0.15f);
 
             Collider[] hits = Physics.OverlapBox(
                 centers[i],
                 halfExtents,
                 Quaternion.identity,
                 connectionMask,
-                QueryTriggerInteraction.Ignore
-            );
+                QueryTriggerInteraction.Ignore);
 
             foreach (Collider hit in hits)
             {
                 if (IsPreviewCollider(hit) || IsPlayerCollider(hit))
-                {
                     continue;
-                }
 
                 return true;
             }
@@ -600,62 +533,46 @@ public class BuildCone : MonoBehaviour
         return false;
     }
 
-    /// <summary>
-    /// Coneの占有範囲とPlayerのColliderが重なるか確認。
-    /// 既存のCone重複判定と同じく、底面と高さを囲むBoxで判定する。
-    /// </summary>
     private bool IsOverlappingPlayer(Vector3 position)
     {
         if (player == null)
-        {
             return false;
-        }
 
         float baseY = position.y - conePivotFromBottom;
+
         Vector3 center = new Vector3(
             position.x,
             baseY + coneHeight / 2f,
-            position.z
-        );
+            position.z);
 
-        // 接するだけで弾かれにくいよう、境界を少し内側にする。
         Vector3 halfExtents = new Vector3(
             Mathf.Max(gridSize / 2f - 0.02f, 0.01f),
             Mathf.Max(coneHeight / 2f - 0.02f, 0.01f),
-            Mathf.Max(gridSize / 2f - 0.02f, 0.01f)
-        );
+            Mathf.Max(gridSize / 2f - 0.02f, 0.01f));
 
         Collider[] hits = Physics.OverlapBox(
             center,
             halfExtents,
             Quaternion.identity,
             ~0,
-            QueryTriggerInteraction.Ignore
-        );
+            QueryTriggerInteraction.Ignore);
 
         foreach (Collider hit in hits)
         {
             if (IsPreviewCollider(hit))
-            {
                 continue;
-            }
 
-            if (hit.transform == player ||
-                hit.transform.IsChildOf(player))
-            {
+            if (IsPlayerCollider(hit))
                 return true;
-            }
         }
 
         return false;
     }
-    /// <summary>
-    /// 完成済みConeとの重複判定
-    /// 床は重複判定へ含めない
-    /// </summary>
+
     private bool IsOverlappingCone(Vector3 position)
     {
-        // 屋根のPivotを補正し、階段と同じ底面グリッドで確認
+        // 元のネットワーク建築占有判定を維持。
+        // 屋根のPivot補正を含めて判定する。
         if (NetworkBuildPiece.Occupied(
             BuildingSystem.BuildType.Cone,
             position,
@@ -697,164 +614,82 @@ public class BuildCone : MonoBehaviour
         return false;
     }
 
-    /// <summary>
-    /// Playerと同じXZグリッドか確認
-    /// </summary>
-    private bool IsSamePlayerGrid(
-        Vector3 position
-    )
+    private bool IsSamePlayerGrid(Vector3 position)
     {
         float playerGridX =
-            Mathf.Round(player.position.x / gridSize) *
-            gridSize;
+            Mathf.Round(player.position.x / gridSize) * gridSize;
 
         float playerGridZ =
-            Mathf.Round(player.position.z / gridSize) *
-            gridSize;
+            Mathf.Round(player.position.z / gridSize) * gridSize;
 
-        return
-            Mathf.Approximately(
-                position.x,
-                playerGridX
-            ) &&
-            Mathf.Approximately(
-                position.z,
-                playerGridZ
-            );
+        return Mathf.Approximately(position.x, playerGridX) &&
+               Mathf.Approximately(position.z, playerGridZ);
     }
 
-    /// <summary>
-    /// 候補が配置方向の後ろか確認
-    /// </summary>
-    private bool IsBehindPlayer(
-        Vector3 position
-    )
+    private bool IsBehindPlayer(Vector3 position)
     {
         Vector3 playerForward = GetSnappedPlayerForward();
-
         playerForward.y = 0f;
 
         if (playerForward.sqrMagnitude <= 0.001f)
-        {
             return false;
-        }
 
-        Vector3 toBuild =
-            position -
-            player.position;
-
+        Vector3 toBuild = position - player.position;
         toBuild.y = 0f;
 
         if (toBuild.sqrMagnitude <= 0.01f)
-        {
             return false;
-        }
 
         return Vector3.Dot(
             playerForward.normalized,
-            toBuild.normalized
-        ) < 0f;
+            toBuild.normalized) < 0f;
     }
 
-    /// <summary>
-    /// プレビュー自身のColliderか確認
-    /// </summary>
     private bool IsPreviewCollider(Collider hit)
     {
-        if (currentPreview == null)
-        {
-            return false;
-        }
-
-        return
-            hit.transform ==
-            currentPreview.transform ||
-            hit.transform.IsChildOf(
-                currentPreview.transform
-            );
+        return currentPreview != null &&
+               (hit.transform == currentPreview.transform ||
+                hit.transform.IsChildOf(currentPreview.transform));
     }
 
-    // Player自身を建築の接続先として扱わない。
     private bool IsPlayerCollider(Collider hit)
     {
         return player != null &&
-            (hit.transform == player || hit.transform.IsChildOf(player));
-    }
-    /// <summary>
-    /// LayerMaskにLayerが含まれるか確認
-    /// </summary>
-    private bool IsLayerInMask(
-        int layer,
-        LayerMask layerMask
-    )
-    {
-        return
-            (layerMask.value & (1 << layer)) != 0;
+               (hit.transform == player ||
+                hit.transform.IsChildOf(player));
     }
 
-    /// <summary>
-    /// プレビューのMaterialを変更
-    /// </summary>
+    private bool IsLayerInMask(int layer, LayerMask layerMask)
+    {
+        return (layerMask.value & (1 << layer)) != 0;
+    }
+
     private void SetPreviewMaterial(bool canBuild)
     {
         if (currentPreview == null)
-        {
             return;
-        }
 
         Material targetMaterial =
-            canBuild
-                ? canBuildMaterial
-                : cannotBuildMaterial;
+            canBuild ? canBuildMaterial : cannotBuildMaterial;
 
         if (targetMaterial == null)
-        {
             return;
-        }
 
-        Renderer[] renderers =
-            currentPreview
-                .GetComponentsInChildren<Renderer>();
-
-        foreach (Renderer targetRenderer in renderers)
+        foreach (Renderer renderer in
+                 currentPreview.GetComponentsInChildren<Renderer>())
         {
-            targetRenderer.material =
-                targetMaterial;
+            renderer.material = targetMaterial;
         }
     }
 
-    /// <summary>
-    /// 建築済み位置のキーを生成
-    /// </summary>
     private string GetBuildKey(Vector3 position)
     {
-        /*
-         * Pivotの位置ではなくCone底面の
-         * グリッド階層をキーに使用する。
-         */
-        float baseY =
-            position.y -
-            conePivotFromBottom;
+        float baseY = position.y - conePivotFromBottom;
 
-        int gridX =
-            Mathf.RoundToInt(
-                position.x / gridSize
-            );
+        int gridX = Mathf.RoundToInt(position.x / gridSize);
+        int gridY = Mathf.RoundToInt(baseY / gridSize);
+        int gridZ = Mathf.RoundToInt(position.z / gridSize);
 
-        int gridY =
-            Mathf.RoundToInt(
-                baseY / gridSize
-            );
-
-        int gridZ =
-            Mathf.RoundToInt(
-                position.z / gridSize
-            );
-
-        return
-            gridX + "_" +
-            gridY + "_" +
-            gridZ;
+        return gridX + "_" + gridY + "_" + gridZ;
     }
 }
-

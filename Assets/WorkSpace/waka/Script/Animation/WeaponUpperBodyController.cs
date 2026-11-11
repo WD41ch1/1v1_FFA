@@ -23,11 +23,9 @@ public class WeaponUpperBodyController : NetworkBehaviour
     [SerializeField] private float transitionTime = 0.15f;
 
     [Header("移動アニメーションの同期")]
-    [Tooltip("１秒間に送信する最大回数")]
     [Range(5f, 30f)]
     [SerializeField] private float sendRate = 15f;
 
-    [Tooltip("他プレイヤーの移動アニメーションの補間時間")]
     [Min(0f)]
     [SerializeField] private float remoteSmoothTime = 0.08f;
 
@@ -51,11 +49,9 @@ public class WeaponUpperBodyController : NetworkBehaviour
     private bool initialized;
     private float targetWeight;
 
-    // 自分が要求している装備種類
     private WeaponAnimationType requestedType =
         WeaponAnimationType.None;
 
-    // この画面で現在表示している構え
     private WeaponAnimationType currentType =
         WeaponAnimationType.None;
 
@@ -108,6 +104,7 @@ public class WeaponUpperBodyController : NetworkBehaviour
         }
 
         animator.SetLayerWeight(layerIndex, 0f);
+
         targetWeight = 0f;
         currentType = WeaponAnimationType.None;
         initialized = true;
@@ -117,7 +114,8 @@ public class WeaponUpperBodyController : NetworkBehaviour
 
     private bool HasFloatParameter(int hash)
     {
-        foreach (AnimatorControllerParameter parameter in animator.parameters)
+        foreach (AnimatorControllerParameter parameter
+                 in animator.parameters)
         {
             if (parameter.nameHash == hash &&
                 parameter.type == AnimatorControllerParameterType.Float)
@@ -141,7 +139,6 @@ public class WeaponUpperBodyController : NetworkBehaviour
 
         if (IsOwner)
         {
-            // ネットワーク開始前に装備された場合も反映する。
             ApplyWeaponVisual(requestedType);
             SendAnimationState(true);
         }
@@ -161,12 +158,10 @@ public class WeaponUpperBodyController : NetworkBehaviour
         {
             if (IsOwner)
             {
-                // PlayerMovementが設定したAnimatorの値を送る。
                 SendAnimationState(false);
             }
             else
             {
-                // 他人のPlayerには受信した値だけを適用する。
                 WeaponAnimationType receivedType =
                     networkWeaponType.Value;
 
@@ -220,10 +215,7 @@ public class WeaponUpperBodyController : NetworkBehaviour
         bool movementChanged =
             (movement - lastSentMovement).sqrMagnitude > 0.000001f;
 
-        bool weaponChanged =
-            requestedType != lastSentType;
-
-        // 変化がなくても定期的に現在値を送る。
+        bool weaponChanged = requestedType != lastSentType;
         bool heartbeat = now - lastSendTime >= 0.5f;
 
         if (!force && hasSent &&
@@ -240,8 +232,6 @@ public class WeaponUpperBodyController : NetworkBehaviour
         hasSent = true;
     }
 
-    // デフォルトの所有者制限を使用。
-    // このPlayerの所有者だけが呼べる。
     [ServerRpc]
     private void SendAnimationServerRpc(
         Vector3 movement,
@@ -292,35 +282,23 @@ public class WeaponUpperBodyController : NetworkBehaviour
         }
 
         animator.SetFloat(
-            SpeedHash,
-            movement.x,
-            remoteSmoothTime,
-            Time.deltaTime);
+            SpeedHash, movement.x,
+            remoteSmoothTime, Time.deltaTime);
 
         animator.SetFloat(
-            MoveXHash,
-            movement.y,
-            remoteSmoothTime,
-            Time.deltaTime);
+            MoveXHash, movement.y,
+            remoteSmoothTime, Time.deltaTime);
 
         animator.SetFloat(
-            MoveYHash,
-            movement.z,
-            remoteSmoothTime,
-            Time.deltaTime);
+            MoveYHash, movement.z,
+            remoteSmoothTime, Time.deltaTime);
     }
 
-    /// <summary>
-    /// 装備処理から呼ぶ。これまでと同じ呼び出し方で使用できる。
-    /// </summary>
     public void SetWeaponType(WeaponAnimationType type)
     {
-        // 通信開始後、他人のPlayerの装備表示を
-        // ローカルの装備処理で上書きしない。
         if (IsClientInitialized && !IsOwner)
             return;
 
-        // 専用サーバー上の装備処理からは送信しない。
         if (IsServerInitialized && !IsClientInitialized)
             return;
 
@@ -332,10 +310,7 @@ public class WeaponUpperBodyController : NetworkBehaviour
         if (!InitializeAnimator())
             return;
 
-        // 自分の画面では通信を待たずに表示する。
         ApplyWeaponVisual(type);
-
-        // 装備変更は通常の送信間隔を待たずに送る。
         SendAnimationState(true);
     }
 
@@ -373,7 +348,7 @@ public class WeaponUpperBodyController : NetworkBehaviour
                 return;
         }
 
-        // 同じ種類の受信でアニメーションを毎回先頭に戻さない。
+        // 同じ武器の構えを繰り返し先頭から再生しない。
         if (currentType == type)
             return;
 
@@ -394,8 +369,7 @@ public class WeaponUpperBodyController : NetworkBehaviour
         if (!animator.HasState(layerIndex, stateHash))
         {
             Debug.LogError(
-                $"Animatorに「{fullPath}」がありません。" +
-                "Inspectorのステート名を確認してください。",
+                $"Animatorに「{fullPath}」がありません。",
                 this);
 
             currentType = type;
@@ -448,80 +422,111 @@ public class WeaponUpperBodyController : NetworkBehaviour
     [SerializeField] private string pistolShootState;
     [SerializeField] private string pistolReloadState;
 
+    [Header("射撃ステートで使用しているAnimation Clip")]
+    [Tooltip("アサルトの射撃ステートのMotionと同じClipを登録")]
+    [SerializeField] private AnimationClip assaultShootClip;
+
+    [Tooltip("ピストルの射撃ステートのMotionと同じClipを登録")]
+    [SerializeField] private AnimationClip pistolShootClip;
+
+    [Header("射撃アニメーションの速度調整")]
+    [Tooltip("Animatorに追加するFloatパラメーター名")]
+    [SerializeField]
+    private string shotSpeedParameter = "ShotAnimationSpeed";
+
+    [Tooltip("次の弾までの時間の何割で再生するか。0.95なら95%。")]
+    [Range(0.5f, 1f)]
+    [SerializeField] private float shotTimeRatio = 0.95f;
+
+    private bool warnedShotSettings;
+
     /// <summary>
-    /// 武器の発射成功時に呼ぶ。
+    /// 以前の呼び出し方との互換用。
+    /// 発射間隔が不明な場合は通常速度で再生する。
     /// </summary>
     public void NotifyWeaponShot(WeaponAnimationType type)
     {
-        SendWeaponAction(type, false);
+        NotifyWeaponShot(type, 0f);
     }
 
     /// <summary>
-    /// 武器のリロード開始時に呼ぶ。
+    /// 発射成功時に、次の弾までの間隔を秒で渡す。
     /// </summary>
+    public void NotifyWeaponShot(
+        WeaponAnimationType type,
+        float shotInterval)
+    {
+        SendWeaponAction(type, false, shotInterval);
+    }
+
     public void NotifyWeaponReload(WeaponAnimationType type)
     {
-        SendWeaponAction(type, true);
+        SendWeaponAction(type, true, 0f);
     }
 
     private void SendWeaponAction(
         WeaponAnimationType type,
-        bool reload)
+        bool reload,
+        float shotInterval)
     {
-        if (!isActiveAndEnabled)
+        if (!isActiveAndEnabled || !IsGunType(type))
             return;
 
-        if (type != WeaponAnimationType.Pistol &&
-            type != WeaponAnimationType.AssaultRifle)
-        {
-            return;
-        }
+        if (!IsFinite(shotInterval) || shotInterval < 0f)
+            shotInterval = 0f;
 
         if (IsServerInitialized)
         {
-            // サーバーで発射処理された場合はこちら。
-            WeaponActionObserversRpc(type, reload);
+            WeaponActionObserversRpc(type, reload, shotInterval);
         }
         else if (IsClientInitialized && IsOwner)
         {
-            // 所有者の画面でリロード処理された場合はこちら。
-            WeaponActionServerRpc(type, reload);
+            WeaponActionServerRpc(type, reload, shotInterval);
         }
     }
 
-    // このPlayerの所有者だけが要求できる。
-    // アニメーションの通知専用。弾数・ダメージは変更しない。
+    private static bool IsGunType(WeaponAnimationType type)
+    {
+        return type == WeaponAnimationType.Pistol ||
+               type == WeaponAnimationType.AssaultRifle;
+    }
+
+    // アニメーションの通知専用。
+    // 弾数・ダメージ・実際の発射間隔は変更しない。
     [ServerRpc]
     private void WeaponActionServerRpc(
         WeaponAnimationType type,
-        bool reload)
+        bool reload,
+        float shotInterval)
     {
-        if (type != WeaponAnimationType.Pistol &&
-            type != WeaponAnimationType.AssaultRifle)
+        if (!IsGunType(type) ||
+            !IsFinite(shotInterval) ||
+            shotInterval < 0f)
         {
             return;
         }
 
-        WeaponActionObserversRpc(type, reload);
+        WeaponActionObserversRpc(type, reload, shotInterval);
     }
 
     // 過去の射撃を途中参加者へ再生しない。
     [ObserversRpc]
     private void WeaponActionObserversRpc(
         WeaponAnimationType type,
-        bool reload)
+        bool reload,
+        float shotInterval)
     {
-        PlayWeaponAction(type, reload);
+        PlayWeaponAction(type, reload, shotInterval);
     }
 
     private void PlayWeaponAction(
         WeaponAnimationType type,
-        bool reload)
+        bool reload,
+        float shotInterval)
     {
         if (!isActiveAndEnabled || !InitializeAnimator())
             return;
 
-        // すでに武器を外した・別の種類に持ち替えた場合は再生しない。
         WeaponAnimationType equippedType =
             IsOwner ? requestedType : networkWeaponType.Value;
 
@@ -570,8 +575,70 @@ public class WeaponUpperBodyController : NetworkBehaviour
 
         ApplyWeaponVisual(type);
 
-        // 連射時も、その都度アニメーションを先頭から再生する。
+        if (!reload)
+        {
+            ApplyShotPlaybackSpeed(type, shotInterval);
+        }
+
+        // 射撃は発射間隔に合う速度で再生。
+        // リロードの再生速度は変更しない。
         animator.Play(stateHash, layerIndex, 0f);
+    }
+
+    private void ApplyShotPlaybackSpeed(
+        WeaponAnimationType type,
+        float shotInterval)
+    {
+        int parameterHash =
+            Animator.StringToHash(shotSpeedParameter);
+
+        if (!HasFloatParameter(parameterHash))
+        {
+            WarnShotSettings(
+                $"AnimatorにFloat型の「{shotSpeedParameter}」を追加し、" +
+                "射撃ステートのSpeed Multiplierに設定してください。");
+            return;
+        }
+
+        AnimationClip clip =
+            type == WeaponAnimationType.AssaultRifle
+                ? assaultShootClip
+                : pistolShootClip;
+
+        if (clip == null || clip.length <= 0f)
+        {
+            animator.SetFloat(parameterHash, 1f);
+
+            WarnShotSettings(
+                $"{type}のShoot Clipが未設定です。" +
+                "射撃ステートのMotionと同じAnimation Clipを登録してください。");
+            return;
+        }
+
+        // 間隔が渡されなかった場合は通常速度。
+        if (shotInterval <= 0f)
+        {
+            animator.SetFloat(parameterHash, 1f);
+            return;
+        }
+
+        float duration = Mathf.Max(
+            0.01f,
+            shotInterval * Mathf.Clamp(shotTimeRatio, 0.5f, 1f));
+
+        // 例：0.5秒のClipを0.1秒で再生するなら速度5。
+        float playbackSpeed = clip.length / duration;
+
+        animator.SetFloat(parameterHash, playbackSpeed);
+    }
+
+    private void WarnShotSettings(string message)
+    {
+        if (warnedShotSettings)
+            return;
+
+        warnedShotSettings = true;
+        Debug.LogWarning("[射撃アニメーション] " + message, this);
     }
 
     #endregion

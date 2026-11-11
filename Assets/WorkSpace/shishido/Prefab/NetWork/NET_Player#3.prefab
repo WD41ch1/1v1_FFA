@@ -3464,6 +3464,10 @@ MonoBehaviour:
   assaultReloadState: HumanF@AssaultRifle_Reload01
   pistolShootState: 
   pistolReloadState: 
+  assaultShootClip: {fileID: -3191409282960832475, guid: dbca6a8acce7f2c48ad2326cf4c4df4a, type: 3}
+  pistolShootClip: {fileID: -3191409282960832475, guid: dbca6a8acce7f2c48ad2326cf4c4df4a, type: 3}
+  shotSpeedParameter: ShotAnimationSpeed
+  shotTimeRatio: 0.95
 --- !u!114 &3652847014429532586
 MonoBehaviour:
   m_ObjectHideFlags: 0

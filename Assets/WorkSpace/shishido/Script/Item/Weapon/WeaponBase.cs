@@ -385,7 +385,8 @@ public abstract class WeaponBase : ItemBase
             return;
         }
 
-        controller.NotifyWeaponShot(type);
+        // 追加：発射間隔も渡して、射撃アニメーションの速度を合わせる。
+        controller.NotifyWeaponShot(type, weaponData.fireRate);
     }
 
     private void NotifyReloadAnimation()

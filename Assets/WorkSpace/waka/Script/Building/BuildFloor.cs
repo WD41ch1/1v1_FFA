@@ -5,15 +5,12 @@ using static GameConst;
 /// <summary>
 /// 床建築を担当するクラス
 ///
-/// ・床をグリッド中心へ配置する
-/// ・下を向くとPlayerの真下へ候補を出す
-/// ・正面ではカメラ方向の隣接マスへ候補を出す
-/// ・上向きでは前方1マス・現在の建築階層の1段上へ候補を出す
-/// ・階段の上では階段の先へ候補を出す
-/// ・地面または既存建築につながる場合だけ建築可能
-/// ・何にもつながらない空中建築は禁止
-/// ・同じ場所への重複建築は禁止
-/// ・建築不可能な場所は赤いプレビュー
+/// ・下向き：Playerの足元
+/// ・正面：カメラ方向の隣接マス
+/// ・上向き：Playerと同じマスの1段上
+/// ・地面または既存建築につながる場合だけ候補を表示
+/// ・重複、Playerとの重なりを判定
+/// ・生成と建材消費はNetworkBuildControllerへ要求
 /// </summary>
 public class BuildFloor : MonoBehaviour
 {
@@ -24,10 +21,11 @@ public class BuildFloor : MonoBehaviour
     public Transform player;
 
     [Header("建材消費")]
-    [Tooltip("建材を消費するPlayer。未設定ならPlayer参照の親から取得")]
+    [Tooltip("未設定ならPlayer参照の親から取得")]
     public PlayerManager playerManager;
-    [Tooltip("消費する建材の種類。Inspectorで選択してください")]
+
     public BildingMatType materialType;
+
     [Min(1)]
     public int materialCost = 10;
 
@@ -40,41 +38,40 @@ public class BuildFloor : MonoBehaviour
     public Material cannotBuildMaterial;
 
     [Header("判定するLayer")]
-    [Tooltip("地面に設定しているLayer")]
     public LayerMask groundLayer;
 
-    [Tooltip("Wall・Ramp・Floorなど、すべての建築Layer")]
+    [Tooltip("完成した壁・階段・床・屋根など、すべての建築Layer")]
     public LayerMask buildLayer;
 
-    [Tooltip("完成した床だけに設定しているLayer")]
+    [Tooltip("完成した床だけのLayer")]
     public LayerMask floorLayer;
 
     [Header("基本設定")]
     public float buildDistance = 6f;
     public float gridSize = 4f;
 
-    [Tooltip("床Prefabの厚さ。床のScale Yと同じ値にする")]
+    [Tooltip("Colliderから厚さを取得できない場合の値")]
     public float floorThickness = 0.1f;
 
     [Header("真下判定")]
-    [Tooltip("この値よりカメラが下向きならPlayerの真下へ候補を出す")]
     [Range(-1f, 0f)]
     public float lookDownThreshold = -0.45f;
 
     [Header("上向き判定")]
-    [Tooltip("この値より上を向くと、前方1マス・現在の建築階層の1段上を候補にする")]
+    [Tooltip("この値より上を向くと、現在のマスの1段上を候補にする")]
     [Range(0f, 1f)]
     public float lookUpThreshold = 0.3f;
 
     [Header("接続判定")]
-    [Tooltip("既存建築との接続判定に使う厚さ")]
     public float connectionThickness = 0.15f;
 
     private GameObject currentPreview;
-
     private PlayerMovement playerMovement;
 
-    // 同じPlayerが使用する生成済みカメラを取得する
+    private readonly HashSet<string> builtPositions =
+        new HashSet<string>();
+
+    // 同じPlayerが使用する生成済みカメラを取得する。
     private bool TryResolvePlayerCamera()
     {
         if (playerMovement == null)
@@ -95,7 +92,9 @@ public class BuildFloor : MonoBehaviour
         }
 
         Transform cameraTransform = playerMovement.cameraTransform;
-        Camera generatedCamera = cameraTransform.GetComponent<Camera>();
+
+        Camera generatedCamera =
+            cameraTransform.GetComponent<Camera>();
 
         if (generatedCamera == null)
         {
@@ -104,76 +103,54 @@ public class BuildFloor : MonoBehaviour
         }
 
         if (generatedCamera == null)
-        {
             return false;
-        }
 
         playerCamera = generatedCamera;
         return true;
     }
 
-    // このスクリプトから建築した床の位置を記録する
-    private readonly HashSet<string> builtPositions =
-        new HashSet<string>();
-
-    /// <summary>
-    /// 床プレビューを生成する
-    /// </summary>
     public void ShowPreview()
     {
-        if (currentPreview != null)
-        {
-            Destroy(currentPreview);
-        }
+        HidePreview();
 
         if (floorPreviewPrefab == null)
         {
             Debug.LogError(
-                "BuildFloorのFloor Preview Prefabが未設定です"
-            );
-
+                "BuildFloorのFloor Preview Prefabが未設定です",
+                this);
             return;
         }
 
-        currentPreview =
-            Instantiate(floorPreviewPrefab);
-        foreach (Collider col in currentPreview.GetComponentsInChildren<Collider>(true))
+        currentPreview = Instantiate(floorPreviewPrefab);
+
+        foreach (Collider col in
+                 currentPreview.GetComponentsInChildren<Collider>(true))
+        {
             col.enabled = false;
+        }
 
         currentPreview.SetActive(true);
     }
 
-    /// <summary>
-    /// 床プレビューを削除する
-    /// </summary>
     public void HidePreview()
     {
         if (currentPreview == null)
-        {
             return;
-        }
 
         Destroy(currentPreview);
         currentPreview = null;
     }
 
-    /// <summary>
-    /// 床プレビューの位置・向き・色を更新する
-    /// </summary>
     public void UpdatePreview()
     {
         if (currentPreview == null)
-        {
             return;
-        }
 
         bool hasCandidate = TryGetBuildPoint(
             out Vector3 position,
             out Quaternion rotation,
-            out bool canBuild
-        );
+            out bool canBuild);
 
-        // 何にもつながらない空中なら候補を消す
         if (!hasCandidate)
         {
             currentPreview.SetActive(false);
@@ -184,50 +161,70 @@ public class BuildFloor : MonoBehaviour
 
         currentPreview.transform.SetPositionAndRotation(
             position,
-            rotation
-        );
+            rotation);
 
         SetPreviewMaterial(canBuild && HasEnoughMaterials());
     }
 
-    /// <summary>
-    /// 床を実際に建築する
-    /// </summary>
     public void Build()
     {
         Physics.SyncTransforms();
-        if (!TryGetBuildPoint(out Vector3 position,
-                out Quaternion rotation, out bool canBuild) || !canBuild)
+
+        if (!TryGetBuildPoint(
+                out Vector3 position,
+                out Quaternion rotation,
+                out bool canBuild) ||
+            !canBuild)
+        {
             return;
+        }
 
         NetworkBuildController network =
             GetComponentInParent<NetworkBuildController>();
+
         if (network == null && player != null)
-            network = player.GetComponentInParent<NetworkBuildController>();
+        {
+            network =
+                player.GetComponentInParent<NetworkBuildController>();
+        }
+
         if (network == null)
         {
-            Debug.LogError("PlayerにNetworkBuildControllerを追加してください。", this);
+            Debug.LogError(
+                "PlayerにNetworkBuildControllerを追加してください。",
+                this);
             return;
         }
-        network.RequestBuild(BuildingSystem.BuildType.Floor, position, rotation);
+
+        network.RequestBuild(
+            BuildingSystem.BuildType.Floor,
+            position,
+            rotation);
     }
 
-    // サーバーでは相手のカメラを使わず、送られた設置位置を検証。
+    // サーバーで送られた設置位置を検証する。
     public bool ServerCanPlace(
-    Vector3 position,
-    Quaternion rotation,
-    Transform playerRoot)
+        Vector3 position,
+        Quaternion rotation,
+        Transform playerRoot)
     {
         player = playerRoot;
+
+        if (player == null)
+            return false;
 
         bool connected = IsFloorConnected(position);
         bool overlapping = IsOverlappingFloor(position);
         bool playerOverlap = IsOverlappingPlayer(position);
+
         bool behind =
             !IsSamePlayerGrid(position) && IsBehindPlayer(position);
 
         bool allowed =
-            connected && !overlapping && !playerOverlap && !behind;
+            connected &&
+            !overlapping &&
+            !playerOverlap &&
+            !behind;
 
         if (!allowed)
         {
@@ -245,423 +242,275 @@ public class BuildFloor : MonoBehaviour
 
         return allowed;
     }
-    private bool TryGetMaterialInventory(out InventoryManager inventory)
+
+    private bool TryGetMaterialInventory(
+        out InventoryManager inventory)
     {
         inventory = null;
-        if (playerManager == null && player != null)
-            playerManager = player.GetComponentInParent<PlayerManager>();
 
-        if (playerManager == null) return false;
-        // PlayerManagerの初期化済みの参照を使う。
+        if (playerManager == null && player != null)
+        {
+            playerManager =
+                player.GetComponentInParent<PlayerManager>();
+        }
+
+        if (playerManager == null)
+            return false;
+
         inventory = playerManager.inventoryManager;
         return inventory != null;
     }
 
     private bool HasEnoughMaterials()
     {
-        InventoryManager inventory;
         return materialCost > 0 &&
-            TryGetMaterialInventory(out inventory) &&
-            inventory.GetMat(materialType) >= materialCost;
+               TryGetMaterialInventory(out InventoryManager inventory) &&
+               inventory.GetMat(materialType) >= materialCost;
     }
 
+    // 元の消費処理を保持。
+    // Build()ではNetworkBuildControllerへ要求するため、ここでは呼ばない。
     private bool TryPayMaterials()
     {
-        InventoryManager inventory;
-        if (materialCost <= 0 || !TryGetMaterialInventory(out inventory))
+        if (materialCost <= 0 ||
+            !TryGetMaterialInventory(out InventoryManager inventory))
         {
             Debug.LogWarning(
-                "BuildFloor: Player ManagerとInventory Managerの参照、およびMaterial Cost（1以上）を確認してください。",
+                "BuildFloor: Player Manager、Inventory Manager、" +
+                "Material Costを確認してください。",
                 this);
             return false;
         }
 
-        // 既存の消費APIは不足分だけでも消費するため、必ず先に必要数を確認。
-        // 確認と消費の間に待機や別の処理を挟まない。
-        if (inventory.GetMat(materialType) < materialCost) return false;
+        if (inventory.GetMat(materialType) < materialCost)
+            return false;
 
-        int consumed;
-        return playerManager.TryConsumeBildMat(materialType, materialCost, out consumed)
-            && consumed == materialCost;
+        return playerManager.TryConsumeBildMat(
+                   materialType,
+                   materialCost,
+                   out int consumed) &&
+               consumed == materialCost;
     }
 
     /// <summary>
-    /// 床の候補位置と建築可能状態を取得する
-    ///
-    /// 戻り値：
-    /// true  = 候補を表示する
-    /// false = 候補自体を表示しない
-    ///
-    /// canBuild：
-    /// true  = 建築可能
-    /// false = 赤いプレビュー
+    /// true：候補を表示
+    /// false：候補を非表示
+    /// canBuild：実際に建築できるか
     /// </summary>
     private bool TryGetBuildPoint(
         out Vector3 position,
         out Quaternion rotation,
-        out bool canBuild
-    )
+        out bool canBuild)
     {
         position = Vector3.zero;
         rotation = Quaternion.identity;
         canBuild = false;
 
-        if (!TryResolvePlayerCamera() || player == null)
+        if (player == null ||
+            gridSize <= 0f ||
+            !TryResolvePlayerCamera())
         {
             return false;
         }
 
-        canBuild = true;
-
-        // 屋根と同じカメラ方向・同じグリッド階層を使用する。
         Vector3 forward = GetSnappedPlayerForward();
+
         if (forward.sqrMagnitude <= 0.001f)
-        {
             return false;
-        }
 
         Vector3 playerGrid = new Vector3(
             Mathf.Round(player.position.x / gridSize) * gridSize,
             GetPlayerFloorBuildLevel(),
-            Mathf.Round(player.position.z / gridSize) * gridSize
-        );
+            Mathf.Round(player.position.z / gridSize) * gridSize);
 
         float lookY = playerCamera.transform.forward.y;
+
         bool lookingDown = lookY < lookDownThreshold;
         bool lookingUp = lookY > lookUpThreshold;
 
         Vector3 buildPoint;
-        if (lookingDown)
+
+        // 修正：上向きなら隣のマスではなく、自分のマスの真上。
+        if (lookingUp)
+        {
+            buildPoint = playerGrid + Vector3.up * gridSize;
+        }
+        else if (lookingDown)
         {
             buildPoint = playerGrid;
         }
         else
         {
             buildPoint = playerGrid + forward * gridSize;
-            if (lookingUp)
-            {
-                buildPoint.y += gridSize;
-            }
         }
 
-        // 床をグリッド位置へ変換
-        position =
-            GetFloorGridPosition(buildPoint);
+        position = GetFloorGridPosition(buildPoint);
 
-        /*
-         * 地面または既存建築につながっていなければ
-         * 空中建築になるため候補を表示しない。
-         */
+        // 接続がなければ候補を表示しない。
         if (!IsFloorConnected(position))
-        {
             return false;
-        }
 
-        /*
-         * Playerと同じマスなら後ろ判定をしない。
-         * これによってPlayerの真下へ建築できる。
-         */
-        if (!IsSamePlayerGrid(position) &&
-            IsBehindPlayer(position))
-        {
+        canBuild = true;
+
+        // 同じXZマスなら、真下・真上とも後方判定をしない。
+        if (!IsSamePlayerGrid(position) && IsBehindPlayer(position))
             canBuild = false;
-        }
 
-        string key =
-            GetBuildKey(position);
-
-        // このスクリプトから同じ場所に建築済み
-        if (builtPositions.Contains(key))
-        {
+        if (builtPositions.Contains(GetBuildKey(position)))
             canBuild = false;
-        }
 
-        // シーン内に完成済みの床がある
         if (IsOverlappingFloor(position))
-        {
             canBuild = false;
-        }
 
-        // 空中でもPlayerの体を横切る床は配置しない。
         if (IsOverlappingPlayer(position))
-        {
             canBuild = false;
-        }
 
         return true;
     }
 
-    /// <summary>
-    /// カメラの向きを前後左右の4方向へ丸める
-    /// </summary>
     private Vector3 GetSnappedPlayerForward()
     {
-        Vector3 forward = playerCamera.transform.forward;
+        // サーバーなど、カメラ参照がない場合はPlayerの向きを使う。
+        Transform directionSource =
+            playerCamera != null ? playerCamera.transform : player;
+
+        if (directionSource == null)
+            return Vector3.forward;
+
+        Vector3 forward = directionSource.forward;
         forward.y = 0f;
 
         if (forward.sqrMagnitude <= 0.001f)
         {
             forward = Quaternion.Euler(
-                0f, playerCamera.transform.eulerAngles.y, 0f
-            ) * Vector3.forward;
+                0f,
+                directionSource.eulerAngles.y,
+                0f) * Vector3.forward;
         }
 
         forward.Normalize();
 
-        if (Mathf.Abs(forward.x) >
-            Mathf.Abs(forward.z))
-        {
-            return new Vector3(
-                Mathf.Sign(forward.x),
-                0f,
-                0f
-            );
-        }
+        if (Mathf.Abs(forward.x) > Mathf.Abs(forward.z))
+            return new Vector3(Mathf.Sign(forward.x), 0f, 0f);
+
+        return new Vector3(0f, 0f, Mathf.Sign(forward.z));
+    }
+
+    private Vector3 GetFloorGridPosition(Vector3 buildPoint)
+    {
+        float x =
+            Mathf.Round(buildPoint.x / gridSize) * gridSize;
+
+        float z =
+            Mathf.Round(buildPoint.z / gridSize) * gridSize;
+
+        float floorLevel =
+            Mathf.Round(buildPoint.y / gridSize) * gridSize;
 
         return new Vector3(
-            0f,
-            0f,
-            Mathf.Sign(forward.z)
-        );
+            x,
+            floorLevel + GetActualFloorThickness() / 2f,
+            z);
     }
 
-    /// <summary>
-    /// 床をグリッド位置へ配置する
-    /// </summary>
-    private Vector3 GetFloorGridPosition(
-        Vector3 buildPoint
-    )
-    {
-        Vector3 position =
-            buildPoint;
-
-        // XとZはグリッド中心へ吸着
-        position.x =
-            Mathf.Round(position.x / gridSize) *
-            gridSize;
-
-        position.z =
-            Mathf.Round(position.z / gridSize) *
-            gridSize;
-
-        // 床を配置する高さを0、4、8...へ合わせる
-        float floorLevel =
-            Mathf.Round(position.y / gridSize) *
-            gridSize;
-
-        /*
-         * 床PrefabのPivotが中央にあるため、
-         * 実際の厚さの半分だけ上へ持ち上げる。
-         */
-        position.y =
-            floorLevel +
-            GetActualFloorThickness() / 2f;
-
-        return position;
-    }
-
-    /// <summary>
-    /// Playerの足元から床を置く階層を取得する
-    ///
-    /// 階段の下半分では下の階層、
-    /// 階段の上半分まで登ると上の階層になる。
-    /// </summary>
     private float GetPlayerFloorBuildLevel()
     {
-        float playerBottomY =
-            player.position.y;
+        float playerBottomY = player.position.y;
 
-        Collider playerCollider =
-            player.GetComponent<Collider>();
+        Collider playerCollider = player.GetComponent<Collider>();
 
         if (playerCollider != null)
-        {
-            playerBottomY =
-                playerCollider.bounds.min.y;
-        }
+            playerBottomY = playerCollider.bounds.min.y;
 
-        return Mathf.Round(
-            playerBottomY / gridSize
-        ) * gridSize;
+        return Mathf.Round(playerBottomY / gridSize) * gridSize;
     }
 
-    /// <summary>
-    /// 床PrefabのColliderから実際の厚さを取得する
-    /// Colliderがない場合はFloor Thicknessを使用する
-    /// </summary>
     private float GetActualFloorThickness()
     {
         if (floorPrefab == null)
-        {
             return floorThickness;
-        }
 
         BoxCollider floorCollider =
             floorPrefab.GetComponentInChildren<BoxCollider>();
 
         if (floorCollider == null)
-        {
             return floorThickness;
-        }
 
         float thickness =
             floorCollider.size.y *
-            Mathf.Abs(
-                floorCollider.transform.lossyScale.y
-            );
+            Mathf.Abs(floorCollider.transform.lossyScale.y);
 
-        if (thickness <= 0.001f)
-        {
-            return floorThickness;
-        }
-
-        return thickness;
+        return thickness <= 0.001f ? floorThickness : thickness;
     }
 
-    /// <summary>
-    /// 候補がPlayerと同じXZグリッドか確認する
-    /// </summary>
-    private bool IsSamePlayerGrid(
-        Vector3 floorPosition
-    )
+    private bool IsSamePlayerGrid(Vector3 floorPosition)
     {
         float playerGridX =
-            Mathf.Round(
-                player.position.x / gridSize
-            ) * gridSize;
+            Mathf.Round(player.position.x / gridSize) * gridSize;
 
         float playerGridZ =
-            Mathf.Round(
-                player.position.z / gridSize
-            ) * gridSize;
+            Mathf.Round(player.position.z / gridSize) * gridSize;
 
-        return
-            Mathf.Approximately(
-                floorPosition.x,
-                playerGridX
-            ) &&
-            Mathf.Approximately(
-                floorPosition.z,
-                playerGridZ
-            );
+        return Mathf.Approximately(floorPosition.x, playerGridX) &&
+               Mathf.Approximately(floorPosition.z, playerGridZ);
     }
 
-    /// <summary>
-    /// 床が地面または既存建築につながっているか確認する
-    /// </summary>
-    private bool IsFloorConnected(
-        Vector3 floorPosition
-    )
+    private bool IsFloorConnected(Vector3 floorPosition)
     {
-        // 地面に接している
-        if (IsConnectedToGround(floorPosition))
-        {
-            return true;
-        }
-
-        // 床の真下に建築物がある
-        if (HasBuildBelow(floorPosition))
-        {
-            return true;
-        }
-
-        // 床の前後左右の辺に建築物がある
-        if (HasBuildBeside(floorPosition))
-        {
-            return true;
-        }
-
-        return false;
+        return IsConnectedToGround(floorPosition) ||
+               HasBuildBelow(floorPosition) ||
+               HasBuildBeside(floorPosition);
     }
 
-    /// <summary>
-    /// 床の下に地面があるか確認する
-    /// </summary>
-    private bool IsConnectedToGround(
-        Vector3 floorPosition
-    )
+    private bool IsConnectedToGround(Vector3 floorPosition)
     {
-        float actualThickness =
-            GetActualFloorThickness();
+        float actualThickness = GetActualFloorThickness();
+        float floorLevel = floorPosition.y - actualThickness / 2f;
 
-        float floorLevel =
-            floorPosition.y -
-            actualThickness / 2f;
-
-        // 地面階以外では地面判定を行わない
+        // 元の地面階の判定を維持。
         if (floorLevel > 0.1f)
-        {
             return false;
-        }
 
-        /*
-         * 床のすぐ下をBoxで確認する。
-         * 四隅Rayより安定して地面を検出できる。
-         */
-        Vector3 checkCenter =
-            floorPosition -
-            Vector3.up *
-            (
-                actualThickness / 2f +
-                0.1f
-            );
+        Vector3 checkCenter = floorPosition -
+            Vector3.up * (actualThickness / 2f + 0.1f);
 
-        Vector3 halfExtents =
-            new Vector3(
-                gridSize / 2f - 0.15f,
-                0.15f,
-                gridSize / 2f - 0.15f
-            );
+        Vector3 halfExtents = new Vector3(
+            gridSize / 2f - 0.15f,
+            0.15f,
+            gridSize / 2f - 0.15f);
 
         return Physics.CheckBox(
             checkCenter,
             halfExtents,
             Quaternion.identity,
             groundLayer,
-            QueryTriggerInteraction.Ignore
-        );
+            QueryTriggerInteraction.Ignore);
     }
 
-    /// <summary>
-    /// 床の真下に建築物があるか確認する
-    /// </summary>
-    private bool HasBuildBelow(
-        Vector3 floorPosition
-    )
+    private bool HasBuildBelow(Vector3 floorPosition)
     {
-        float actualThickness =
-            GetActualFloorThickness();
+        float actualThickness = GetActualFloorThickness();
 
-        Vector3 checkCenter =
-            floorPosition -
+        Vector3 checkCenter = floorPosition -
             Vector3.up *
-            (
-                actualThickness / 2f +
-                connectionThickness
-            );
+            (actualThickness / 2f + connectionThickness);
 
-        Vector3 halfExtents =
-            new Vector3(
-                gridSize / 2f - 0.15f,
-                connectionThickness,
-                gridSize / 2f - 0.15f
-            );
+        Vector3 halfExtents = new Vector3(
+            gridSize / 2f - 0.15f,
+            connectionThickness,
+            gridSize / 2f - 0.15f);
 
-        Collider[] hits =
-            Physics.OverlapBox(
-                checkCenter,
-                halfExtents,
-                Quaternion.identity,
-                buildLayer.value | floorLayer.value,
-                QueryTriggerInteraction.Ignore
-            );
+        Collider[] hits = Physics.OverlapBox(
+            checkCenter,
+            halfExtents,
+            Quaternion.identity,
+            buildLayer.value | floorLayer.value,
+            QueryTriggerInteraction.Ignore);
 
         foreach (Collider hit in hits)
         {
             if (IsPreviewCollider(hit) || IsPlayerCollider(hit))
-            {
                 continue;
-            }
 
             return true;
         }
@@ -669,73 +518,41 @@ public class BuildFloor : MonoBehaviour
         return false;
     }
 
-    /// <summary>
-    /// 床の前後左右の辺に建築物があるか確認する
-    /// </summary>
-    private bool HasBuildBeside(
-        Vector3 floorPosition
-    )
+    private bool HasBuildBeside(Vector3 floorPosition)
     {
-        float halfGrid =
-            gridSize / 2f;
+        float halfGrid = gridSize / 2f;
 
         Vector3[] checkCenters =
         {
-            floorPosition +
-            Vector3.forward * halfGrid,
-
-            floorPosition +
-            Vector3.back * halfGrid,
-
-            floorPosition +
-            Vector3.right * halfGrid,
-
-            floorPosition +
-            Vector3.left * halfGrid
+            floorPosition + Vector3.forward * halfGrid,
+            floorPosition + Vector3.back * halfGrid,
+            floorPosition + Vector3.right * halfGrid,
+            floorPosition + Vector3.left * halfGrid
         };
 
-        for (int i = 0;
-             i < checkCenters.Length;
-             i++)
+        for (int i = 0; i < checkCenters.Length; i++)
         {
-            Vector3 halfExtents;
+            Vector3 halfExtents = i < 2
+                ? new Vector3(
+                    halfGrid - 0.15f,
+                    connectionThickness,
+                    connectionThickness)
+                : new Vector3(
+                    connectionThickness,
+                    connectionThickness,
+                    halfGrid - 0.15f);
 
-            // 前後の辺
-            if (i < 2)
-            {
-                halfExtents =
-                    new Vector3(
-                        halfGrid - 0.15f,
-                        connectionThickness,
-                        connectionThickness
-                    );
-            }
-            // 左右の辺
-            else
-            {
-                halfExtents =
-                    new Vector3(
-                        connectionThickness,
-                        connectionThickness,
-                        halfGrid - 0.15f
-                    );
-            }
-
-            Collider[] hits =
-                Physics.OverlapBox(
-                    checkCenters[i],
-                    halfExtents,
-                    Quaternion.identity,
-                    buildLayer.value | floorLayer.value,
-                    QueryTriggerInteraction.Ignore
-                );
+            Collider[] hits = Physics.OverlapBox(
+                checkCenters[i],
+                halfExtents,
+                Quaternion.identity,
+                buildLayer.value | floorLayer.value,
+                QueryTriggerInteraction.Ignore);
 
             foreach (Collider hit in hits)
             {
                 if (IsPreviewCollider(hit) || IsPlayerCollider(hit))
-                {
                     continue;
-                }
 
                 return true;
             }
@@ -744,38 +561,26 @@ public class BuildFloor : MonoBehaviour
         return false;
     }
 
-    /// <summary>
-    /// 同じ場所に完成済みの床があるか確認する
-    /// </summary>
-    private bool IsOverlappingFloor(
-        Vector3 position
-    )
+    private bool IsOverlappingFloor(Vector3 position)
     {
-        float actualThickness =
-            GetActualFloorThickness();
+        float actualThickness = GetActualFloorThickness();
 
-        Vector3 halfExtents =
-            new Vector3(
-                gridSize / 2f - 0.1f,
-                actualThickness / 2f,
-                gridSize / 2f - 0.1f
-            );
+        Vector3 halfExtents = new Vector3(
+            gridSize / 2f - 0.1f,
+            actualThickness / 2f,
+            gridSize / 2f - 0.1f);
 
-        Collider[] hits =
-            Physics.OverlapBox(
-                position,
-                halfExtents,
-                Quaternion.identity,
-                floorLayer,
-                QueryTriggerInteraction.Ignore
-            );
+        Collider[] hits = Physics.OverlapBox(
+            position,
+            halfExtents,
+            Quaternion.identity,
+            floorLayer,
+            QueryTriggerInteraction.Ignore);
 
         foreach (Collider hit in hits)
         {
             if (IsPreviewCollider(hit))
-            {
                 continue;
-            }
 
             return true;
         }
@@ -783,162 +588,91 @@ public class BuildFloor : MonoBehaviour
         return false;
     }
 
-    /// <summary>
-    /// 床候補がPlayerより後ろにあるか確認する
-    /// </summary>
-    private bool IsBehindPlayer(
-        Vector3 position
-    )
+    private bool IsBehindPlayer(Vector3 position)
     {
         Vector3 playerForward = GetSnappedPlayerForward();
-
         playerForward.y = 0f;
 
         if (playerForward.sqrMagnitude <= 0.001f)
-        {
             return false;
-        }
 
-        playerForward.Normalize();
-
-        Vector3 toBuild =
-            position -
-            player.position;
-
+        Vector3 toBuild = position - player.position;
         toBuild.y = 0f;
 
         if (toBuild.sqrMagnitude <= 0.01f)
-        {
             return false;
-        }
 
         return Vector3.Dot(
-            playerForward,
-            toBuild.normalized
-        ) < 0f;
+            playerForward.normalized,
+            toBuild.normalized) < 0f;
     }
 
-    /// <summary>
-    /// Colliderが現在のプレビュー自身か確認する
-    /// </summary>
-    private bool IsPreviewCollider(
-        Collider hit
-    )
+    private bool IsPreviewCollider(Collider hit)
     {
-        if (currentPreview == null)
-        {
-            return false;
-        }
-
-        return
-            hit.transform ==
-            currentPreview.transform ||
-            hit.transform.IsChildOf(
-                currentPreview.transform
-            );
+        return currentPreview != null &&
+               (hit.transform == currentPreview.transform ||
+                hit.transform.IsChildOf(currentPreview.transform));
     }
 
-    /// <summary>
-    /// 床の厚みを含む占有BoxとPlayerのColliderの重なりを確認する。
-    /// 足元より下にある床は許可し、胴体を横切る床は拒否する。
-    /// </summary>
     private bool IsOverlappingPlayer(Vector3 position)
     {
         if (player == null)
-        {
             return false;
-        }
 
-        // Transformで移動した直後の建築でも最新位置で確認する。
         Physics.SyncTransforms();
 
         Vector3 halfExtents = new Vector3(
             Mathf.Max(gridSize / 2f, 0.001f),
             Mathf.Max(GetActualFloorThickness() / 2f, 0.001f),
-            Mathf.Max(gridSize / 2f, 0.001f)
-        );
+            Mathf.Max(gridSize / 2f, 0.001f));
 
         Collider[] hits = Physics.OverlapBox(
             position,
             halfExtents,
             Quaternion.identity,
             ~0,
-            QueryTriggerInteraction.Ignore
-        );
+            QueryTriggerInteraction.Ignore);
 
         foreach (Collider hit in hits)
         {
             if (!IsPreviewCollider(hit) && IsPlayerCollider(hit))
-            {
                 return true;
-            }
         }
 
         return false;
     }
+
     private bool IsPlayerCollider(Collider hit)
     {
         return player != null &&
-            (hit.transform == player || hit.transform.IsChildOf(player));
+               (hit.transform == player ||
+                hit.transform.IsChildOf(player));
     }
-    /// <summary>
-    /// 建築可能状態に応じてプレビュー色を変更する
-    /// </summary>
-    private void SetPreviewMaterial(
-        bool canBuild
-    )
+
+    private void SetPreviewMaterial(bool canBuild)
     {
         if (currentPreview == null)
-        {
             return;
-        }
 
         Material targetMaterial =
-            canBuild
-                ? canBuildMaterial
-                : cannotBuildMaterial;
+            canBuild ? canBuildMaterial : cannotBuildMaterial;
 
         if (targetMaterial == null)
-        {
             return;
-        }
 
-        Renderer[] renderers =
-            currentPreview.GetComponentsInChildren<Renderer>();
-
-        foreach (Renderer renderer in renderers)
+        foreach (Renderer renderer in
+                 currentPreview.GetComponentsInChildren<Renderer>())
         {
-            renderer.material =
-                targetMaterial;
+            renderer.material = targetMaterial;
         }
     }
 
-    /// <summary>
-    /// 建築済み判定用のキーを作る
-    /// </summary>
-    private string GetBuildKey(
-        Vector3 position
-    )
+    private string GetBuildKey(Vector3 position)
     {
-        int x =
-            Mathf.RoundToInt(
-                position.x * 100f
-            );
+        int x = Mathf.RoundToInt(position.x * 100f);
+        int y = Mathf.RoundToInt(position.y * 100f);
+        int z = Mathf.RoundToInt(position.z * 100f);
 
-        int y =
-            Mathf.RoundToInt(
-                position.y * 100f
-            );
-
-        int z =
-            Mathf.RoundToInt(
-                position.z * 100f
-            );
-
-        return
-            x + "_" +
-            y + "_" +
-            z;
+        return x + "_" + y + "_" + z;
     }
 }
-

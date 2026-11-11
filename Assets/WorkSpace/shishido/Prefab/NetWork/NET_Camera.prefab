@@ -109,14 +109,24 @@ MonoBehaviour:
   owner: {fileID: 0}
   target: {fileID: 0}
   input: {fileID: 0}
-  offset: {x: 0.5, y: 0, z: -5}
+  offset: {x: 0.65, y: 0.15, z: -3.2}
   mouseSensitivity: 0.5
   targetHeight: 1.5
+  initialPitch: 10
+  minPitch: -65
+  maxPitch: 75
   collisionLayer:
     serializedVersion: 2
-    m_Bits: 328
-  cameraRadius: 0.3
-  wallOffset: 0.2
-  minDistance: 1.2
+    m_Bits: 8008
+  cameraRadius: 0.18
+  wallOffset: 0.04
+  minDistance: 0.65
+  hidePlayerWhenClose: 1
+  playerRenderers: []
+  showDistanceMargin: 0.15
   closeCameraHeight: 2.2
   closeCameraBack: 0.4
+  distanceReturnTime: 0.15
+  shoulderReturnTime: 0.15
+  maxPivotCorrection: 0.6
+  nearClipPlane: 0.05
