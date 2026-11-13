@@ -5,6 +5,9 @@ using UnityEngine.InputSystem;
 
 public abstract class HealingItemBase : ItemBase
 {
+    [SerializeField]
+    protected PlayerManager owner;
+
     protected HealingItemData healingData;
 
     protected HealingItemState healingState;
@@ -40,7 +43,7 @@ public abstract class HealingItemBase : ItemBase
         itemState.stackCount--;
 
         //  UIの更新要求
-        owner.inventoryManager.SlotUpdateRequest(
+        owner.inventoryManager.RequestSlotCounterUpdate(
             owner.equipmentManager.GetcurrentSlot(),
             healingData.itemType
         );
@@ -52,4 +55,13 @@ public abstract class HealingItemBase : ItemBase
         }
 
     }
+
+    protected PlayerManager SetOwner()
+    {
+        if (owner != null)
+            return owner;
+        else
+            return syncOwner.Value;
+    }
+
 }

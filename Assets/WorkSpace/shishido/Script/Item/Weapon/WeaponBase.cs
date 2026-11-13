@@ -11,11 +11,26 @@ using static GameConst;
 
 public abstract class WeaponBase : ItemBase
 {
+    #region SerializeField
+    [SerializeField]
+    protected PlayerManager owner;
+
+    [SerializeField]
     protected WeaponData weaponData;
 
+    [SerializeField]
     protected ItemView weaponView;
 
+    [SerializeField]
     protected WeaponState weaponState;
+    #endregion
+
+    #region SyncVar
+
+    protected readonly SyncVar<WeaponData> syncWeaponData
+        = new SyncVar<WeaponData>();
+
+    #endregion
 
     //  リロード中かいなか
     protected bool isReloading;
@@ -29,15 +44,31 @@ public abstract class WeaponBase : ItemBase
 
     public readonly SyncVar<int> bulletShootCount = new();
 
-    private void Awake()
+    #region Server
+    public override void OnStartServer()
     {
+        base.OnStartServer();
         bulletShootCount.OnChange += OnchangeShootCount;
+        syncOwner.OnChange += OnChangeOwner;
+        syncWeaponData.OnChange += OnChangeWeaponData;
+    }
+
+    private void OnChangeOwner(PlayerManager prev, PlayerManager next, bool asServer)
+    {
+        GameDebug.Log($"[OnChangeOwner]{next},IsServer:{IsServerInitialized}");
+    }
+
+    private void OnChangeWeaponData(WeaponData prev, WeaponData next, bool asServer)
+    {
+        GameDebug.Log($"[OnChangeWeaponData]{next}");
     }
 
     private void OnchangeShootCount(int prev, int next, bool asServer)
     {
-        GameDebug.Server($"[OnchangeShootCount]実行回数:{next}",false);
+        GameDebug.Server($"[OnchangeShootCount]実行回数:{next}", false);
     }
+
+    #endregion
 
     public void AddShootCount()
     {
@@ -78,6 +109,8 @@ public abstract class WeaponBase : ItemBase
 
     protected void FireRequest()
     {
+        owner = SetOwner();
+
         if (owner == null)
             return;
 
@@ -99,12 +132,12 @@ public abstract class WeaponBase : ItemBase
 
         FireRequest();
 
-        if (weaponData.fireMode == FireMode.FullAuto)
+        if (syncWeaponData.Value.fireMode == FireMode.FullAuto)
         {
             InvokeRepeating(
                 nameof(FireRequest),
-                weaponData.fireRate,
-                weaponData.fireRate
+                syncWeaponData.Value.fireRate,
+                syncWeaponData.Value.fireRate
             );
         }
     }
@@ -117,6 +150,8 @@ public abstract class WeaponBase : ItemBase
 
     public void OnFireRequest()
     {
+        owner = SetOwner();
+
         if (owner == null)
             return;
 
@@ -163,10 +198,15 @@ public abstract class WeaponBase : ItemBase
 
     public virtual void StartADS()
     {
+        owner = SetOwner();
+
         Camera camera = owner.cameraController.PlayerCamera;
         if (camera == null) return;
 
-        camera.DOFieldOfView(weaponData.adsMultiplier, weaponData.adsSpeed);
+        camera.DOFieldOfView(
+            syncWeaponData.Value.adsMultiplier,
+            syncWeaponData.Value.adsSpeed
+            );
 
         //camera.transform.DOMove(weaponView.adsPoint.position, 0.2f);
         //camera.transform.DORotate(weaponView.adsPoint.eulerAngles, 0.2f);
@@ -174,6 +214,8 @@ public abstract class WeaponBase : ItemBase
 
     public virtual void EndADS()
     {
+        owner = SetOwner();
+
         Camera camera = owner.cameraController.PlayerCamera;
         if (camera == null) return;
 
@@ -186,12 +228,14 @@ public abstract class WeaponBase : ItemBase
 
     protected void AmmoCheker()
     {
-        if (weaponData == null) return;
+        if (syncWeaponData.Value == null) return;
+
+        owner = SetOwner();
 
         //  UIの更新要求
-        owner.inventoryManager.SlotUpdateRequest(
+        owner.inventoryManager.RequestSlotCounterUpdate(
             owner.equipmentManager.GetcurrentSlot(),
-            weaponData.itemType
+            syncWeaponData.Value.itemType
         );
     }
     /// <summary>
@@ -226,6 +270,8 @@ public abstract class WeaponBase : ItemBase
     /// <returns></returns>
     public Vector3 GetTarget()
     {
+        owner = SetOwner();
+
         RaycastHit target;
         Vector3 targetPosition;
 
@@ -257,7 +303,7 @@ public abstract class WeaponBase : ItemBase
 
     public WeaponData GetWeaponData()
     {
-        return weaponData;
+        return syncWeaponData.Value;
     }
 
     public ItemView GetWeaponView()
@@ -268,6 +314,31 @@ public abstract class WeaponBase : ItemBase
     public int GetcurrentAmmo()
     {
         return weaponState.currentAmmo;
+    }
+
+    protected PlayerManager SetOwner()
+    {
+        if (owner != null)
+            return owner;
+        else
+            return syncOwner.Value;
+    }
+    protected WeaponData SetWeaponData()
+    {
+#if false
+        if (weaponData != null)
+            return weaponData;
+        else
+            return syncWeaponData.Value;
+#endif
+        return null;
+    }
+
+
+    [Server]
+    public void SetSyncWeaponData(WeaponBase _script, WeaponData _data)
+    {
+        _script.syncWeaponData.Value = _data;
     }
 
     #endregion
@@ -309,6 +380,7 @@ public abstract class WeaponBase : ItemBase
     private bool CheckHitMe(RaycastHit _target)
     {
         bool result = false;
+        owner = SetOwner();
         PlayerManager targetManger =
             _target.collider.gameObject.GetComponentInParent<PlayerManager>();
 
@@ -329,6 +401,8 @@ public abstract class WeaponBase : ItemBase
 
     private WeaponUpperBodyController GetAnimationController()
     {
+        owner = SetOwner();
+
         if (owner == null)
             return null;
 
@@ -348,7 +422,7 @@ public abstract class WeaponBase : ItemBase
     {
         ShotAnimationRequested?.Invoke();
 
-        if (weaponData == null)
+        if (syncWeaponData.Value == null)
             return;
 
         WeaponUpperBodyController controller =
@@ -357,7 +431,7 @@ public abstract class WeaponBase : ItemBase
         if (controller != null)
         {
             controller.NotifyWeaponShot(
-                weaponData.weaponAnimationType);
+                syncWeaponData.Value.weaponAnimationType);
         }
     }
 
@@ -366,7 +440,7 @@ public abstract class WeaponBase : ItemBase
     {
         ReloadAnimationRequested?.Invoke();
 
-        if (weaponData == null)
+        if (syncWeaponData.Value == null)
             return;
 
         WeaponUpperBodyController controller =
@@ -375,7 +449,7 @@ public abstract class WeaponBase : ItemBase
         if (controller != null)
         {
             controller.NotifyWeaponReload(
-                weaponData.weaponAnimationType);
+                syncWeaponData.Value.weaponAnimationType);
         }
     }
 

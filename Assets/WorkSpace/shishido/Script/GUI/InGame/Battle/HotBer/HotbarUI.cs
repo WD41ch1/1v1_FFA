@@ -87,7 +87,7 @@ public class HotbarUI : UIBase
 
         //  データがあれば対応するスロット番号にデータをセット
         if (itemData != null)
-            SlotIcons[number].SetData(itemData);
+            SlotIcons[number].SetIconData(itemData);
         else
             SlotIcons[number].RemoveData();
     }

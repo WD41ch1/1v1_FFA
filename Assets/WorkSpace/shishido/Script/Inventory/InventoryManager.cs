@@ -1,5 +1,8 @@
+using Cysharp.Threading.Tasks;
 using FishNet;
+using FishNet.Connection;
 using FishNet.Object;
+using FishNet.Object.Synchronizing;
 using NaughtyAttributes;
 using System;
 using System.Collections.Generic;
@@ -28,8 +31,13 @@ public class InventoryManager : NetworkBehaviour
     //public List<ItemData> slots /*{ get; private set; } */= new();
 
     [SerializeField]
-    private List<InventoryItem> slots = new();
+    private List<InventoryItem> viewSyncListSlots;
 
+    //  武器スロット本体
+    public readonly SyncList<InventoryItem> slots = new();
+    private readonly SyncVar<InventoryItem> syncInventoryItem = new();
+    private readonly SyncVar<InventoryItem> syncAvailableStackItem = new();
+    private readonly SyncVar<InventoryItem> syncUpdateRequestItem = new();
 
     //  弾薬スロット
     public Dictionary<AmmoType, int> ammoDict =
@@ -40,12 +48,10 @@ public class InventoryManager : NetworkBehaviour
          = new Dictionary<BildingMatType, int>();
 
     //=======================================================
+    // 結果を受け取るイベント
+    public event Action<int, InventoryItem> OnSlotItemReceivedEvent;
+    public event Action<int, InventoryItem> OnSlotItemReceivedTaskEvent;
 
-    //  武器の状態を保存しておくリスト
-    //public List<ItemState> itemStates = new();
-
-
-    //=======================================================
     //EquipmentManager側装備通知処理
     public event Action OnDeletingSetItems;
 
@@ -66,7 +72,28 @@ public class InventoryManager : NetworkBehaviour
         for (int i = 0; i < ITEM_SLOT_MAX; i++)
         {
             slots.Add(null);
+            viewSyncListSlots.Add(null);
         }
+
+        OnSlotItemReceivedEvent += OnSlotItemReceived;
+
+    }
+
+    private void OnDestroy()
+    {
+        OnSlotItemReceivedEvent -= OnSlotItemReceived;
+    }
+
+    private void OnSlotItemReceived(int slotNum, InventoryItem data)
+    {
+        if (data != null)
+            GameDebug.Client($"Slot:{slotNum} ItemID:{data.data.itemId}");
+        else
+            GameDebug.Client($"Slot:{slotNum} NULL");
+
+        SetsyncInventoryItem(data);
+        SetsyncAvailableStackItem(data);
+        SetsyncUpdateRequestItem(data);
     }
 
     /// <summary>
@@ -105,7 +132,11 @@ public class InventoryManager : NetworkBehaviour
 
         for (int i = 0; i < slots.Count; i++)
         {
-            InventoryItem slot = slots[i];
+            // 取得要求
+            RequestItem(i);
+            //  Slot内のデータ取得
+            InventoryItem slot = syncAvailableStackItem.Value;
+
 
             // 空きスロットなら次へ
             if (slot == null || slot.data == null)
@@ -130,7 +161,7 @@ public class InventoryManager : NetworkBehaviour
     /// アイテムを拾う（追加）
     /// </summary>
     /// <param name="item">追加するアイテムの設定データ</param>
-    /// <param name="state">引き継ぐアイテム状態（任意）</param>
+    /// <param name="state">引き継ぐアイテム状態（任意）</param> 
     public bool AddItem(ItemData item, ItemState state = null)
     {
         // ItemDataのチェック
@@ -145,13 +176,16 @@ public class InventoryManager : NetworkBehaviour
         if (item.MaxStack > 1
             && IsAvailableStackSlot(item, out int stackIndex))
         {
-            InventoryItem inventoryItem = slots[stackIndex];
+            // 取得要求
+            RequestItem(stackIndex);
+            //  Slot内のデータ取得
+            InventoryItem inventoryItem = syncInventoryItem.Value;
 
             // スタック数を増やす
             inventoryItem.stackCount++;
 
             // 既存の状態（ItemState）は維持する
-            SlotUpdateRequest(stackIndex, item.itemType);
+            RequestSlotCounterUpdate(stackIndex, item.itemType);
 
             OnChangeInventoryItem?.Invoke(
                 stackIndex,
@@ -204,28 +238,229 @@ public class InventoryManager : NetworkBehaviour
                 }
             }
         }
+
         // スロットに登録
-        slots[availableSlotNum] = inventoryItemNew;
-
-        // UIなどへ通知
-        OnChangeInventoryItem?.Invoke(
-            availableSlotNum,
-            item,
-            ResourceChangeType.AddedNew);
-
-        OnAddHotbarItem?.Invoke(availableSlotNum);
-
-        SlotUpdateRequest(availableSlotNum, item.itemType);
+        RegisterSlot(availableSlotNum, inventoryItemNew);
 
         return true;
     }
 
+    public void RequestItem(int index)
+    {
+        if (IsOwner)
+        {
+            RequestGetSlotItem(this, index);
+        }
+    }
+
+
+    #region Server関連
+
+    public override void OnStartServer()
+    {
+        base.OnStartServer();
+        //slots.OnChange += OnchangeSlots;
+    }
+
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+        slots.OnChange += OnchangeSlots;
+    }
+
+    private void OnchangeSlots(SyncListOperation op, int index, InventoryItem oldItem, InventoryItem newItem, bool asServer)
+    {
+        GameDebug.Log($"[OnchangeSlots]");
+        if (index == -1)
+            return;
+        else if (index <= slots.Count)
+        {
+            //  インスペクター表示用Listに登録
+            viewSyncListSlots[index] = newItem;
+
+            // UIなどへ通知
+            OnChangeInventoryItem?.Invoke(
+                index,
+                newItem.data,
+                ResourceChangeType.AddedNew);
+
+            //  ホットバー上のアイコン表示
+            OnAddHotbarItem?.Invoke(index);
+
+            //  ホットバーのカウンターアップデート
+            RequestSlotCounterUpdate(index, newItem.data.itemType);
+        }
+        else
+            GameDebug.Warning($"[OnchangeSlots]index:{index}");
+    }
+
+    [Server]
+    private InventoryItem GetSlotItem(InventoryManager myManager, int slotNum)
+    {
+        return myManager.slots[slotNum];
+    }
+
+    [ServerRpc]
+    public void RequestGetSlotItem(InventoryManager myManager, int slotNum)
+    {
+        InventoryItem data = GetSlotItem(myManager, slotNum);
+
+        // 結果を要求元のクライアントに返す
+        TargetReceiveSlotItem(Owner, slotNum, data);
+    }
+
+    // 要求元のクライアントに結果を返す
+    [TargetRpc]
+    private void TargetReceiveSlotItem(
+        NetworkConnection conn,
+        int slotNum,
+        InventoryItem data)
+    {
+        OnSlotItemReceivedEvent?.Invoke(slotNum, data);
+    }
+
+
+    #endregion
+
+    #region SyncVerSetter
+
+    /// <summary>
+    /// Slotにアイテムを登録
+    /// </summary>
+    /// <param name="_registerSlotNum"></param>
+    /// <param name="_inventoryItem"></param>
+    public void RegisterSlot(
+    int _registerSlotNum,
+    InventoryItem _inventoryItem)
+    {
+        if (IsServerInitialized)
+            RegisterSlotServer(this, _registerSlotNum, _inventoryItem);
+        else
+            RegisterSlotServerRpc(this, _registerSlotNum, _inventoryItem);
+    }
+    [ServerRpc]
+    private void RegisterSlotServerRpc(
+    InventoryManager myManager,
+    int _registerSlotNum,
+    InventoryItem _inventoryItem)
+    {
+        RegisterSlotServer(myManager, _registerSlotNum, _inventoryItem);
+    }
+    [Server]
+    private void RegisterSlotServer(
+        InventoryManager myManager,
+        int _registerSlotNum,
+        InventoryItem _inventoryItem)
+    {
+        myManager.slots[_registerSlotNum] = _inventoryItem;
+    }
+
+    /// <summary>
+    /// syncInventoryItemのSetter
+    /// </summary>
+    private void SetsyncInventoryItem(InventoryItem _item)
+    {
+        if (IsServerInitialized)
+            SetsyncInventoryItemServer(_item);
+        else
+            SetsyncInventoryItemServerRpc(_item);
+    }
+    [ServerRpc]
+    private void SetsyncInventoryItemServerRpc(InventoryItem _item)
+    {
+        SetsyncInventoryItemServer(_item);
+    }
+    [Server]
+    private void SetsyncInventoryItemServer(InventoryItem _item)
+    {
+        syncInventoryItem.Value = _item;
+    }
+
+    /// <summary>
+    /// syncAvailableStackItemのSetter
+    /// </summary>
+    private void SetsyncAvailableStackItem(InventoryItem _item)
+    {
+        if (IsServerInitialized)
+            SetsyncAvailableStackItemServer(_item);
+        else
+            SetsyncAvailableStackItemServerRpc(_item);
+    }
+    [ServerRpc]
+    private void SetsyncAvailableStackItemServerRpc(InventoryItem _item)
+    {
+        SetsyncAvailableStackItemServer(_item);
+    }
+    [Server]
+    private void SetsyncAvailableStackItemServer(InventoryItem _item)
+    {
+        syncAvailableStackItem.Value = _item;
+    }
+
+    /// <summary>
+    /// syncInventoryItemのSetter
+    /// </summary>
+    private void SetsyncUpdateRequestItem(InventoryItem _item)
+    {
+        if (IsServerInitialized)
+            SetsyncUpdateRequestItemServer(_item);
+        else
+            SetsyncUpdateRequestItemServerRpc(_item);
+    }
+    [ServerRpc]
+    private void SetsyncUpdateRequestItemServerRpc(InventoryItem _item)
+    {
+        SetsyncUpdateRequestItemServer(_item);
+    }
+    [Server]
+    private void SetsyncUpdateRequestItemServer(InventoryItem _item)
+    {
+        syncInventoryItem.Value = _item;
+    }
+
+
+    #endregion
+
+    #region UniTask
+
+    public async UniTask<InventoryItem> AsyncRequestItem(
+        InventoryManager myManager,
+        int slotNum)
+    {
+        var tcs = new UniTaskCompletionSource<InventoryItem>();
+
+        // 一時的なイベント登録
+        void OnReceived(int index, InventoryItem data)
+        {
+            if (index != slotNum)
+                return;
+
+            OnSlotItemReceivedTaskEvent -= OnReceived;
+            tcs.TrySetResult(data);
+        }
+
+        OnSlotItemReceivedTaskEvent += OnReceived;
+
+        RequestGetSlotItem(myManager, slotNum);
+
+        return await tcs.Task;
+    }
+
+    #endregion
+
     #region 基本アイテム系
 
-
-    public InventoryItem GetInvetoryItem(int listNum)
+    /// <summary>
+    /// InventoryItem取得関数
+    /// </summary>
+    /// <param name="listNum"></param>
+    /// <returns></returns>
+    public InventoryItem GetInvetoryItem(int slotIndex)
     {
-        return slots[listNum];
+        if (slotIndex < 0 || slotIndex >= slots.Count)
+            return null;
+
+        return slots[slotIndex];
     }
 
     /// <summary>
@@ -445,14 +680,17 @@ public class InventoryManager : NetworkBehaviour
     /// </summary>
     /// <param name="slotNum"></param>
     /// <param name="itemType"></param>
-    public void SlotUpdateRequest(
+    public void RequestSlotCounterUpdate(
     int slotNum,
     BerItemType itemType)
     {
         if (slotNum < 0 || slotNum >= slots.Count)
             return;
 
-        InventoryItem item = slots[slotNum];
+        // 取得要求
+        RequestItem(slotNum);
+        //  Slot内のデータ取得
+        InventoryItem item = syncUpdateRequestItem.Value;
 
         if (item == null)
             return;
@@ -478,6 +716,18 @@ public class InventoryManager : NetworkBehaviour
     public void StartTimerRequest(float duration)
     {
 
+    }
+
+    public bool IsNumberInSlotsCounts(int number)
+    {
+        bool result = false;
+        if (number <= -1)
+            result = false;
+
+        if (0 <= number && number <= slots.Count)
+            result = true;
+
+        return result;
     }
 
     #endregion
@@ -750,7 +1000,7 @@ public class InventoryManager : NetworkBehaviour
 
     public bool AddBildMat(BildingMatType type, int amount)
     {
-        if(bildMatDict == null)
+        if (bildMatDict == null)
             return false;
 
         //  新規追加かどうか
@@ -764,7 +1014,7 @@ public class InventoryManager : NetworkBehaviour
             MAX_BILDMAT,
             MatDroping);
 
-        if(!canAddResource)
+        if (!canAddResource)
             return false;
 
         //  新規追加なら

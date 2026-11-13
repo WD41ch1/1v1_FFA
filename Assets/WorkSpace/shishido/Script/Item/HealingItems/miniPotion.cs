@@ -24,7 +24,8 @@ public class miniPotion : HealingItemBase
         }
 
         //  使用者情報
-        this.owner = _owner;
+        SetSyncOwner(this, _owner);
+        owner = syncOwner.Value;
 
         //itemState = _itemState;
 
@@ -36,6 +37,8 @@ public class miniPotion : HealingItemBase
     /// </summary>
     public override void Healing()
     {
+        owner = SetOwner();
+
         //  使用者がわからない もしくは すでに回復中　
         if (owner == null || isHealing ||
         //  もしくは アイテムの回復上限よりシールドが高かったら
@@ -43,7 +46,7 @@ public class miniPotion : HealingItemBase
 
         StartCoroutine(HealingAnimation(healingData.healingTiem));
 
-        owner.inventoryManager.SlotUpdateRequest(
+        owner.inventoryManager.RequestSlotCounterUpdate(
             owner.equipmentManager.GetcurrentSlot(),
             healingData.itemType
             );
@@ -52,6 +55,8 @@ public class miniPotion : HealingItemBase
 
     protected override IEnumerator HealingAnimation(float reloadTime)
     {
+        owner = SetOwner();
+
         isHealing = true;
         yield return new WaitForSeconds(reloadTime);
 

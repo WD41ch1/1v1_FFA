@@ -1,3 +1,4 @@
+using FishNet.Object.Synchronizing;
 using UnityEngine;
 using static GameConst;
 
@@ -6,8 +7,19 @@ public class ItemPickup : PickupBase
 
     [Header("アイテムデータ")]
     public ItemData itemData;
-
     public ItemState itemState;
+
+    private readonly SyncVar<ItemData> syncItemData = new SyncVar<ItemData>();
+    private readonly SyncVar<ItemState> syncItemState = new SyncVar<ItemState>();
+
+
+    public override void OnStartServer()
+    {
+        base.OnStartServer();
+
+        if (itemData != null) syncItemData.Value = itemData;
+        if (itemState != null) syncItemState.Value = itemState;
+    }
 
     /// <summary>
     /// 生成時初期化関数
@@ -19,16 +31,29 @@ public class ItemPickup : PickupBase
         itemData = data;
         itemState = state;
 
+        if (itemData != null) syncItemData.Value = itemData;
+        if (itemState != null) syncItemState.Value = itemState;
+
         SetAppearance();
     }
 
+
     public override bool AddInventory(PlayerManager character)
     {
-        if(character == null)
+        if (character == null)
             return false;
 
-        return character.inventoryManager.AddItem(itemData, itemState);
+
+        bool success = SetAfterConfirmation_ItemData(out ItemData data);
+        if (!success)
+            return false;
+
+        SetAfterConfirmation_ItemState(out ItemState state);
+
+        return character.inventoryManager.AddItem(data, state);
     }
+
+
 
     /// <summary>
     /// 見た目のせってい
@@ -48,7 +73,7 @@ public class ItemPickup : PickupBase
         if (!ItemDataManager.Instance.TryGetModelData(itemData.itemId, out modelData))
         {
             Despawn(this);
-            return ;
+            return;
         }
 
         GameObject prefab = modelData.AppearancePrefab;
@@ -72,5 +97,40 @@ public class ItemPickup : PickupBase
 
     }
 
+    private bool SetAfterConfirmation_ItemData(out ItemData _data)
+    {
+        bool result = false;
+        _data = null;
 
+        if (syncItemData.Value != null)
+        {
+            result = true;
+            _data = syncItemData.Value;
+        }
+        else if (itemData != null)
+        {
+            result = true;
+            _data = itemData;
+        }
+
+        return result;
+    }
+    private bool SetAfterConfirmation_ItemState(out ItemState _State)
+    {
+        bool result = false;
+        _State = null;
+
+        if (syncItemData.Value != null)
+        {
+            result = true;
+            _State = syncItemState.Value;
+        }
+        else if (itemState != null)
+        {
+            result = true;
+            _State = itemState;
+        }
+
+        return result;
+    }
 }

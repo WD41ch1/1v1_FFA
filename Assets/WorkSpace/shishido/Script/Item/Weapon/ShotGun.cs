@@ -27,7 +27,8 @@ public class ShotGun : WeaponBase
 
         if (_itemData is WeaponData)
         {
-            weaponData = (WeaponData)_itemData;
+            SetSyncWeaponData(this,(WeaponData)_itemData);
+            weaponData = syncWeaponData.Value;
         }
         else
         {
@@ -37,14 +38,14 @@ public class ShotGun : WeaponBase
         }
 
         //  使用者情報
-        this.owner = _owner;
+        SetSyncOwner(this, _owner);
 
         itemState = _itemState;
 
         if (!CheckWeaponState(itemState, out weaponState))
             return false;
 
-        spreadAngle = weaponData.fireAccuracy;
+        spreadAngle = syncWeaponData.Value.fireAccuracy;
 
         return true;
     }
@@ -65,7 +66,7 @@ public class ShotGun : WeaponBase
         }
 
         Debug.Log("発射");
-        Debug.Log(weaponData.weaponDamage);
+        Debug.Log(syncWeaponData.Value.weaponDamage);
 
         for (int i = 0; i < pelletCount; i++)
         {
@@ -110,17 +111,17 @@ public class ShotGun : WeaponBase
         if (isReloading) return;
 
         // 満タンなら
-        if (weaponState.currentAmmo >= weaponData.magazineSize)
+        if (weaponState.currentAmmo >= syncWeaponData.Value.magazineSize)
             return;
 
-        StartCoroutine(ReloadAnimation(weaponData.reloadTime, 0));
+        StartCoroutine(ReloadAnimation(syncWeaponData.Value.reloadTime, 0));
     }
 
     protected override IEnumerator ReloadAnimation(float reloadTime, int _approvalValue)
     {
         isReloading = true;
 
-        while (weaponState.currentAmmo < weaponData.magazineSize)
+        while (weaponState.currentAmmo < syncWeaponData.Value.magazineSize)
         {
             // 射撃されたらリロード中断
             //if (isShooting)
@@ -130,7 +131,7 @@ public class ShotGun : WeaponBase
 
             // 弾を1発消費
             if (!owner.TryConsumeAmmo(
-                weaponData.ammoType,
+                syncWeaponData.Value.ammoType,
                 1,
                 out approvalValue))
             {
@@ -145,8 +146,8 @@ public class ShotGun : WeaponBase
             weaponState.currentAmmo += approvalValue;
 
             // 上限チェック
-            if (weaponState.currentAmmo > weaponData.magazineSize)
-                weaponState.currentAmmo = weaponData.magazineSize;
+            if (weaponState.currentAmmo > syncWeaponData.Value.magazineSize)
+                weaponState.currentAmmo = syncWeaponData.Value.magazineSize;
         }
 
         isReloading = false;

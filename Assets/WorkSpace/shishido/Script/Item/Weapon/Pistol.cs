@@ -20,7 +20,8 @@ public class Pistol : WeaponBase
 
         if (_itemData is WeaponData)
         {
-            weaponData = (WeaponData)_itemData;
+            SetSyncWeaponData(this, (WeaponData)_itemData);
+            weaponData = syncWeaponData.Value;
         }
         else
         {
@@ -30,7 +31,7 @@ public class Pistol : WeaponBase
         }
 
         //  使用者情報
-        this.owner = _owner;
+        SetSyncOwner(this, _owner);
 
         itemState = _itemState;
 
@@ -54,7 +55,7 @@ public class Pistol : WeaponBase
         }
 
         Debug.Log("発射");
-        Debug.Log(weaponData.weaponDamage);
+        Debug.Log(syncWeaponData.Value.weaponDamage);
 
         Transform muzzlePoint = weaponView.muzzlePoint;
 
@@ -80,22 +81,22 @@ public class Pistol : WeaponBase
         if (isReloading) return;
 
         //  補充必要数取得
-        int requestValue = weaponData.magazineSize - weaponState.currentAmmo;
+        int requestValue = syncWeaponData.Value.magazineSize - weaponState.currentAmmo;
         //  承認
         int approvalValue = 0;
 
         //  inventory内弾数消費要求
         if (owner.TryConsumeAmmo(
-            weaponData.ammoType,
+            syncWeaponData.Value.ammoType,
             requestValue,
             out approvalValue))
         {
             //  リロード時間 + 弾補充
-            StartCoroutine(ReloadAnimation(weaponData.reloadTime, approvalValue));
+            StartCoroutine(ReloadAnimation(syncWeaponData.Value.reloadTime, approvalValue));
 
             //  万が一マガジン数が上限より上を行った場合
-            if (weaponData.magazineSize <= weaponState.currentAmmo)
-                weaponState.currentAmmo = weaponData.magazineSize;
+            if (syncWeaponData.Value.magazineSize <= weaponState.currentAmmo)
+                weaponState.currentAmmo = syncWeaponData.Value.magazineSize;
         }
 
 

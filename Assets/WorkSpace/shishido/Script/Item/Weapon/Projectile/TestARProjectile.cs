@@ -41,7 +41,7 @@ public class TestARProjectile : ProjectileBase
         {
             GameDebug.Warning(
                 $"[Projectile.Initialize]syncWeaponDataのデータが見つからなかったため" +
-                $"初期化できませんでした");
+                $"初期化できませんでした", isShowLog);
             return false;
         }
         else

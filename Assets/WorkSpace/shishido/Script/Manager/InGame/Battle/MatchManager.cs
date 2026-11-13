@@ -3,6 +3,8 @@ using FishNet.Connection;
 using FishNet.Managing;
 using FishNet.Managing.Scened;
 using FishNet.Object;
+using FishNet.Object.Synchronizing;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -19,6 +21,8 @@ public class MatchManager : nobManagerBase
 
     private List<NetworkConnection> matchPlayers
     = new List<NetworkConnection>();
+
+    private readonly SyncVar<bool> syncSuccess = new SyncVar<bool>();
 
     #endregion
 
@@ -43,7 +47,12 @@ public class MatchManager : nobManagerBase
     public override void OnStartServer()
     {
         base.OnStartServer();
+        syncSuccess.OnChange += onChangeSuccess;
+    }
 
+    private void onChangeSuccess(bool prev, bool next, bool asServer)
+    {
+        GameDebug.Log($"[onChangeSuccess]:{next}");
     }
 
     #endregion
@@ -83,6 +92,107 @@ public class MatchManager : nobManagerBase
         //    loadData
         //);
     }
+    #endregion
+
+    #region アイテム取得管理
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="character">要求者</param>
+    /// <param name="script">対象</param>
+    public void RequestPickup(PlayerManager character, PickupBase script)
+    {
+        if (character == null)
+            return;
+
+        if (IsServerInitialized)
+        {
+            TryPickupOnServer(character, script);
+        }
+        else if (IsClientInitialized)
+        {
+            RequestPickupServerRpc(character, script);
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void RequestPickupServerRpc(
+        PlayerManager character,
+        PickupBase script,
+        NetworkConnection sender = null)
+    {
+        if (character == null/* || sender == null*/)
+            return;
+
+        // 要求したクライアントが、このキャラクターの所有者か確認
+        if (character.Owner != sender)
+        {
+            GameDebug.Warning(
+                "[PickupBase] 要求者とキャラクターの所有者が一致しません");
+            return;
+        }
+
+        TryPickupOnServer(character, script);
+    }
+
+    [Server]
+    public void TryPickupOnServer(PlayerManager character, PickupBase script)
+    {
+        if (character == null)
+        {
+            GameDebug.Warning("[Pickup] character が null");
+            return;
+        }
+
+        if (!CheckCondition())
+        {
+            GameDebug.Warning("[Pickup] CheckCondition に失敗");
+            return;
+        }
+
+        GameDebug.Log(
+            $"[Pickup] 取得処理開始: " +
+            $"Player={character.name}, " +
+            $"IsServer={IsServerInitialized}");
+
+        bool success = script.AddInventory(character);
+
+        syncSuccess.Value = success;
+        GameDebug.Log(
+            $"[Pickup] AddInventory 結果: {success}");
+
+        if (!success)
+            return;
+
+        GameDebug.Log("[Pickup] 追加成功。Despawnを実行");
+
+        script.Despawn();
+    }
+
+    /// <summary>
+    /// Despawn前の状態チェック
+    /// </summary>
+    private bool CheckCondition()
+    {
+        // Server側で初期化されているか
+        if (!IsServerInitialized)
+        {
+            GameDebug.Warning("[Despawn] Serverとして初期化されていません");
+            return false;
+        }
+
+        // NetworkObjectがSpawn済みか
+        if (NetworkObject == null || !NetworkObject.IsSpawned)
+        {
+            GameDebug.Warning("[Despawn] NetworkObjectが存在しないか、Spawnされていません");
+            return false;
+        }
+
+        return true;
+    }
+
+
     #endregion
 
     #region ダメージ管理

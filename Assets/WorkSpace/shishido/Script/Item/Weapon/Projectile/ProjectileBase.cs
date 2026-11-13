@@ -120,7 +120,7 @@ public abstract class ProjectileBase : NetworkBehaviour
 #else
             if (!syncWeaponData.Value.IsValid)
             {
-                GameDebug.Warning($"[EnemyHit]!syncWeaponDataのデータがありません", isShowLog);
+                GameDebug.Warning($"[EnemyHit]syncWeaponDataのデータがありません", isShowLog);
                 return;
             }
 

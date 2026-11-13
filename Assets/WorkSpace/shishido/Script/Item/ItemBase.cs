@@ -1,4 +1,5 @@
 using FishNet.Object;
+using FishNet.Object.Synchronizing;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using static GameConst;
@@ -7,8 +8,10 @@ using static GameConst;
 public abstract class ItemBase : NetworkBehaviour
 {
     //  使用者
-    protected PlayerManager owner;
+    protected readonly SyncVar<PlayerManager> syncOwner 
+        = new SyncVar<PlayerManager>();
 
+    [SerializeField]
     protected InventoryItem itemState;
 
     /// <summary>
@@ -20,4 +23,9 @@ public abstract class ItemBase : NetworkBehaviour
     public virtual void UseSecondary(bool flag) { }
     public virtual void UseReload() { }
 
+    [Server]
+    public void SetSyncOwner(ItemBase _script,PlayerManager _owner)
+    {
+        _script.syncOwner.Value = _owner;
+    }
 }

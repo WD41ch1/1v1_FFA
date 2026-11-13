@@ -19,6 +19,11 @@ public class InventoryItem
     //  スロット番号
     public int useSlotNum { get; private set; }
 
+    public InventoryItem()
+    {
+
+    }
+
     public InventoryItem(ItemData itemData, int count = 1)
     {
         if (itemData == null)
