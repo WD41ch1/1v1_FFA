@@ -8,7 +8,7 @@ using static GameConst;
 public abstract class ItemBase : NetworkBehaviour
 {
     //  使用者
-    protected readonly SyncVar<PlayerManager> syncOwner 
+    protected readonly SyncVar<PlayerManager> syncOwner
         = new SyncVar<PlayerManager>();
 
     [SerializeField]
@@ -17,15 +17,28 @@ public abstract class ItemBase : NetworkBehaviour
     /// <summary>
     /// 初期化
     /// </summary>
-    public virtual bool Initialize(PlayerManager _owner, ItemData _itemData,ItemView _itemView, InventoryItem _itemState) { return true; }
+    public virtual bool Initialize(PlayerManager _owner, ItemData _itemData, ItemView _itemView, InventoryItem _itemState) { return true; }
 
     public virtual void UsePrimary(InputAction.CallbackContext context) { }
     public virtual void UseSecondary(bool flag) { }
     public virtual void UseReload() { }
 
-    [Server]
-    public void SetSyncOwner(ItemBase _script,PlayerManager _owner)
+    public void SetSyncOwner(ItemBase _script, PlayerManager _myManager)
     {
-        _script.syncOwner.Value = _owner;
+        if (IsServerInitialized)
+            SetSyncOwnerServer(_myManager);
+        else
+            SetSyncOwnerServerRpc(_myManager);
+    }
+
+    [ServerRpc]
+    private void SetSyncOwnerServerRpc(PlayerManager _myManager)
+    {
+        SetSyncOwnerServer(_myManager);
+    }
+    [Server]
+    private void SetSyncOwnerServer(PlayerManager _myManager)
+    {
+        syncOwner.Value = _myManager;
     }
 }

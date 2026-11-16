@@ -18,10 +18,11 @@ public class Pistol : WeaponBase
         if (weaponView == null)
             return false;
 
+
         if (_itemData is WeaponData)
         {
+            weaponData = (WeaponData)_itemData;
             SetSyncWeaponData(this, (WeaponData)_itemData);
-            weaponData = syncWeaponData.Value;
         }
         else
         {
@@ -31,6 +32,7 @@ public class Pistol : WeaponBase
         }
 
         //  使用者情報
+        myManager = _owner;
         SetSyncOwner(this, _owner);
 
         itemState = _itemState;
@@ -47,6 +49,9 @@ public class Pistol : WeaponBase
         if (isReloading)
             return;
 
+        if (!TryGetWeaponResources(out WeaponData data, out PlayerManager owner))
+            return;
+
         //  残弾無し
         if (weaponState.currentAmmo == 0)
         {
@@ -55,7 +60,7 @@ public class Pistol : WeaponBase
         }
 
         Debug.Log("発射");
-        Debug.Log(syncWeaponData.Value.weaponDamage);
+        Debug.Log(data.weaponDamage);
 
         Transform muzzlePoint = weaponView.muzzlePoint;
 
@@ -80,23 +85,26 @@ public class Pistol : WeaponBase
         //  すでにリロード中なら
         if (isReloading) return;
 
+        if (!TryGetWeaponResources(out WeaponData data, out PlayerManager owner))
+            return;
+
         //  補充必要数取得
-        int requestValue = syncWeaponData.Value.magazineSize - weaponState.currentAmmo;
+        int requestValue = data.magazineSize - weaponState.currentAmmo;
         //  承認
         int approvalValue = 0;
 
         //  inventory内弾数消費要求
         if (owner.TryConsumeAmmo(
-            syncWeaponData.Value.ammoType,
+            data.ammoType,
             requestValue,
             out approvalValue))
         {
             //  リロード時間 + 弾補充
-            StartCoroutine(ReloadAnimation(syncWeaponData.Value.reloadTime, approvalValue));
+            StartCoroutine(ReloadAnimation(data.reloadTime, approvalValue));
 
             //  万が一マガジン数が上限より上を行った場合
-            if (syncWeaponData.Value.magazineSize <= weaponState.currentAmmo)
-                weaponState.currentAmmo = syncWeaponData.Value.magazineSize;
+            if (data.magazineSize <= weaponState.currentAmmo)
+                weaponState.currentAmmo = data.magazineSize;
         }
 
 

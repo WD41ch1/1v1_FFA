@@ -9,16 +9,13 @@ public class ItemPickup : PickupBase
     public ItemData itemData;
     public ItemState itemState;
 
-    private readonly SyncVar<ItemData> syncItemData = new SyncVar<ItemData>();
-    private readonly SyncVar<ItemState> syncItemState = new SyncVar<ItemState>();
-
 
     public override void OnStartServer()
     {
         base.OnStartServer();
 
-        if (itemData != null) syncItemData.Value = itemData;
-        if (itemState != null) syncItemState.Value = itemState;
+        if (itemData != null) SetSyncItemData(itemData);
+        if (itemState != null) SetSyncItemState(itemState);
     }
 
     /// <summary>
@@ -31,8 +28,8 @@ public class ItemPickup : PickupBase
         itemData = data;
         itemState = state;
 
-        if (itemData != null) syncItemData.Value = itemData;
-        if (itemState != null) syncItemState.Value = itemState;
+        if (itemData != null) SetSyncItemData(itemData);
+        if (itemState != null) SetSyncItemState(itemState);
 
         SetAppearance();
     }
@@ -75,6 +72,13 @@ public class ItemPickup : PickupBase
             Despawn(this);
             return;
         }
+
+        Debug.Log(
+            $"[SetAppearance Model] " +
+            $"ItemID:{itemData.itemId} " +
+            $"Prefab:{modelData.AppearancePrefab?.name}"
+        );
+
 
         GameObject prefab = modelData.AppearancePrefab;
         if (prefab == null)

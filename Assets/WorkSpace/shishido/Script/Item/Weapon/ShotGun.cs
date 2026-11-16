@@ -27,8 +27,8 @@ public class ShotGun : WeaponBase
 
         if (_itemData is WeaponData)
         {
-            SetSyncWeaponData(this,(WeaponData)_itemData);
-            weaponData = syncWeaponData.Value;
+            weaponData = (WeaponData)_itemData;
+            SetSyncWeaponData(this, (WeaponData)_itemData);
         }
         else
         {
@@ -38,6 +38,7 @@ public class ShotGun : WeaponBase
         }
 
         //  使用者情報
+        myManager = _owner;
         SetSyncOwner(this, _owner);
 
         itemState = _itemState;
@@ -52,6 +53,9 @@ public class ShotGun : WeaponBase
 
     public override void Fire()
     {
+        if (!TryGetWeaponResources(out WeaponData data, out PlayerManager owner))
+            return;
+
         //  リロード中
         if (isReloading)
             return;
@@ -107,21 +111,27 @@ public class ShotGun : WeaponBase
     /// </summary>
     public override void Reload()
     {
+        if (!TryGetWeaponResources(out WeaponData data, out PlayerManager owner))
+            return;
+
         // すでにリロード中なら
         if (isReloading) return;
 
         // 満タンなら
-        if (weaponState.currentAmmo >= syncWeaponData.Value.magazineSize)
+        if (weaponState.currentAmmo >= data.magazineSize)
             return;
 
-        StartCoroutine(ReloadAnimation(syncWeaponData.Value.reloadTime, 0));
+        StartCoroutine(ReloadAnimation(data.reloadTime, 0));
     }
 
     protected override IEnumerator ReloadAnimation(float reloadTime, int _approvalValue)
     {
+        if (!TryGetWeaponResources(out WeaponData data, out PlayerManager owner))
+            yield return null;
+
         isReloading = true;
 
-        while (weaponState.currentAmmo < syncWeaponData.Value.magazineSize)
+        while (weaponState.currentAmmo < data.magazineSize)
         {
             // 射撃されたらリロード中断
             //if (isShooting)
@@ -131,7 +141,7 @@ public class ShotGun : WeaponBase
 
             // 弾を1発消費
             if (!owner.TryConsumeAmmo(
-                syncWeaponData.Value.ammoType,
+                data.ammoType,
                 1,
                 out approvalValue))
             {
@@ -146,8 +156,8 @@ public class ShotGun : WeaponBase
             weaponState.currentAmmo += approvalValue;
 
             // 上限チェック
-            if (weaponState.currentAmmo > syncWeaponData.Value.magazineSize)
-                weaponState.currentAmmo = syncWeaponData.Value.magazineSize;
+            if (weaponState.currentAmmo > data.magazineSize)
+                weaponState.currentAmmo = data.magazineSize;
         }
 
         isReloading = false;

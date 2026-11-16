@@ -23,6 +23,8 @@ public abstract class PickupBase : NetworkBehaviour, IPickupable
 
     public abstract bool AddInventory(PlayerManager character);
 
+    protected readonly SyncVar<ItemData> syncItemData = new SyncVar<ItemData>();
+    protected readonly SyncVar<ItemState> syncItemState = new SyncVar<ItemState>();
 
 
     #region 見た目の処理
@@ -37,7 +39,7 @@ public abstract class PickupBase : NetworkBehaviour, IPickupable
         startPosition = transform.position;
         height = ITEM_MOVE_HEIGHT;
         speed = ITEM_MOVE_SPEED;
-        SetAppearance();
+        //SetAppearance();
     }
 
     private void Update()
@@ -66,6 +68,53 @@ public abstract class PickupBase : NetworkBehaviour, IPickupable
         transform.position = startPosition + new Vector3(0f, y, 0f);
     }
 
+
+
+    #endregion
+
+    #region Setter
+
+    protected void SetSyncItemData(ItemData _data)
+    {
+        if (IsServerInitialized)
+            SetSyncItemDataServer(_data);
+        else
+            SetSyncItemDataServerRpc(_data);
+    }
+
+    protected void SetSyncItemState(ItemState _state)
+    {
+        if (IsServerInitialized)
+            SetSyncItemStateServer(_state);
+        else
+            SetSyncItemStateServerRpc(_state);
+    }
+
+    #endregion
+
+    #region Server関連
+
+    [ServerRpc]
+    private void SetSyncItemDataServerRpc(ItemData _data)
+    {
+        SetSyncItemDataServer(_data);
+    }
+    [Server]
+    private void SetSyncItemDataServer(ItemData _data)
+    {
+        syncItemData.Value = _data;
+    }
+
+    [ServerRpc]
+    private void SetSyncItemStateServerRpc(ItemState _state)
+    {
+        SetSyncItemStateServer(_state);
+    }
+    [Server]
+    private void SetSyncItemStateServer(ItemState _state)
+    {
+        syncItemState.Value = _state;
+    }
 
 
     #endregion

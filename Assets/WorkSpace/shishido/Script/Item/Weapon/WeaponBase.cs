@@ -13,7 +13,7 @@ public abstract class WeaponBase : ItemBase
 {
     #region SerializeField
     [SerializeField]
-    protected PlayerManager owner;
+    protected PlayerManager myManager;
 
     [SerializeField]
     protected WeaponData weaponData;
@@ -60,7 +60,15 @@ public abstract class WeaponBase : ItemBase
 
     private void OnChangeWeaponData(WeaponData prev, WeaponData next, bool asServer)
     {
-        GameDebug.Log($"[OnChangeWeaponData]{next}");
+        GameDebug.Log(
+               $"[OnChangeWeaponData] " +
+               $"InstanceID:{GetInstanceID()} " +
+               $"GameObject:{gameObject.name} " +
+               $"IsServer:{IsServerInitialized} " +
+               $"IsClient:{IsClientInitialized} " +
+               $"asServer:{asServer} " +
+               $"next:{next}"
+           );
     }
 
     private void OnchangeShootCount(int prev, int next, bool asServer)
@@ -109,9 +117,7 @@ public abstract class WeaponBase : ItemBase
 
     protected void FireRequest()
     {
-        owner = SetOwner();
-
-        if (owner == null)
+        if (!TryGetWeaponResources(out WeaponData data, out PlayerManager owner))
             return;
 
         // 自分が操作しているプレイヤー以外は射撃要求を送らない
@@ -128,16 +134,19 @@ public abstract class WeaponBase : ItemBase
         if (isFiring)
             return;
 
+        if (!TryGetWeaponResources(out WeaponData data, out PlayerManager owner))
+            return;
+
         isFiring = true;
 
         FireRequest();
 
-        if (syncWeaponData.Value.fireMode == FireMode.FullAuto)
+        if (data.fireMode == FireMode.FullAuto)
         {
             InvokeRepeating(
                 nameof(FireRequest),
-                syncWeaponData.Value.fireRate,
-                syncWeaponData.Value.fireRate
+                data.fireRate,
+                data.fireRate
             );
         }
     }
@@ -150,11 +159,8 @@ public abstract class WeaponBase : ItemBase
 
     public void OnFireRequest()
     {
-        owner = SetOwner();
-
-        if (owner == null)
+        if (!TryGetWeaponResources(out WeaponData data, out PlayerManager owner))
             return;
-
 
         if (IsServerInitialized)
         {
@@ -198,14 +204,15 @@ public abstract class WeaponBase : ItemBase
 
     public virtual void StartADS()
     {
-        owner = SetOwner();
+        if (!TryGetWeaponResources(out WeaponData data, out PlayerManager owner))
+            return;
 
         Camera camera = owner.cameraController.PlayerCamera;
         if (camera == null) return;
 
         camera.DOFieldOfView(
-            syncWeaponData.Value.adsMultiplier,
-            syncWeaponData.Value.adsSpeed
+            data.adsMultiplier,
+            data.adsSpeed
             );
 
         //camera.transform.DOMove(weaponView.adsPoint.position, 0.2f);
@@ -214,7 +221,8 @@ public abstract class WeaponBase : ItemBase
 
     public virtual void EndADS()
     {
-        owner = SetOwner();
+        if (!TryGetWeaponResources(out WeaponData data, out PlayerManager owner))
+            return;
 
         Camera camera = owner.cameraController.PlayerCamera;
         if (camera == null) return;
@@ -228,14 +236,13 @@ public abstract class WeaponBase : ItemBase
 
     protected void AmmoCheker()
     {
-        if (syncWeaponData.Value == null) return;
-
-        owner = SetOwner();
+        if (!TryGetWeaponResources(out WeaponData data, out PlayerManager owner))
+            return;
 
         //  UIの更新要求
         owner.inventoryManager.RequestSlotCounterUpdate(
             owner.equipmentManager.GetcurrentSlot(),
-            syncWeaponData.Value.itemType
+            data.itemType
         );
     }
     /// <summary>
@@ -270,7 +277,8 @@ public abstract class WeaponBase : ItemBase
     /// <returns></returns>
     public Vector3 GetTarget()
     {
-        owner = SetOwner();
+        if (!TryGetWeaponResources(out WeaponData data, out PlayerManager owner))
+            return Vector3.zero;
 
         RaycastHit target;
         Vector3 targetPosition;
@@ -303,6 +311,14 @@ public abstract class WeaponBase : ItemBase
 
     public WeaponData GetWeaponData()
     {
+        GameDebug.Log(
+        $"[GetWeaponData] " +
+        $"InstanceID:{GetInstanceID()} " +
+        $"IsServer:{IsServerInitialized} " +
+        $"IsClient:{IsClientInitialized} " +
+        $"Data:{syncWeaponData.Value}"
+        );
+
         return syncWeaponData.Value;
     }
 
@@ -316,35 +332,62 @@ public abstract class WeaponBase : ItemBase
         return weaponState.currentAmmo;
     }
 
-    protected PlayerManager SetOwner()
-    {
-        if (owner != null)
-            return owner;
-        else
-            return syncOwner.Value;
-    }
-    protected WeaponData SetWeaponData()
-    {
-#if false
-        if (weaponData != null)
-            return weaponData;
-        else
-            return syncWeaponData.Value;
-#endif
-        return null;
-    }
-
-
-    [Server]
     public void SetSyncWeaponData(WeaponBase _script, WeaponData _data)
     {
-        _script.syncWeaponData.Value = _data;
+        if (IsServerInitialized)
+            SetSyncWeaponDataServer(_script, _data);
+        else
+            SetSyncWeaponDataServerRpc(_script, _data);
     }
+
+    [ServerRpc]
+    private void SetSyncWeaponDataServerRpc(WeaponBase _script, WeaponData _data)
+    {
+        SetSyncWeaponDataServer(_script, _data);
+    }
+    [Server]
+    private void SetSyncWeaponDataServer(WeaponBase _script, WeaponData _data)
+    {
+        syncWeaponData.Value = _data;
+    }
+
 
     #endregion
 
     #region checker
 
+    protected bool TryGetWeaponResources(out WeaponData _data, out PlayerManager _myManager)
+    {
+        _data = null;
+        _myManager = null;
+
+        GameDebug.Log(
+        $"[TryGetWeaponResources] " +
+        $"InstanceID:{GetInstanceID()} " +
+        $"GameObject:{gameObject.name}, " +
+        $"IsServer:{IsServerInitialized}, " +
+        $"IsClient:{IsClientInitialized}, " +
+        $"syncWeaponData:{syncWeaponData.Value}, " +
+        $"syncOwner:{syncOwner.Value}, " +
+        $"weaponData:{weaponData}, " +
+        $"myManager:{myManager}"
+        );
+
+        if (syncWeaponData.Value != null && syncOwner.Value != null)
+        {
+            _data = syncWeaponData.Value;
+            _myManager = syncOwner.Value;
+            return true;
+        }
+        else if(weaponData != null&& myManager != null)
+        {
+            _data = weaponData;
+            _myManager = myManager;
+            return true;
+        }
+
+        return false;
+    }
 
     public bool CheckWeaponState(InventoryItem item, out WeaponState state)
     {
@@ -380,7 +423,9 @@ public abstract class WeaponBase : ItemBase
     private bool CheckHitMe(RaycastHit _target)
     {
         bool result = false;
-        owner = SetOwner();
+        if (!TryGetWeaponResources(out WeaponData data, out PlayerManager owner))
+            return false;
+
         PlayerManager targetManger =
             _target.collider.gameObject.GetComponentInParent<PlayerManager>();
 
@@ -401,9 +446,7 @@ public abstract class WeaponBase : ItemBase
 
     private WeaponUpperBodyController GetAnimationController()
     {
-        owner = SetOwner();
-
-        if (owner == null)
+        if (!TryGetWeaponResources(out WeaponData data, out PlayerManager owner))
             return null;
 
         WeaponUpperBodyController controller =

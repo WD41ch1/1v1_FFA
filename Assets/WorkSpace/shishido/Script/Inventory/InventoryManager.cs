@@ -28,8 +28,6 @@ public class InventoryManager : NetworkBehaviour
     //=======================================================
 
     //  アイテムスロット
-    //public List<ItemData> slots /*{ get; private set; } */= new();
-
     [SerializeField]
     private List<InventoryItem> viewSyncListSlots;
 
@@ -271,6 +269,7 @@ public class InventoryManager : NetworkBehaviour
     private void OnchangeSlots(SyncListOperation op, int index, InventoryItem oldItem, InventoryItem newItem, bool asServer)
     {
         GameDebug.Log($"[OnchangeSlots]");
+
         if (index == -1)
             return;
         else if (index <= slots.Count)
@@ -292,6 +291,7 @@ public class InventoryManager : NetworkBehaviour
         }
         else
             GameDebug.Warning($"[OnchangeSlots]index:{index}");
+
     }
 
     [Server]
@@ -352,6 +352,13 @@ public class InventoryManager : NetworkBehaviour
         int _registerSlotNum,
         InventoryItem _inventoryItem)
     {
+        Debug.Log(
+       $"[RegisterSlotServer] " +
+       $"Name:{_inventoryItem?.data?.name} " +
+       $"Type:{_inventoryItem?.data?.GetType().FullName} " +
+       $"IsWeaponData:{_inventoryItem?.data is WeaponData}"
+        );
+
         myManager.slots[_registerSlotNum] = _inventoryItem;
     }
 
@@ -672,7 +679,16 @@ public class InventoryManager : NetworkBehaviour
         if (slotNumber < 0 || slotNumber >= slots.Count)
             return null;
 
-        return slots[slotNumber]?.data;
+        ItemData data = slots[slotNumber]?.data;
+
+        Debug.Log(
+            $"[GetItem] " +
+            $"Name:{data?.name} " +
+            $"Type:{data?.GetType().FullName} " +
+            $"IsWeaponData:{data is WeaponData}"
+        );
+
+        return data;
     }
 
     /// <summary>

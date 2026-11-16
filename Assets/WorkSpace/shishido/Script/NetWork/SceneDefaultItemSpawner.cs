@@ -1,4 +1,5 @@
 using FishNet;
+using FishNet.Connection;
 using FishNet.Managing;
 using FishNet.Object;
 using System.Collections;
@@ -31,16 +32,18 @@ public class SceneDefaultItemSpawner : NetworkBehaviour
         if (_networkManager == null)
             _networkManager = InstanceFinder.NetworkManager;
 
-        SpawneItem();
+        //SceneManager.OnClientLoadedStartScenes += SpawneItem;
+        SpawneItem(null, true);
     }
 
     public override void OnStopServer()
     {
     }
 
-    private void SpawneItem()
+    [Server]
+    private void SpawneItem(NetworkConnection connection, bool asServer)
     {
-#if false
+#if true
 
         if ((spawnItemList == null || spawnItemList.Count <= 0) ||
             (spawnItemPointList == null || spawnItemPointList.Count <= 0))
@@ -63,9 +66,11 @@ public class SceneDefaultItemSpawner : NetworkBehaviour
 
             if (nob != null)
             {
+                ItemPickup pickup = nob.GetComponent<ItemPickup>();
+
+                pickup.Initialize(spawnItemList[i], null);
+
                 Spawn(nob);
-                nob.GetComponent<ItemPickup>()
-                    .Initialize(spawnItemList[i], null);
             }
         }
 #endif

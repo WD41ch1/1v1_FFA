@@ -11,15 +11,31 @@ public class AssaultRifle : WeaponBase
         if (_owner == null || _itemData == null || _itemState == null)
             return false;
 
+        GameDebug.Server(
+            $"[Initialize Server]" +
+            $" Object:{gameObject.name}" +
+            $" InstanceID:{GetInstanceID()}" +
+            $" IsServer:{IsServerInitialized}" +
+            $" IsClient:{IsClientInitialized}"
+        );
+
+
         weaponView = _itemView;
 
         if (weaponView == null)
             return false;
 
+        GameDebug.Log(
+            $"[Initialize ItemData]" +
+            $" Name:{_itemData?.name}" +
+            $" Type:{_itemData?.GetType().FullName}" +
+            $" IsWeaponData:{_itemData is WeaponData}"
+        );
+
         if (_itemData is WeaponData)
         {
+            weaponData = (WeaponData)_itemData;
             SetSyncWeaponData(this, (WeaponData)_itemData);
-            weaponData = syncWeaponData.Value;
         }
         else
         {
@@ -29,9 +45,16 @@ public class AssaultRifle : WeaponBase
         }
 
         //  使用者情報
+        myManager = _owner;
         SetSyncOwner(this, _owner);
 
         itemState = _itemState;
+
+        GameDebug.Server(
+            $"[Initialize Server Result]" +
+            $" Owner:{syncOwner.Value}" +
+            $" Data:{syncWeaponData.Value}"
+        );
 
         if (!CheckWeaponState(itemState, out weaponState))
             return false;
@@ -41,6 +64,9 @@ public class AssaultRifle : WeaponBase
 
     public override void Fire()
     {
+        if (!TryGetWeaponResources(out WeaponData data, out PlayerManager owner))
+            return;
+
         if (!owner.GetIsOwner())
             return;
 
@@ -56,7 +82,7 @@ public class AssaultRifle : WeaponBase
         }
 
         Debug.Log("発射");
-        Debug.Log(syncWeaponData.Value.weaponDamage);
+        Debug.Log(data.weaponDamage);
 
 
         Transform muzzlePoint = weaponView.muzzlePoint;
@@ -84,25 +110,28 @@ public class AssaultRifle : WeaponBase
 
     public override void Reload()
     {
+        if (!TryGetWeaponResources(out WeaponData data, out PlayerManager owner))
+            return;
+
         //  すでにリロード中なら
         if (isReloading) return;
 
         //  補充必要数取得
-        int requestValue = syncWeaponData.Value.magazineSize - weaponState.currentAmmo;
+        int requestValue = data.magazineSize - weaponState.currentAmmo;
         //  承認
         int approvalValue = 0;
         //  inventory内弾数消費要求
         if (owner.TryConsumeAmmo(
-            syncWeaponData.Value.ammoType,
+            data.ammoType,
             requestValue,
             out approvalValue))
         {
             //  リロード時間 + 弾補充
-            StartCoroutine(ReloadAnimation(syncWeaponData.Value.reloadTime, approvalValue));
+            StartCoroutine(ReloadAnimation(data.reloadTime, approvalValue));
 
             //  万が一マガジン数が上限より上を行った場合
-            if (syncWeaponData.Value.magazineSize <= weaponState.currentAmmo)
-                weaponState.currentAmmo = syncWeaponData.Value.magazineSize;
+            if (data.magazineSize <= weaponState.currentAmmo)
+                weaponState.currentAmmo = data.magazineSize;
         }
 
     }
