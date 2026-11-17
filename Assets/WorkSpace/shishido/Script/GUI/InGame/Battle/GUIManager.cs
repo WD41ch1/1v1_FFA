@@ -11,6 +11,15 @@ public class GUIManager : MonoBehaviour, IGuiInitialize
 
     public CanvasGroup canvasGroup { private set; get; }
 
+    [Header("インベントリ入力")]
+    [SerializeField]
+    private string inventoryActionPath = "Player/Inventory";
+
+    private InputAction inventoryAction;
+    private InputActionAsset cachedActions;
+    private string cachedActionPath;
+    private bool inputWarningShown;
+
     private bool inventoryOpen;
     private bool initialized;
 
@@ -19,7 +28,15 @@ public class GUIManager : MonoBehaviour, IGuiInitialize
 
     public void RegisterPlayer(PlayerManager player)
     {
+        if (myPlayer != player && inventoryOpen)
+            CloseInventory();
+
         myPlayer = player;
+
+        inventoryAction = null;
+        cachedActions = null;
+        cachedActionPath = null;
+        inputWarningShown = false;
     }
 
     public void Initialize()
@@ -27,12 +44,15 @@ public class GUIManager : MonoBehaviour, IGuiInitialize
         if (canvasGroup == null)
             canvasGroup = GetComponentInParent<CanvasGroup>();
 
-        foreach (UIBase ui in UIList)
+        if (UIList != null)
         {
-            if (ui == null)
-                continue;
+            foreach (UIBase ui in UIList)
+            {
+                if (ui == null)
+                    continue;
 
-            ui.Initialize(myPlayer, this);
+                ui.Initialize(myPlayer, this);
+            }
         }
 
         // UIの初期化が終わってから入力を受け付ける。
@@ -41,7 +61,7 @@ public class GUIManager : MonoBehaviour, IGuiInitialize
 
     private void Update()
     {
-        if (!initialized || Keyboard.current == null)
+        if (!initialized)
             return;
 
         // 自分のPlayerに接続されたUIだけ操作する。
@@ -55,7 +75,57 @@ public class GUIManager : MonoBehaviour, IGuiInitialize
             return;
         }
 
-        if (Keyboard.current.gKey.wasPressedThisFrame)
+        if (!Application.isFocused)
+            return;
+
+        // PlayerInputControllerが使用しているPlayerInputを取得する。
+        UnityEngine.InputSystem.PlayerInput playerInput =
+            myPlayer.inputController.playerInput;
+
+        if (playerInput == null ||
+            !playerInput.isActiveAndEnabled ||
+            playerInput.actions == null)
+        {
+            return;
+        }
+
+        // 実行中のPlayerが使用しているActionsから取得する。
+        if (inventoryAction == null ||
+            cachedActions != playerInput.actions ||
+            cachedActionPath != inventoryActionPath)
+        {
+            cachedActions = playerInput.actions;
+            cachedActionPath = inventoryActionPath;
+
+            inventoryAction =
+                string.IsNullOrWhiteSpace(inventoryActionPath)
+                    ? null
+                    : cachedActions.FindAction(
+                        inventoryActionPath, false);
+        }
+
+        if (inventoryAction == null)
+        {
+            if (!inputWarningShown)
+            {
+                Debug.LogWarning(
+                    $"[インベントリ入力] Input Actionsに" +
+                    $"「{inventoryActionPath}」がありません。",
+                    this);
+
+                inputWarningShown = true;
+            }
+
+            return;
+        }
+
+        inputWarningShown = false;
+
+        if (!inventoryAction.enabled)
+            return;
+
+        // Input Actionsに設定されたキーで開閉する。
+        if (inventoryAction.WasPressedThisFrame())
         {
             SetInventoryOpen(!inventoryOpen);
         }
@@ -78,15 +148,18 @@ public class GUIManager : MonoBehaviour, IGuiInitialize
         // CameraControllerへ開閉状態を伝える。
         CameraController.InventoryOpen = open;
 
-        foreach (UIBase ui in UIList)
+        if (UIList != null)
         {
-            if (ui == null)
-                continue;
+            foreach (UIBase ui in UIList)
+            {
+                if (ui == null)
+                    continue;
 
-            if (open)
-                ui.Show();
-            else
-                ui.Hide();
+                if (open)
+                    ui.Show();
+                else
+                    ui.Hide();
+            }
         }
 
         if (open)
