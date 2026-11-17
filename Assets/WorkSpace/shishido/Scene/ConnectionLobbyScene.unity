@@ -609,6 +609,7 @@ MonoBehaviour:
   _networkDiscovery: {fileID: 1585237101}
   _inputField: {fileID: 946266430}
   _localHost: 127.0.0.1
+  _derision: 10000
 --- !u!1 &788426883
 GameObject:
   m_ObjectHideFlags: 0
@@ -1791,7 +1792,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 73774cd3c82040844af3eb10859624c4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  secret: 
+  secret: MyGameRoom2026
   port: 47777
   searchTimeout: 0
   automatic: 0

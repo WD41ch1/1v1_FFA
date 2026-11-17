@@ -6,8 +6,10 @@ using FishNet.Transporting;
 using TMPro;
 using UnityEngine;
 using static GameConst;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using FishNet.Discovery;
+using System;
 
 public class ConnectionManager : MonoBehaviour
 {
@@ -15,7 +17,10 @@ public class ConnectionManager : MonoBehaviour
     [SerializeField] private NetworkDiscovery _networkDiscovery;
     [SerializeField] private TMP_InputField _inputField;
     [SerializeField] private string _localHost = "127.0.0.1";
+    [SerializeField] private int _derision = 10000;
     public bool IsConnected { get; private set; }
+
+    private CancellationTokenSource _searchCts;
 
     private void Awake()
     {
@@ -141,15 +146,40 @@ public class ConnectionManager : MonoBehaviour
 
     #region 部屋検索
 
-    public void SearchRoom()
+    public async void SearchRoom()
     {
-        if (_networkManager.IsClientStarted)
+        // すでに検索中なら何もしない
+        if (_searchCts != null)
             return;
 
-        // LAN内のサーバーを検索
-        _networkDiscovery.SearchForServers();
+        _searchCts = new CancellationTokenSource();
 
-        GameDebug.Client("部屋を検索しています...");
+        try
+        {
+            _networkDiscovery.SearchForServers();
+
+            GameDebug.Client("部屋を検索しています...");
+
+            // 5秒間検索
+            await UniTask.Delay(
+                _derision,
+                cancellationToken: _searchCts.Token
+            );
+
+            // 5秒経過しても見つからなかった場合
+            _networkDiscovery.StopSearchingOrAdvertising();
+
+            GameDebug.Client("部屋が見つかりませんでした。");
+        }
+        catch (OperationCanceledException)
+        {
+            // 検索中に部屋が見つかった場合
+        }
+        finally
+        {
+            _searchCts?.Dispose();
+            _searchCts = null;
+        }
     }
 
     /// <summary>
