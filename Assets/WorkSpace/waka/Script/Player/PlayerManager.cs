@@ -448,7 +448,11 @@ public class PlayerManager : NetworkBehaviour
 
         if (projectile != null)
         {
-            p_Base.Initialize(_owner, script, target);
+            //  仮でここに生成
+            WeaponDamageSyncData syncData
+                = CreateWeaponDamageSyncData(script.GetWeaponData());
+
+            p_Base.Initialize(_owner, script, syncData, target);
         }
         else
         {
@@ -504,7 +508,11 @@ public class PlayerManager : NetworkBehaviour
 
         if (projectile != null)
         {
-            CompleteInit = p_Base.Initialize(_owner, script, Vector3.zero);
+            //  仮でここに生成
+            WeaponDamageSyncData syncData
+                = CreateWeaponDamageSyncData(script.GetWeaponData());
+
+            CompleteInit = p_Base.Initialize(_owner, script, syncData, Vector3.zero);
         }
         else
         {
@@ -521,6 +529,27 @@ public class PlayerManager : NetworkBehaviour
             GameDebug.ServerWarning("SGProjectileの初期化が完了しておらずSpawnできませんでした");
         }
 
+    }
+
+    /// <summary>
+    /// 同期用のデータ作成
+    /// </summary>
+    /// <param name="_wbase"></param>
+    /// <param name="_data"></param>
+    /// <returns></returns>
+    public WeaponDamageSyncData CreateWeaponDamageSyncData( WeaponData _data)
+    {
+        WeaponDamageSyncData syncData = new WeaponDamageSyncData();
+
+        syncData.IsValid = true;
+        syncData.ItemId = _data.itemId;
+        syncData.ammoSpeed = _data.ammoSpeed;
+        syncData.damage = _data.weaponDamage;
+        syncData.headMultiplier = _data.headMultiplier;
+        syncData.bodyMultiplier = _data.bodyMultiplier;
+        syncData.legMultiplier = _data.legMultiplier;
+
+        return syncData;
     }
 
     #endregion

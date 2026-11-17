@@ -44,6 +44,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 338d743afb026ab45bd6eb82abba3983, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  itemDataList:
+  - {fileID: 11400000, guid: 1a0966492dd77114ea46555df0c9608a, type: 2}
+  - {fileID: 11400000, guid: a6b060d2ade59c04eaf7bda79aeb90f7, type: 2}
+  - {fileID: 11400000, guid: f03517a79c4e85148bee1c7f3f37c8a4, type: 2}
+  - {fileID: 11400000, guid: 889baee77d4be754c9396a3690836a83, type: 2}
+  - {fileID: 11400000, guid: 97d65c142fd09024d9c4a820cbc7adff, type: 2}
+  - {fileID: 11400000, guid: a772cfc5fd01b7747932d2cdc135ee16, type: 2}
   modelDataList:
   - {fileID: 11400000, guid: dd4c02edde8d66c4ca00abb4f61911b9, type: 2}
   - {fileID: 11400000, guid: adaa3348a0dfd2f4ea3d6c22636a3256, type: 2}
@@ -64,3 +71,11 @@ MonoBehaviour:
   - {fileID: 11400000, guid: b6d92f914f4a21e4b9bdfe3efb4af025, type: 2}
   - {fileID: 11400000, guid: 42d6b9b15a7d96247a06d089b3e11eec, type: 2}
   - {fileID: 11400000, guid: 3f281cb20f815134c977116929d2b9e7, type: 2}
+  iconDataList:
+  - {fileID: 11400000, guid: 1761f8104065c4e47a549b84a75475fc, type: 2}
+  - {fileID: 11400000, guid: 23ff1cd8b881c994e96fd930f934340b, type: 2}
+  - {fileID: 11400000, guid: 951e72aecfa8b1744914b2855f8ebda4, type: 2}
+  - {fileID: 11400000, guid: dcf5de6911810ae47b8e1c1cf897696e, type: 2}
+  - {fileID: 11400000, guid: 50580fd296f001442a88f5f6613f3209, type: 2}
+  - {fileID: 11400000, guid: 785f45c1baff37342afda8718d05631e, type: 2}
+  rarityBackGroundIcon: {fileID: 0}

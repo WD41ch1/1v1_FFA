@@ -9,5 +9,4 @@ public class AppearanceModelData : ScriptableObject
 
     [Header("Prefab")]
     public GameObject AppearancePrefab;
-
 }

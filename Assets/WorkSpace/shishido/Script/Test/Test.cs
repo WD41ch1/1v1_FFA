@@ -185,7 +185,6 @@ public class Test : MonoBehaviour
             DamageInfo testinfo = new DamageInfo();
             testinfo.Damage = 30;
             testinfo.Attacker = null;
-            testinfo.Weapon = null;
             testinfo.IsHeadshot = false;
 
             pm.playerHealth.TakeDamage(testinfo);

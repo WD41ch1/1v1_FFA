@@ -10,14 +10,19 @@ public class InventoryItem
 
     // アイテム個体の状態
     // WeaponState など ItemState の派生クラスを保持する
-    [SerializeReference]
     public ItemState state;
+    public WeaponState state_weapon;
 
     // この枠に入っている個数
     public int stackCount;
 
     //  スロット番号
     public int useSlotNum { get; private set; }
+
+    public InventoryItem()
+    {
+
+    }
 
     public InventoryItem(ItemData itemData, int count = 1)
     {
@@ -30,9 +35,10 @@ public class InventoryItem
         data = itemData;
         stackCount = count;
 
-        if (itemData is WeaponData weaponData)
+        //  アイテムの状態を初期化
+        if (TryGetWeaponData(itemData, out WeaponData weaponData))
         {
-            state = new WeaponState(weaponData.magazineSize);
+            state_weapon = new WeaponState(weaponData.magazineSize);
         }
         else
         {
@@ -55,10 +61,29 @@ public class InventoryItem
             && stackCount < data.MaxStack;
     }
 
+    private bool TryGetWeaponData(ItemData itemData, out WeaponData weaponData)
+    {
+        weaponData = null;
+        if (itemData is WeaponData _weaponData)
+        {
+            weaponData = _weaponData;
+
+        }
+        else if (ItemDataManager.Instance.TryGetWeaponData(
+                itemData.itemId,
+                out WeaponData _weaponData2))
+        {
+            weaponData = _weaponData2;
+        }
+
+        return weaponData != null;
+    }
+
     public void SetuseSlotNum(int num) { useSlotNum = num; }
 
     // WeaponStateを取得する
-    public WeaponState weaponState => state as WeaponState;
+    public WeaponState weaponState => state_weapon;
+    public ItemState itemState => state;
 
 
 }

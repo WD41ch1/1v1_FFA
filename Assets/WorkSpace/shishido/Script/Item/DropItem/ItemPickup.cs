@@ -1,3 +1,4 @@
+using FishNet.Object.Synchronizing;
 using UnityEngine;
 using static GameConst;
 
@@ -6,29 +7,50 @@ public class ItemPickup : PickupBase
 
     [Header("アイテムデータ")]
     public ItemData itemData;
+    public InventoryItem itemState;
 
-    public ItemState itemState;
+
+    public override void OnStartServer()
+    {
+        base.OnStartServer();
+
+        if (itemData != null) SetSyncItemData(itemData);
+        if (itemState != null) SetSyncItemState(itemState);
+    }
 
     /// <summary>
     /// 生成時初期化関数
     /// </summary>
     /// <param name="type"></param>
     /// <param name="_amount"></param>
-    public override void Initialize(ItemData data, ItemState state)
+    public override void Initialize(ItemData data, InventoryItem state)
     {
         itemData = data;
         itemState = state;
 
+        if (itemData != null) SetSyncItemData(itemData);
+        if (itemState != null) SetSyncItemState(itemState);
+
         SetAppearance();
     }
 
+
     public override bool AddInventory(PlayerManager character)
     {
-        if(character == null)
+        if (character == null)
             return false;
 
-        return character.inventoryManager.AddItem(itemData, itemState);
+
+        bool success = SetAfterConfirmation_ItemData(out ItemData data);
+        if (!success)
+            return false;
+
+        SetAfterConfirmation_InventoryItem(out InventoryItem state);
+
+        return character.inventoryManager.AddItem(data, state);
     }
+
+
 
     /// <summary>
     /// 見た目のせってい
@@ -48,8 +70,15 @@ public class ItemPickup : PickupBase
         if (!ItemDataManager.Instance.TryGetModelData(itemData.itemId, out modelData))
         {
             Despawn(this);
-            return ;
+            return;
         }
+
+        Debug.Log(
+            $"[SetAppearance Model] " +
+            $"ItemID:{itemData.itemId} " +
+            $"Prefab:{modelData.AppearancePrefab?.name}"
+        );
+
 
         GameObject prefab = modelData.AppearancePrefab;
         if (prefab == null)
@@ -72,5 +101,40 @@ public class ItemPickup : PickupBase
 
     }
 
+    private bool SetAfterConfirmation_ItemData(out ItemData _data)
+    {
+        bool result = false;
+        _data = null;
 
+        if (syncItemData.Value != null)
+        {
+            result = true;
+            _data = syncItemData.Value;
+        }
+        else if (itemData != null)
+        {
+            result = true;
+            _data = itemData;
+        }
+
+        return result;
+    }
+    private bool SetAfterConfirmation_InventoryItem(out InventoryItem _State)
+    {
+        bool result = false;
+        _State = null;
+
+        if (syncItemData.Value != null)
+        {
+            result = true;
+            _State = syncItem.Value;
+        }
+        else if (itemState != null)
+        {
+            result = true;
+            _State = itemState;
+        }
+
+        return result;
+    }
 }

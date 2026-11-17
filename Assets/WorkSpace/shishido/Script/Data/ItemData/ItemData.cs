@@ -13,12 +13,6 @@ public class ItemData : ScriptableObject
 {
     public int itemId;
 
-    [Header("inventory表示アイコン")]
-    public Sprite itemIcon;
-
-    [Header("レアリティバックグラウンドカラー")]
-    public Sprite rarityBackGroundIcon;
-
     [Header("アイテム名")]
     public string ItemName;
 
@@ -28,10 +22,6 @@ public class ItemData : ScriptableObject
     [Header("装備時のアニメーション種類")]
     public WeaponAnimationType weaponAnimationType =
         WeaponAnimationType.None;
-
-    [Header("Prefab")]
-    public GameObject AppearancePrefab;
-    public GameObject wearPrefab;
 
     [Header("スタック")]
     [Min(1)]

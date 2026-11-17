@@ -25,32 +25,23 @@ public class ShotGun : WeaponBase
         if (weaponView == null)
             return false;
 
-        if (_itemData is WeaponData)
-        {
-            weaponData = (WeaponData)_itemData;
-        }
-        else
-        {
-            // 失敗：WeaponDataではない、またはnull
-            Debug.LogWarning("WeaponDataへの変換に失敗しました");
+        //  使用者情報登録
+        if (!InformationRegistr(_owner, _itemData, _itemState))
             return false;
-        }
-
-        //  使用者情報
-        this.owner = _owner;
-
-        itemState = _itemState;
 
         if (!CheckWeaponState(itemState, out weaponState))
             return false;
 
-        spreadAngle = weaponData.fireAccuracy;
+        SetSpreadAngle();
 
         return true;
     }
 
     public override void Fire()
     {
+        if (!TryGetWeaponResources(out WeaponData data, out PlayerManager owner))
+            return;
+
         //  リロード中
         if (isReloading)
             return;
@@ -65,7 +56,7 @@ public class ShotGun : WeaponBase
         }
 
         Debug.Log("発射");
-        Debug.Log(weaponData.weaponDamage);
+        Debug.Log(syncWeaponData.Value.weaponDamage);
 
         for (int i = 0; i < pelletCount; i++)
         {
@@ -106,21 +97,27 @@ public class ShotGun : WeaponBase
     /// </summary>
     public override void Reload()
     {
+        if (!TryGetWeaponResources(out WeaponData data, out PlayerManager owner))
+            return;
+
         // すでにリロード中なら
         if (isReloading) return;
 
         // 満タンなら
-        if (weaponState.currentAmmo >= weaponData.magazineSize)
+        if (weaponState.currentAmmo >= data.magazineSize)
             return;
 
-        StartCoroutine(ReloadAnimation(weaponData.reloadTime, 0));
+        StartCoroutine(ReloadAnimation(data.reloadTime, 0));
     }
 
     protected override IEnumerator ReloadAnimation(float reloadTime, int _approvalValue)
     {
+        if (!TryGetWeaponResources(out WeaponData data, out PlayerManager owner))
+            yield return null;
+
         isReloading = true;
 
-        while (weaponState.currentAmmo < weaponData.magazineSize)
+        while (weaponState.currentAmmo < data.magazineSize)
         {
             // 射撃されたらリロード中断
             //if (isShooting)
@@ -130,7 +127,7 @@ public class ShotGun : WeaponBase
 
             // 弾を1発消費
             if (!owner.TryConsumeAmmo(
-                weaponData.ammoType,
+                data.ammoType,
                 1,
                 out approvalValue))
             {
@@ -145,11 +142,19 @@ public class ShotGun : WeaponBase
             weaponState.currentAmmo += approvalValue;
 
             // 上限チェック
-            if (weaponState.currentAmmo > weaponData.magazineSize)
-                weaponState.currentAmmo = weaponData.magazineSize;
+            if (weaponState.currentAmmo > data.magazineSize)
+                weaponState.currentAmmo = data.magazineSize;
         }
 
         isReloading = false;
+    }
+
+    private void SetSpreadAngle()
+    {
+        if(!TryGetWeaponResources(out WeaponData data, out PlayerManager owner))
+            return;
+
+        spreadAngle = data.fireAccuracy;
     }
 
 }

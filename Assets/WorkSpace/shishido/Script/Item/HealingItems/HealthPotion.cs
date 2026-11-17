@@ -23,7 +23,7 @@ public class HealthPotion : HealingItemBase
         }
 
         //  使用者情報
-        this.owner = _owner;
+        SetSyncOwner(this, _owner);
 
         //itemState = _itemState;
 
@@ -42,7 +42,7 @@ public class HealthPotion : HealingItemBase
 
         StartCoroutine(HealingAnimation(healingData.healingTiem));
 
-        owner.inventoryManager.SlotUpdateRequest(
+        owner.inventoryManager.RequestSlotCounterUpdate(
             owner.equipmentManager.GetcurrentSlot(),
             healingData.itemType
             );

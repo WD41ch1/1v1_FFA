@@ -66,8 +66,16 @@ public class IS_Item : InventorySlotBase<BerItemType>
 
         itemData = data;
 
+        // 必要なデータを確認してから装備を交換する
+        if (!ItemDataManager.Instance.TryGetItemIconData(
+            data.itemId,
+            out ItemIconData iconData))
+        {
+            return;
+        }
+
         //  アイコン
-        icon.sprite = data.itemIcon;
+        icon.sprite = iconData.icon;
 
         SetNumber(slotNum);
     }

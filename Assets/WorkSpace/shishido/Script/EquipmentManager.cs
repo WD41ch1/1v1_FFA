@@ -1,8 +1,14 @@
+using Cysharp.Threading.Tasks;
+using FishNet.Connection;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
 using System;
+using System.Threading;
+using System.Threading.Tasks;
+using UnityEditor;
 using UnityEngine;
 using static GameConst;
+using static UnityEngine.UI.GridLayoutGroup;
 
 public class EquipmentManager : NetworkBehaviour
 {
@@ -14,22 +20,27 @@ public class EquipmentManager : NetworkBehaviour
     [SerializeField, Header("武器アニメーション")]
     private WeaponUpperBodyController weaponUpperBodyController;
 
-    private readonly SyncVar<int> currentSlot =
-        new SyncVar<int>();
-
-    private readonly SyncVar<int> currentItemID =
-        new SyncVar<int>();
-
-    private ItemBase currentItem;
     private GameObject createItem;
     private ItemView currentItemView;
 
     private InventoryManager subscribedInventory;
-
     public event Action<int> OnEquipChanged;
+    private CancellationToken _token;
+
+    #region SyncVar
+    private readonly SyncVar<int> currentSlot =
+    new SyncVar<int>();
+    private readonly SyncVar<NetworkObject> currentProcess =
+        new SyncVar<NetworkObject>(null);
+    private readonly SyncVar<bool> IsCreatedProcess =
+        new SyncVar<bool>(false);
+
+    #endregion
 
     private void Awake()
     {
+        _token = this.GetCancellationTokenOnDestroy();
+
         ResolveAnimationController();
     }
 
@@ -69,19 +80,6 @@ public class EquipmentManager : NetworkBehaviour
         subscribedInventory.OnDeletingSetItems += DeletingSetItems;
     }
 
-    public override void OnStartClient()
-    {
-        base.OnStartClient();
-
-        currentSlot.OnChange += OnChangeEquipItem;
-        ResolveAnimationController();
-    }
-
-    public override void OnStopClient()
-    {
-        currentSlot.OnChange -= OnChangeEquipItem;
-        base.OnStopClient();
-    }
 
     private void OnDestroy()
     {
@@ -91,26 +89,18 @@ public class EquipmentManager : NetworkBehaviour
         }
     }
 
-    public void OnChangeEquipItem(
-        int prev,
-        int next,
-        bool asServer)
-    {
-        OnEquipChanged?.Invoke(next);
-        if(OnEquipChanged == null) return;
-
-        //  UIに通知
-        OnEquipChanged.Invoke(next);
-    }
     /// <summary>
     /// 指定スロットのアイテムを装備する。
     /// </summary>
-    public bool Equip(int slotNum)
+    public async UniTask<bool> Equip(int slotNum)
     {
         if (!IsOwner)
             return false;
 
         if (myPlayer == null || myPlayer.inventoryManager == null)
+            return false;
+
+        if (!myPlayer.inventoryManager.IsNumberInSlotsCounts(slotNum))
             return false;
 
         ItemData data;
@@ -123,16 +113,10 @@ public class EquipmentManager : NetworkBehaviour
         if (data == null)
             return false;
 
-        InventoryItem state =
-            myPlayer.inventoryManager.GetInvetoryItem(slotNum);
-
-        if (state == null)
+        if (!await CreateEquipItem(data, slotNum))
             return false;
 
-        if (!CreateEquipItem(myPlayer, data, state))
-            return false;
-
-        currentSlot.Value = slotNum;
+        SetCurrentSlot(this, slotNum);
 
         // 装備成功後に、そのアイテムのアニメーションへ変更
         ApplyEquippedAnimation(data);
@@ -140,15 +124,12 @@ public class EquipmentManager : NetworkBehaviour
         return true;
     }
 
-    private bool CreateEquipItem(
-        PlayerManager owner,
+    private async UniTask<bool> CreateEquipItem(
         ItemData data,
-        InventoryItem state)
+        int slotNum)
     {
-        if (itemSocket == null || data == null || state == null)
-            return false;
-
-        if (ItemDataManager.Instance == null)
+        if (itemSocket == null || data == null ||
+            ItemDataManager.Instance == null)
             return false;
 
         // 必要なデータを確認してから装備を交換する
@@ -158,10 +139,6 @@ public class EquipmentManager : NetworkBehaviour
         {
             return false;
         }
-
-        if (modelData == null || modelData.AppearancePrefab == null)
-            return false;
-
         if (!ItemDataManager.Instance.TryGetProcessData(
             data.itemId,
             out ItemProcessData processData))
@@ -169,21 +146,32 @@ public class EquipmentManager : NetworkBehaviour
             return false;
         }
 
+        //  ItemDataManagerからの取得データの再確認
+        if (modelData == null || modelData.AppearancePrefab == null)
+            return false;
         if (processData == null || processData.processPrefab == null)
             return false;
 
-        if (currentItem != null || createItem != null)
+        //  InventoryItemの状態を取得
+        InventoryItem state = myPlayer.inventoryManager.GetInvetoryItem(slotNum);
+        if (state == null)
+            return false;
+
+        //  すでに装備中のアイテムがあれば外す
+        if (GetcurrentItem() != null || createItem != null)
             UnEquip();
 
+        //  見た目モデル生成(ローカル)
         createItem = Instantiate(
             modelData.AppearancePrefab,
             itemSocket);
 
+        //  生成ができなかった
         if (createItem == null)
             return false;
 
+        //  モデル情報を取得
         currentItemView = createItem.GetComponent<ItemView>();
-
         if (currentItemView == null)
         {
             Debug.LogWarning(
@@ -195,36 +183,60 @@ public class EquipmentManager : NetworkBehaviour
             return false;
         }
 
-        currentItem = Instantiate(
+        //  ProcessData生成要求(network)
+        RequestCreateProcessData(
             processData.processPrefab,
-            transform);
+            transform,
+            myPlayer,
+            data.itemId,
+            slotNum
+            );
 
-        if (currentItem == null)
+        //  ProcessData生成完了を待つ
+        if (!await WaitChangeIsCreatedProcess(_token))
         {
-            Destroy(createItem);
-            createItem = null;
-            currentItemView = null;
-            return false;
+            GameDebug.Warning("ProcessDataの生成に失敗しました。");
         }
 
-        // 既存の武器生成処理
-        Spawn(currentItem);
-
-        bool success = currentItem.Initialize(
-            owner,
-            data,
-            currentItemView,
-            state);
-
-        GameDebug.Log($"アイテム生成初期化：[{success}]");
-
-        if (!success)
+        //  オブジェクトが取得できなかった場合は、装備を外す
+        if (currentProcess.Value == null)
         {
             UnEquip();
             return false;
         }
 
-        return true;
+        ItemBase process =
+            currentProcess.Value.gameObject.GetComponent<ItemBase>();
+
+        if (process == null)
+            return false;
+
+        bool success = process.Initialize(
+            myPlayer,
+            data,
+            currentItemView,
+            state);
+
+        return success;
+    }
+
+    /// <summary>
+    /// ProcessData生成要求
+    /// </summary>
+    private void RequestCreateProcessData(
+        NetworkObject _prefab,
+        Transform _trans,
+        PlayerManager _myOwner,
+        int _itemId,
+        int _slotNum)
+    {
+        CreateProcessData(
+            this,
+            _prefab,
+            _trans,
+            _myOwner,
+            _itemId,
+            _slotNum);
     }
 
     /// <summary>
@@ -242,56 +254,15 @@ public class EquipmentManager : NetworkBehaviour
             Destroy(createItem);
             createItem = null;
         }
-
-        if (currentItem != null)
-            RemoveCurrentItem();
+        RemoveCurrentProcess();
 
         currentItemView = null;
     }
 
-    /// <summary>
-    /// 現在の装備処理オブジェクトをサーバーで削除する。
-    /// </summary>
-    [Server]
-    private void RemoveCurrentItem()
-    {
-        if (currentItem == null)
-            return;
-
-        NetworkObject networkObject =
-            currentItem.GetComponent<NetworkObject>();
-
-        if (networkObject != null && networkObject.IsSpawned)
-        {
-            networkObject.Despawn();
-        }
-        else
-        {
-            Debug.LogWarning(
-                "武器がNetworkObjectとしてSpawnされていません。");
-        }
-
-        currentItem = null;
-    }
 
     public void DeletingSetItems()
     {
         UnEquip();
-    }
-
-    public ItemBase GetcurrentItem()
-    {
-        return currentItem;
-    }
-
-    public int GetcurrentSlot()
-    {
-        return currentSlot.Value;
-    }
-
-    public WeaponBase GetcurrentWeapon()
-    {
-        return currentItem as WeaponBase;
     }
 
     public void NextItemEquip()
@@ -331,6 +302,280 @@ public class EquipmentManager : NetworkBehaviour
             }
         }
     }
+    #region Getter/Setter
+
+    public ItemBase GetcurrentItem()
+    {
+        if (currentProcess.Value == null)
+            return null;
+
+        return currentProcess.Value.GetComponent<ItemBase>();
+    }
+
+    public WeaponBase GetcurrentWeapon()
+    {
+        if (currentProcess.Value == null)
+            return null;
+
+        return currentProcess.Value.GetComponent<WeaponBase>();
+    }
+
+    public int GetcurrentSlot()
+    {
+        return currentSlot.Value;
+    }
+
+    #endregion
+
+    #region Server関連
+
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+
+        currentSlot.OnChange += OnChangeEquipItem;
+        IsCreatedProcess.OnChange += OnChangeIsCreatedProcess;
+        ResolveAnimationController();
+    }
+
+    public override void OnStopClient()
+    {
+        currentSlot.OnChange -= OnChangeEquipItem;
+        base.OnStopClient();
+    }
+
+
+    public void OnChangeEquipItem(
+        int prev,
+        int next,
+        bool asServer)
+    {
+        OnEquipChanged?.Invoke(next);
+        if (OnEquipChanged == null) return;
+
+        //  UIに通知
+        OnEquipChanged.Invoke(next);
+    }
+
+    private void OnChangeIsCreatedProcess(bool prev, bool next, bool asServer)
+    {
+        NetworkObject process = currentProcess.Value;
+
+        string processInfo = "null";
+
+        if (process != null)
+        {
+            processInfo =
+                $"Name:{process.gameObject.name}, " +
+                $"IsSpawned:{process.IsSpawned}";
+        }
+
+        GameDebug.Log(
+            $"[OnChangeIsCreatedProcess] " +
+            $"ID:{gameObject.name} " +
+            $"next:{next} " +
+            $"Process:{processInfo}",
+            false
+        );
+    }
+
+    /// <summary>
+    /// ProcessData生成
+    /// </summary>
+    [ServerRpc]
+    private void CreateProcessData(
+        EquipmentManager _myManager,
+        NetworkObject _prefab,
+        Transform _trans,
+        PlayerManager _owner,
+        int _itemId,
+        int _slotNum
+    )
+    {
+        if (!IsServerInitialized)
+            return;
+
+        if (_myManager == null || _prefab == null)
+            return;
+
+        // 既存のProcessDataを削除
+        if (_myManager.currentProcess.Value != null)
+        {
+            NetworkObject oldProcess =
+                _myManager.currentProcess.Value;
+
+            if (oldProcess.IsSpawned)
+                oldProcess.Despawn();
+
+            _myManager.currentProcess.Value = null;
+        }
+
+        // 新規生成
+        // 新規生成
+        NetworkObject nob = Instantiate(_prefab, _trans);
+
+        if (nob == null)
+            return;
+
+        Spawn(nob);
+
+        // Spawn済みのオブジェクトを登録
+        _myManager.currentProcess.Value = nob;
+
+        // 生成完了を通知
+        _myManager.IsCreatedProcess.Value = true;
+
+    }
+
+    [TargetRpc]
+    private void TargetEquipResult(
+    NetworkConnection conn,
+    NetworkObject process,
+    bool success)
+    {
+        GameDebug.Client($"装備結果：{success}");
+
+        // クライアント側の成功時処理
+        SetSyncProcess(process);
+        SetIsCreatedProcess(success);
+    }
+
+    private void SetSyncProcess(NetworkObject _process)
+    {
+        if (IsServerInitialized)
+            SetSyncProcessServer(_process);
+        else
+            SetSyncProcessServerRpc(_process);
+    }
+
+    [ServerRpc]
+    private void SetSyncProcessServerRpc(NetworkObject _process)
+    {
+        SetSyncProcessServer(_process);
+    }
+    [Server]
+    private void SetSyncProcessServer(NetworkObject _process)
+    {
+        currentProcess.Value = _process;
+    }
+
+    private void SetIsCreatedProcess(bool _success)
+    {
+        if (IsServerInitialized)
+            SetIsCreatedProcessServer(_success);
+        else
+            SetIsCreatedProcessServerRpc(_success);
+    }
+
+    [ServerRpc]
+    private void SetIsCreatedProcessServerRpc(bool _success)
+    {
+        SetIsCreatedProcessServer(_success);
+    }
+    [Server]
+    private void SetIsCreatedProcessServer(bool _success)
+    {
+        IsCreatedProcess.Value = _success;
+    }
+
+    /// <summary>
+    /// CurrentProcessの除去
+    /// </summary>
+    private void RemoveCurrentProcess()
+    {
+        if (IsServerInitialized)
+            RemoveCurrentProcessServer();
+        else
+            RemoveCurrentProcessServerRpc();
+    }
+
+    /// <summary>
+    /// クライアントからサーバーへ要求
+    /// </summary>
+    [ServerRpc]
+    private void RemoveCurrentProcessServerRpc()
+    {
+        RemoveCurrentProcessServer();
+    }
+
+    /// <summary>
+    /// 現在の装備処理オブジェクトをサーバーで削除する。
+    /// </summary>
+    [Server]
+    private void RemoveCurrentProcessServer()
+    {
+        NetworkObject process = currentProcess.Value;
+
+        if (process == null)
+            return;
+
+        if (!process.IsSpawned)
+        {
+            Debug.LogWarning(
+                "ProcessがNetworkObjectとしてSpawnされていません。");
+            return;
+        }
+
+        process.Despawn();
+        currentProcess.Value = null;
+    }
+
+    [ServerRpc]
+    private void SetCurrentSlot(EquipmentManager script, int num)
+    {
+        script.currentSlot.Value = num;
+    }
+
+    #endregion
+
+    #region UniTask
+
+    private async UniTask<bool> WaitChangeIsCreatedProcess(
+        CancellationToken destroyToken,
+        float timeoutSeconds = 0.5f)
+    {
+        if (timeoutSeconds <= 0f)
+        {
+            GameDebug.Error("タイムアウト時間は0より大きくしてください。");
+            return false;
+        }
+
+        // タイムアウト用トークン
+        using var timeoutCts =
+            new CancellationTokenSource(
+            TimeSpan.FromSeconds(timeoutSeconds));
+
+        // 破棄とタイムアウトの両方でキャンセル
+        using var linkedCts =
+            CancellationTokenSource.CreateLinkedTokenSource(
+                destroyToken,
+                timeoutCts.Token);
+
+        try
+        {
+            await UniTask.WaitUntil(() => IsCreatedProcess.Value == true,
+                cancellationToken: linkedCts.Token);
+
+            //  生成完了後にフラグを戻す
+            SetIsCreatedProcess(false);
+
+            return true;
+        }
+        catch (OperationCanceledException)
+        {
+            // タイムアウトした場合
+            if (timeoutCts.IsCancellationRequested &&
+                !destroyToken.IsCancellationRequested)
+            {
+                GameDebug.Warning(
+                    $"{IsCreatedProcess}が{timeoutSeconds}秒以内に変更がくわえられませんでした。");
+            }
+
+            return false;
+        }
+    }
+
+    #endregion
 
     #region 追加：アイテムIDごとの装備アニメーション設定
 
@@ -414,7 +659,7 @@ public class EquipmentManager : NetworkBehaviour
                 this);
         }
 
-        if (currentItem is WeaponBase &&
+        if (GetcurrentItem() is WeaponBase &&
             type == WeaponAnimationType.None)
         {
             Debug.LogWarning(

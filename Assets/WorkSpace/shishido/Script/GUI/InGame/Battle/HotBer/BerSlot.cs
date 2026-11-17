@@ -44,11 +44,19 @@ public class BerSlot : MonoBehaviour
         SlotSelectMove(flag);
     }
 
-    public void SetData(ItemData data)
+    public void SetIconData(ItemData data)
     {
         if (data == null) return;
 
-        ItemIcon.sprite = data.itemIcon;
+        // 必要なデータを確認してから装備を交換する
+        if (!ItemDataManager.Instance.TryGetItemIconData(
+            data.itemId,
+            out ItemIconData iconData))
+        {
+            return;
+        }
+
+        ItemIcon.sprite = iconData.icon;
         rarityIcon = null;
     }
     public void RemoveData()

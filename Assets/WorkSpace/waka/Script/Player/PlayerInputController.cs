@@ -3,6 +3,7 @@ using UnityEngine.Events;
 using UnityEngine.InputSystem;
 using FishNet.Object;
 using static GameConst;
+using Cysharp.Threading.Tasks;
 
 [DefaultExecutionOrder(-200)]
 public class PlayerInputController : MonoBehaviour
@@ -289,7 +290,7 @@ public class PlayerInputController : MonoBehaviour
         if (owner == null || owner.equipmentManager == null)
             return;
 
-        owner.equipmentManager.Equip(slot);
+        owner.equipmentManager.Equip(slot).Forget();
     }
 
     public void OnEquipPickelSlot(InputAction.CallbackContext context)

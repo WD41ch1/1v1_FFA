@@ -1,6 +1,7 @@
 using FishNet.Connection;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
+using FishNet.Object.Synchronizing.Internal;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -10,15 +11,19 @@ using static GameConst;
 
 public abstract class ProjectileBase : NetworkBehaviour
 {
+    [SerializeField, Header("[Debug用]Logの表示切り替え")]
+    protected bool isShowLog = false;
+
     protected Rigidbody rb;
     protected Vector3 direction;
     protected Vector3 targetPosition;
 
     protected PlayerManager owner;
+    protected WeaponBase wBase;
     protected readonly SyncVar<PlayerManager> syncOwner
         = new SyncVar<PlayerManager>(null);
-    protected WeaponBase wBase;
-    protected WeaponData data;
+    protected readonly SyncVar<WeaponDamageSyncData> syncWeaponData
+        = new SyncVar<WeaponDamageSyncData>();
 
     //建築へのダメージに必要なもの
     [Header("建築物へのダメージ")]
@@ -49,7 +54,8 @@ public abstract class ProjectileBase : NetworkBehaviour
         GameDebug.Log($"[OnChangeSyncOwner]" +
             $"InstanceID:{GetInstanceID()} " +
             $"prev:{(prevFlag ? prev : "null")}," +
-            $"next:{(nextFlag ? next : "null")}");
+            $"next:{(nextFlag ? next : "null")}",
+            isShowLog);
     }
     #endregion
 
@@ -57,7 +63,7 @@ public abstract class ProjectileBase : NetworkBehaviour
     /// 初期化
     /// </summary>
     /// <param name="data"></param>
-    public abstract bool Initialize(PlayerManager _owner, WeaponBase _base, Vector3 pos);
+    public abstract bool Initialize(PlayerManager _owner, WeaponBase _base, WeaponDamageSyncData _syncData, Vector3 pos);
 
     /// <summary>
     /// 弾の挙動処理
@@ -75,11 +81,11 @@ public abstract class ProjectileBase : NetworkBehaviour
     /// <param name="other"></param>
     private void EnemyHit(Collider other)
     {
-        if (syncOwner.Value == null || other == null)
-            return;
-
         if (other.gameObject.tag == PLAYER_TAG)
         {
+            if (syncOwner.Value == null)
+                return;
+
             if (other.gameObject.layer == PLAYER_MAINCOLLIDER)
                 return;
 
@@ -91,13 +97,36 @@ public abstract class ProjectileBase : NetworkBehaviour
             GameObject targetPlayer = other.gameObject;
 
             //  仮のヒット判定
-            PlayerManager target = targetPlayer.GetComponent<PlayerManager>();
+            PlayerManager target = targetPlayer.GetComponentInParent<PlayerManager>();
 
             //  NULLもしくは射撃者なら
-            if (target == null || target == syncOwner.Value) return;
+            if (target == null || target == syncOwner.Value)
+            {
+                return;
+            }
+
+#if false
+
+            if (wBase == null || data == null)
+            {
+                GameDebug.Warning($"[EnemyHit]WeaponBaseもしくはItemDataがNULL" +
+                    $"wBase:{wBase},data:{data}");
+                return;
+            }
 
             if (MatchManager.Instance != null)
-                MatchManager.Instance.RequestTakeDamage(syncOwner.Value, target, hitPart, wBase, data);
+                MatchManager.Instance.RequestTakeDamage(syncOwner.Value, target, hitPart,data);
+
+#else
+            if (!syncWeaponData.Value.IsValid)
+            {
+                GameDebug.Warning($"[EnemyHit]syncWeaponDataのデータがありません", isShowLog);
+                return;
+            }
+
+            if (MatchManager.Instance != null)
+                MatchManager.Instance.RequestTakeDamage(syncOwner.Value, target, hitPart, syncWeaponData.Value);
+#endif
         }
     }
 
@@ -114,8 +143,8 @@ public abstract class ProjectileBase : NetworkBehaviour
         GameDebug.Log($"hitLayer:{hitLayer}," +
             $"Head:{PLAYER_HEAD}," +
             $"BODY:{PLAYER_BODY}," +
-            $"LEG:{PLAYER_LEG}"
-            );
+            $"LEG:{PLAYER_LEG}",
+            isShowLog);
 
         if (hitLayer == PLAYER_HEAD)
             result = HitPart.Head;
@@ -132,12 +161,19 @@ public abstract class ProjectileBase : NetworkBehaviour
 
     public void OnTriggerEnter(Collider other)
     {
+        // 自分の弾を識別するキー
+        if (!DoOnce.TryExecute(this))
+            return;
+
         GameDebug.Log(
                 $"[OnTriggerEnter] " +
                 $"InstanceID:{GetInstanceID()} " +
                 $"IsServer:{IsServerInitialized} " +
-                $"Owner:{owner}"
+                $"Owner:{owner}",
+                isShowLog
             );
+
+
         // ===== 追加ここから =====
         //建築物へのダメージ処理
         // すでに建築物にヒットしていたら処理しない
@@ -168,4 +204,10 @@ public abstract class ProjectileBase : NetworkBehaviour
 
         EnemyHit(other);
     }
+
+    private void OnTriggerExit(Collider other)
+    {
+        DoOnce.Reset(this);
+    }
+
 }

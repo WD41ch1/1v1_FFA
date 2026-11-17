@@ -5,6 +5,10 @@ using UnityEngine.InputSystem;
 
 public class Pickaxe : ItemBase
 {
+    [SerializeField]
+    protected PlayerManager owner;
+
+
     private PickaxeData pickaxeData;
     private PickaxeView pickaxeView;
 
@@ -30,7 +34,9 @@ public class Pickaxe : ItemBase
             return false;
 
         //  使用者情報
-        this.owner = _owner;
+        SetSyncOwner(this, _owner);
+        owner = syncOwner.Value;
+
 
         return true;
         
