@@ -5,7 +5,6 @@ using FishNet.Managing.Scened;
 using FishNet.Transporting;
 using TMPro;
 using UnityEngine;
-using System.Threading;
 using static GameConst;
 using Cysharp.Threading.Tasks;
 using FishNet.Discovery;
@@ -68,27 +67,12 @@ public class ConnectionManager : MonoBehaviour
         GameDebug.Client($"Client状態: {args.ConnectionState}");
     }
 
-    public async void StartHost()
+    public void StartHost()
     {
         //StartServer();
         //StartClient();
 
-        // サーバー起動
-        _networkManager.TransportManager.Transport.SetPort(7777);
-
-        StartServer();
-
-        // サーバー起動完了まで待機
-        await UniTask.WaitUntil(
-            () => _networkManager.IsServerStarted
-        );
-
-        // LAN内に部屋を広告
-        _networkDiscovery.AdvertiseServer();
-
-        // ホスト自身もクライアントとして接続
-        SetIPAddress(_localHost);
-        StartClient();
+        CreateRoom();
     }
 
     public void StartServer()
@@ -130,6 +114,30 @@ public class ConnectionManager : MonoBehaviour
             loadData
         );
     }
+
+    #region 部屋作成
+
+    public async void CreateRoom()
+    {
+        // サーバー起動
+        _networkManager.TransportManager.Transport.SetPort(7777);
+
+        StartServer();
+
+        // サーバー起動完了まで待機
+        await UniTask.WaitUntil(
+            () => _networkManager.IsServerStarted
+        );
+
+        // LAN内に部屋を広告
+        _networkDiscovery.AdvertiseServer();
+
+        // ホスト自身もクライアントとして接続
+        SetIPAddress(_localHost);
+        StartClient();
+
+    }
+    #endregion
 
     #region 部屋検索
 
