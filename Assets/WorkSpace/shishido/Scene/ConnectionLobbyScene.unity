@@ -605,6 +605,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _networkManager: {fileID: 1585237100}
+  _networkDiscovery: {fileID: 1585237101}
   _inputField: {fileID: 946266430}
   _localHost: 127.0.0.1
 --- !u!1 &788426883
@@ -1446,6 +1447,7 @@ GameObject:
   - component: {fileID: 1585237098}
   - component: {fileID: 1585237099}
   - component: {fileID: 1585237100}
+  - component: {fileID: 1585237101}
   m_Layer: 0
   m_Name: NetworkManager
   m_TagString: Untagged
@@ -1507,6 +1509,22 @@ MonoBehaviour:
   _persistence: 0
   _logging: {fileID: 0}
   _spawnablePrefabs: {fileID: 11400000, guid: 1944d8aca2c29c14e84e1dabcfbc13f8, type: 2}
+--- !u!114 &1585237101
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1585237096}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73774cd3c82040844af3eb10859624c4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  secret: 
+  port: 47777
+  searchTimeout: 0
+  automatic: 0
 --- !u!1 &1605021368
 GameObject:
   m_ObjectHideFlags: 0

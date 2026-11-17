@@ -8,6 +8,7 @@ using UnityEngine.InputSystem.XInput;
 /// </summary>
 public class TC_Character : MonoBehaviour
 {
+#if false
     public PlayerInputController inputController;
     public CharacterController controller;
     public CameraController cameraController;
@@ -124,5 +125,7 @@ public class TC_Character : MonoBehaviour
     }
     #endregion
 
+    
+#endif
 
 }

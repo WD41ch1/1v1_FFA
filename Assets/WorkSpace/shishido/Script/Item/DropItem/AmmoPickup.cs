@@ -43,7 +43,6 @@ public class AmmoPickup : PickupBase
                $"{character.name}が" +
                $"{amount}発の弾薬[{ammoType}]を取得"
             );
-
         }
 
         return isAddAmmo;

@@ -6,6 +6,8 @@ using static GameConst;
 
 public class Test : MonoBehaviour
 {
+#if false
+
     [SerializeField]
     public PlayerManager pm;
 
@@ -204,6 +206,7 @@ public class Test : MonoBehaviour
             Destroy(other?.gameObject);
         }
     }
+#endif
 #endif
 
 }

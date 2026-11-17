@@ -1011,6 +1011,8 @@ public class InventoryManager : NetworkBehaviour
 
     #region 弾薬系
 
+
+
     public bool AddAmmo(AmmoType type, int amount)
     {
         bool isNew = !ammoDict.ContainsKey(type);
@@ -1184,30 +1186,4 @@ public class InventoryManager : NetworkBehaviour
 
     #endregion
 
-    #region デバッグ用
-#if UNITY_EDITOR
-    [Button]
-    public void ShowDictionary()
-    {
-        StringBuilder sb = new StringBuilder();
-
-        //  弾
-        sb.AppendLine("========弾薬========");
-        foreach (var pair in ammoDict)
-        {
-            sb.AppendLine($"{pair.Key} : {pair.Value}");
-        }
-
-        //  建材
-        sb.AppendLine("========建材========");
-        foreach (var pair in bildMatDict)
-        {
-            sb.AppendLine($"{pair.Key} : {pair.Value}");
-        }
-
-        Debug.Log(sb.ToString());
-    }
-
-#endif
-    #endregion
 }
