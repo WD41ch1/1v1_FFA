@@ -18,23 +18,9 @@ public class SubmachineGun : WeaponBase
         if (weaponView == null)
             return false;
 
-        if (_itemData is WeaponData)
-        {
-            weaponData = (WeaponData)_itemData;
-            SetSyncWeaponData(this, (WeaponData)_itemData);
-        }
-        else
-        {
-            // 失敗：WeaponDataではない、またはnull
-            Debug.LogWarning("WeaponDataへの変換に失敗しました");
+        //  使用者情報登録
+        if(!InformationRegistr(_owner, _itemData, _itemState))
             return false;
-        }
-
-        //  使用者情報
-        myManager = _owner;
-        SetSyncOwner(this, _owner);
-
-        itemState = _itemState;
 
         if (!CheckWeaponState(itemState, out weaponState))
             return false;

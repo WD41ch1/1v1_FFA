@@ -7,7 +7,7 @@ public class ItemPickup : PickupBase
 
     [Header("アイテムデータ")]
     public ItemData itemData;
-    public ItemState itemState;
+    public InventoryItem itemState;
 
 
     public override void OnStartServer()
@@ -23,7 +23,7 @@ public class ItemPickup : PickupBase
     /// </summary>
     /// <param name="type"></param>
     /// <param name="_amount"></param>
-    public override void Initialize(ItemData data, ItemState state)
+    public override void Initialize(ItemData data, InventoryItem state)
     {
         itemData = data;
         itemState = state;
@@ -45,7 +45,7 @@ public class ItemPickup : PickupBase
         if (!success)
             return false;
 
-        SetAfterConfirmation_ItemState(out ItemState state);
+        SetAfterConfirmation_InventoryItem(out InventoryItem state);
 
         return character.inventoryManager.AddItem(data, state);
     }
@@ -119,7 +119,7 @@ public class ItemPickup : PickupBase
 
         return result;
     }
-    private bool SetAfterConfirmation_ItemState(out ItemState _State)
+    private bool SetAfterConfirmation_InventoryItem(out InventoryItem _State)
     {
         bool result = false;
         _State = null;
@@ -127,7 +127,7 @@ public class ItemPickup : PickupBase
         if (syncItemData.Value != null)
         {
             result = true;
-            _State = syncItemState.Value;
+            _State = syncItem.Value;
         }
         else if (itemState != null)
         {

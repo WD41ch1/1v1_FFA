@@ -15,6 +15,7 @@ public class InventoryManager : NetworkBehaviour
     [InfoBox("インベントリ内部の処理" +
         "建材、弾、アイテムを管理している場所です")]
 
+    #region SerializeField
     //  収集ツールスロット
     [SerializeField]
     public ItemData pickel;
@@ -23,19 +24,16 @@ public class InventoryManager : NetworkBehaviour
     [SerializeField] public GameObject MaterialdropObj;
     [SerializeField] public GameObject ItemdropObj;
 
+    //  アイテムスロット
+    [SerializeField]
+    private List<InventoryItem> viewSyncListSlots;
+    #endregion
     //=======================================================
     //              大本の個数管理変数
     //=======================================================
 
-    //  アイテムスロット
-    [SerializeField]
-    private List<InventoryItem> viewSyncListSlots;
-
     //  武器スロット本体
     public readonly SyncList<InventoryItem> slots = new();
-    private readonly SyncVar<InventoryItem> syncInventoryItem = new();
-    private readonly SyncVar<InventoryItem> syncAvailableStackItem = new();
-    private readonly SyncVar<InventoryItem> syncUpdateRequestItem = new();
 
     //  弾薬スロット
     public Dictionary<AmmoType, int> ammoDict =
@@ -45,7 +43,23 @@ public class InventoryManager : NetworkBehaviour
     public Dictionary<BildingMatType, int> bildMatDict
          = new Dictionary<BildingMatType, int>();
 
-    //=======================================================
+    #region SyncVar
+    //  直前に入ったInventoryItemの値を確認・保持するSyncVar [現状：未使用]
+    private readonly SyncVar<InventoryItem> syncAddInventoryItem = new();
+    //  用途不明
+    private readonly SyncVar<InventoryItem> syncInventoryItem = new();
+    //  用途不明
+    private readonly SyncVar<InventoryItem> syncAvailableStackItem = new();
+    //  SlotCounterの更新情報を渡す用
+    private readonly SyncVar<InventoryItem> syncUpdateRequestItem = new();
+
+    //  弾薬の追加時に渡す用
+    public readonly SyncVar<int> syncAddAmmoCount = new();
+    //  弾薬の消費字に渡す用
+    public readonly SyncVar<int> syncUseAmmoCount = new();
+    #endregion
+
+    #region Action
     // 結果を受け取るイベント
     public event Action<int, InventoryItem> OnSlotItemReceivedEvent;
     public event Action<int, InventoryItem> OnSlotItemReceivedTaskEvent;
@@ -63,6 +77,7 @@ public class InventoryManager : NetworkBehaviour
     public event Action<int, int> OnSwapHotbarItem;
     public event Action<AmmoType, int, ResourceChangeType> OnChangeAmmo;
     public event Action<BildingMatType, int, ResourceChangeType> OnChangeBildMat;
+    #endregion
 
     private void Awake()
     {
@@ -133,7 +148,8 @@ public class InventoryManager : NetworkBehaviour
             // 取得要求
             RequestItem(i);
             //  Slot内のデータ取得
-            InventoryItem slot = syncAvailableStackItem.Value;
+            //InventoryItem slot = syncAvailableStackItem.Value;
+            InventoryItem slot = slots[i];
 
 
             // 空きスロットなら次へ
@@ -160,7 +176,7 @@ public class InventoryManager : NetworkBehaviour
     /// </summary>
     /// <param name="item">追加するアイテムの設定データ</param>
     /// <param name="state">引き継ぐアイテム状態（任意）</param> 
-    public bool AddItem(ItemData item, ItemState state = null)
+    public bool AddItem(ItemData item, InventoryItem state = null)
     {
         // ItemDataのチェック
         if (item == null)
@@ -202,7 +218,8 @@ public class InventoryManager : NetworkBehaviour
         }
 
         // 新しいInventoryItemを作成
-        InventoryItem inventoryItemNew = new InventoryItem(item);
+        InventoryItem inventoryItemNew = GenerateNewInventoryItem(item);
+        SetsyncAddInventoryItem(inventoryItemNew);
 
         // ドロップなどから状態を引き継ぐ場合
         if (state != null)
@@ -210,9 +227,9 @@ public class InventoryManager : NetworkBehaviour
             // 武器には WeaponState が必要
             if (item is WeaponData)
             {
-                if (state is WeaponState)
+                if (state.weaponState != null)
                 {
-                    inventoryItemNew.state = state;
+                    inventoryItemNew.state_weapon = state.weaponState;
                 }
                 else
                 {
@@ -224,9 +241,10 @@ public class InventoryManager : NetworkBehaviour
             else
             {
                 // 武器以外は ItemState を引き継ぐ
-                if (state is ItemState && state is not WeaponState)
+                if (item.itemType != BerItemType.Weapon &&
+                    state != null)
                 {
-                    inventoryItemNew.state = state;
+                    inventoryItemNew.state = state.itemState;
                 }
                 else
                 {
@@ -243,6 +261,47 @@ public class InventoryManager : NetworkBehaviour
         return true;
     }
 
+    private InventoryItem GenerateNewInventoryItem(ItemData data) 
+    {
+        if (data == null) return null;
+
+        InventoryItem item = null;
+
+        switch (data.itemType)
+        {
+            case BerItemType.Weapon:
+
+                if (data is WeaponData weaponData)
+                {
+                    WeaponState _state 
+                        = new WeaponState(weaponData.magazineSize);
+                    item = new InventoryItem(data);
+                }
+                else if (ItemDataManager.Instance.TryGetWeaponData(
+                        data.itemId,
+                        out WeaponData _weaponData))
+                {
+                    WeaponState _state
+                        = new WeaponState(_weaponData.magazineSize);
+                    item = new InventoryItem(data);
+                }
+                else
+                {
+                    item = new InventoryItem(data);
+                }
+
+                break;
+            case BerItemType.Healing:
+                item = new InventoryItem(data);
+                break;
+            case BerItemType.Throwing:
+                item = new InventoryItem(data);
+                break;
+        }
+
+        return item;
+    }
+
     public void RequestItem(int index)
     {
         if (IsOwner)
@@ -250,7 +309,6 @@ public class InventoryManager : NetworkBehaviour
             RequestGetSlotItem(this, index);
         }
     }
-
 
     #region Server関連
 
@@ -422,9 +480,29 @@ public class InventoryManager : NetworkBehaviour
     [Server]
     private void SetsyncUpdateRequestItemServer(InventoryItem _item)
     {
-        syncInventoryItem.Value = _item;
+        syncUpdateRequestItem.Value = _item;
     }
 
+    /// <summary>
+    /// syncAddInventoryItemのSetter
+    /// </summary>
+    private void SetsyncAddInventoryItem(InventoryItem _item)
+    {
+        if (IsServerInitialized)
+            SetsyncAddInventoryItemServer(_item);
+        else
+            SetsyncAddInventoryItemServerRpc(_item);
+    }
+    [ServerRpc]
+    private void SetsyncAddInventoryItemServerRpc(InventoryItem _item)
+    {
+        SetsyncAddInventoryItemServer(_item);
+    }
+    [Server]
+    private void SetsyncAddInventoryItemServer(InventoryItem _item)
+    {
+        syncAddInventoryItem.Value = _item;
+    }
 
     #endregion
 
@@ -611,7 +689,7 @@ public class InventoryManager : NetworkBehaviour
     public bool ItemDroping(
         int number,
         ItemData dropData,
-        ItemState state = null)
+        InventoryItem state = null)
     {
         // アイテムデータのチェック
         if (dropData == null)
@@ -622,10 +700,10 @@ public class InventoryManager : NetworkBehaviour
         }
 
         // ドロップ対象の状態を取得
-        ItemState sourceState = state ?? GetItemState(number);
+        InventoryItem sourceState = state ?? GetInvetoryItem(number);
 
         // 状態をコピー
-        ItemState dropState = CopyItemState(sourceState);
+        InventoryItem dropState = CopyItemState(sourceState);
 
         // ドロップオブジェクトを生成
         GameObject obj = Instantiate(
@@ -662,13 +740,17 @@ public class InventoryManager : NetworkBehaviour
         return true;
     }
 
-    private ItemState CopyItemState(ItemState source)
+    private InventoryItem CopyItemState(InventoryItem source)
     {
         if (source == null)
             return null;
 
-        if (source is WeaponState weaponState)
-            return new WeaponState(weaponState);
+        if (source.weaponState != null)
+            return new InventoryItem(source.data, source.stackCount)
+            { state_weapon = source.weaponState };
+        else if (source.itemState != null)
+            return new InventoryItem(source.data, source.stackCount)
+            { state = source.itemState };
 
         // 通常の ItemState は、現時点ではコピー方法が不明
         return source;
@@ -681,11 +763,12 @@ public class InventoryManager : NetworkBehaviour
 
         ItemData data = slots[slotNumber]?.data;
 
-        Debug.Log(
+        GameDebug.Log(
             $"[GetItem] " +
             $"Name:{data?.name} " +
             $"Type:{data?.GetType().FullName} " +
-            $"IsWeaponData:{data is WeaponData}"
+            $"IsWeaponData:{data is WeaponData}",
+            false
         );
 
         return data;
@@ -716,8 +799,8 @@ public class InventoryManager : NetworkBehaviour
         switch (itemType)
         {
             case BerItemType.Weapon:
-                if (item.state is WeaponState weaponState)
-                    count = weaponState.currentAmmo;
+                if (item.weaponState != null)
+                    count = item.weaponState.currentAmmo;
                 break;
 
             case BerItemType.Healing:

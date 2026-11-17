@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.TextCore.Text;
 using static GameConst;
+using static UnityEngine.UI.GridLayoutGroup;
 
 public abstract class WeaponBase : ItemBase
 {
@@ -29,7 +30,6 @@ public abstract class WeaponBase : ItemBase
 
     protected readonly SyncVar<WeaponData> syncWeaponData
         = new SyncVar<WeaponData>();
-
     #endregion
 
     //  リロード中かいなか
@@ -77,6 +77,57 @@ public abstract class WeaponBase : ItemBase
     }
 
     #endregion
+
+    /// <summary>
+    /// 使用者情報登録
+    /// </summary>
+    /// <param name="_owner"></param>
+    /// <param name="_itemData"></param>
+    /// <param name="_itemState"></param>
+    /// <returns></returns>
+    protected bool InformationRegistr(PlayerManager _owner,
+        ItemData _itemData,
+        InventoryItem _itemState)
+    {
+        //  使用者情報
+        myManager = _owner;
+        SetSyncOwner(this, _owner);
+
+        if (_itemData is WeaponData)
+        {
+            weaponData = (WeaponData)_itemData;
+            SetSyncWeaponData(this, (WeaponData)_itemData);
+        }
+        else
+        {
+            bool success = false;
+            if (!ItemDataManager.Instance.TryGetWeaponData(
+                _itemData.itemId,
+                out WeaponData _weaponData))
+            {
+                GameDebug.Warning("WeaponDataへの取得に失敗しました");
+                success = false;
+            }
+            else
+            {
+                weaponData = _weaponData;
+                SetSyncWeaponData(this, _weaponData);
+                success = true;
+            }
+
+            // 失敗：WeaponDataではない、またはnull
+            if (!success)
+            {
+                GameDebug.Warning("WeaponDataへの変換に失敗しました");
+                return false;
+            }
+        }
+
+        itemState = _itemState;
+        SetSyncInventoryItem(this, _itemState);
+
+        return true;
+    }
 
     public void AddShootCount()
     {
@@ -162,27 +213,29 @@ public abstract class WeaponBase : ItemBase
         if (!TryGetWeaponResources(out WeaponData data, out PlayerManager owner))
             return;
 
-        if (IsServerInitialized)
-        {
-            FireInternal();
-        }
-        else if (IsClientInitialized)
-        {
-            FireServerRpc();
-        }
+        //if (IsServerInitialized)
+        //{
+        //    FireInternal(this);
+        //}
+        //else if (IsClientInitialized)
+        //{
+        //    FireServerRpc(this);
+        //}
+
+        Fire();
 
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    private void FireServerRpc()
+    [ServerRpc/*(RequireOwnership = false)*/]
+    private void FireServerRpc(WeaponBase script)
     {
-        FireInternal();
+        FireInternal(script);
     }
 
     [Server]
-    private void FireInternal()
+    private void FireInternal(WeaponBase script)
     {
-        Fire();
+        script.Fire();
     }
 
 
@@ -331,7 +384,15 @@ public abstract class WeaponBase : ItemBase
     {
         return weaponState.currentAmmo;
     }
+    #endregion
 
+    #region SyncVarStter        
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="_script"></param>
+    /// <param name="_data"></param>
     public void SetSyncWeaponData(WeaponBase _script, WeaponData _data)
     {
         if (IsServerInitialized)
@@ -340,7 +401,7 @@ public abstract class WeaponBase : ItemBase
             SetSyncWeaponDataServerRpc(_script, _data);
     }
 
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     private void SetSyncWeaponDataServerRpc(WeaponBase _script, WeaponData _data)
     {
         SetSyncWeaponDataServer(_script, _data);
@@ -348,9 +409,8 @@ public abstract class WeaponBase : ItemBase
     [Server]
     private void SetSyncWeaponDataServer(WeaponBase _script, WeaponData _data)
     {
-        syncWeaponData.Value = _data;
+        _script.syncWeaponData.Value = _data;
     }
-
 
     #endregion
 
@@ -379,7 +439,7 @@ public abstract class WeaponBase : ItemBase
             _myManager = syncOwner.Value;
             return true;
         }
-        else if(weaponData != null&& myManager != null)
+        else if (weaponData != null && myManager != null)
         {
             _data = weaponData;
             _myManager = myManager;
@@ -399,14 +459,11 @@ public abstract class WeaponBase : ItemBase
             return false;
         }
 
-        if (item.state == null)
+        if (item.weaponState == null)
         {
-            GameDebug.Warning("state が null");
+            GameDebug.Warning("weaponState が null");
             return false;
         }
-
-        GameDebug.Log($"stateの実際の型: {item.state.GetType().FullName}");
-        GameDebug.Log($"WeaponStateか: {item.state is WeaponState}");
 
         WeaponState weaponState = item.weaponState;
 

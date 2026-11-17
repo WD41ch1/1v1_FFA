@@ -14,6 +14,9 @@ public abstract class ItemBase : NetworkBehaviour
     [SerializeField]
     protected InventoryItem itemState;
 
+    protected readonly SyncVar<InventoryItem> syncInventoryItem
+    = new SyncVar<InventoryItem>();
+
     /// <summary>
     /// 初期化
     /// </summary>
@@ -26,19 +29,44 @@ public abstract class ItemBase : NetworkBehaviour
     public void SetSyncOwner(ItemBase _script, PlayerManager _myManager)
     {
         if (IsServerInitialized)
-            SetSyncOwnerServer(_myManager);
+            SetSyncOwnerServer(_script, _myManager);
         else
-            SetSyncOwnerServerRpc(_myManager);
+            SetSyncOwnerServerRpc(_script, _myManager);
     }
 
-    [ServerRpc]
-    private void SetSyncOwnerServerRpc(PlayerManager _myManager)
+    [ServerRpc(RequireOwnership = false)]
+    private void SetSyncOwnerServerRpc(ItemBase _script, PlayerManager _myManager)
     {
-        SetSyncOwnerServer(_myManager);
+        SetSyncOwnerServer(_script, _myManager);
     }
     [Server]
-    private void SetSyncOwnerServer(PlayerManager _myManager)
+    private void SetSyncOwnerServer(ItemBase _script, PlayerManager _myManager)
     {
-        syncOwner.Value = _myManager;
+        _script.syncOwner.Value = _myManager;
     }
+
+    /// <summary>
+    /// SyncInventoryItemの値を設定する
+    /// </summary>
+    /// <param name="_script"></param>
+    /// <param name="_state"></param>
+    public void SetSyncInventoryItem(WeaponBase _script, InventoryItem _item)
+    {
+        if (IsServerInitialized)
+            SetSyncInventoryItemServer(_script, _item);
+        else
+            SetSyncInventoryItemServerRpc(_script, _item);
+    }
+
+    [ServerRpc/*(RequireOwnership = false)*/]
+    private void SetSyncInventoryItemServerRpc(WeaponBase _script, InventoryItem _item)
+    {
+        SetSyncInventoryItemServer(_script, _item);
+    }
+    [Server]
+    private void SetSyncInventoryItemServer(WeaponBase _script, InventoryItem _item)
+    {
+        _script.syncInventoryItem.Value = _item;
+    }
+
 }

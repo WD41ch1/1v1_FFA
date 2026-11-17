@@ -11,8 +11,14 @@ public class ItemDataManager : MonoBehaviour
     [SerializeField]
     private List<ItemData> itemDataList = new();
 
+    [SerializeField]
+    [Tooltip("itemDataListからWeaponDataのみを抽出したリスト")]
+    private List<WeaponData> weaponDataList = new();
+
+
     // IDから見た目データを取得するための辞書
     private Dictionary<int, ItemData> itemDataDictionary = new();
+    private Dictionary<int, WeaponData> weaponDataDictionary = new();
     #endregion
 
     #region モデルSO:武器系
@@ -82,10 +88,14 @@ public class ItemDataManager : MonoBehaviour
     private void BuildDictionary()
     {
         itemDataDictionary.Clear();
+        weaponDataDictionary.Clear();
         modelDataDictionary.Clear();
         MatmodelDataDictionary.Clear();
         processlDataDictionary.Clear();
         iconDataDictionary.Clear();
+
+        //  WeaponDataの抽出
+        ExtractWeaponData();
 
         foreach (ItemData data in itemDataList)
         {
@@ -104,6 +114,23 @@ public class ItemDataManager : MonoBehaviour
             }
 
             itemDataDictionary.Add(data.itemId, data);
+        }
+
+        foreach (WeaponData data in weaponDataList)
+        {
+            if (data == null)
+            {
+                GameDebug.Warning(
+                    "ItemModelManager: WeaponDataが未登録です。");
+                continue;
+            }
+            if (weaponDataDictionary.ContainsKey(data.itemId))
+            {
+                GameDebug.Error(
+                    $"ItemModelManager: WeaponDataのIDが重複しています: {data.itemId}");
+                continue;
+            }
+            weaponDataDictionary.Add(data.itemId, data);
         }
 
         foreach (AppearanceModelData data in modelDataList)
@@ -195,6 +222,33 @@ public class ItemDataManager : MonoBehaviour
     {
         return itemDataDictionary.TryGetValue(
             itemId, out itemData);
+    }
+
+    /// <summary>
+    /// IDから抽出したWeaponDataを取得
+    /// </summary>
+    public bool TryGetWeaponData(
+        int itemId,
+        out WeaponData weaponData)
+    {
+        return weaponDataDictionary.TryGetValue(
+            itemId, out weaponData);
+    }
+
+    private void ExtractWeaponData()
+    {
+        if (itemDataList == null || itemDataList.Count == 0)
+            return;
+
+        //  itemDataListからWeaponDataのみを抽出してweaponDataListに追加
+        for (int i = 0; i < itemDataList.Count; i++)
+        {
+            ItemData data = itemDataList[i];
+            if (data is WeaponData weaponData)
+            {
+                weaponDataList.Add(weaponData);
+            }
+        }
     }
 
     #endregion

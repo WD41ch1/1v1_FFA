@@ -12,7 +12,7 @@ public abstract class PickupBase : NetworkBehaviour, IPickupable
     //  BildingMat
     public virtual void Initialize(BildingMatType type, int _amount) { }
     //  Item
-    public virtual void Initialize(ItemData data, ItemState state) { }
+    public virtual void Initialize(ItemData data, InventoryItem state) { }
 
     public Transform GetTransform() { return transform; }
 
@@ -24,7 +24,7 @@ public abstract class PickupBase : NetworkBehaviour, IPickupable
     public abstract bool AddInventory(PlayerManager character);
 
     protected readonly SyncVar<ItemData> syncItemData = new SyncVar<ItemData>();
-    protected readonly SyncVar<ItemState> syncItemState = new SyncVar<ItemState>();
+    protected readonly SyncVar<InventoryItem> syncItem = new SyncVar<InventoryItem>();
 
 
     #region 見た目の処理
@@ -39,7 +39,7 @@ public abstract class PickupBase : NetworkBehaviour, IPickupable
         startPosition = transform.position;
         height = ITEM_MOVE_HEIGHT;
         speed = ITEM_MOVE_SPEED;
-        //SetAppearance();
+        SetAppearance();
     }
 
     private void Update()
@@ -82,12 +82,12 @@ public abstract class PickupBase : NetworkBehaviour, IPickupable
             SetSyncItemDataServerRpc(_data);
     }
 
-    protected void SetSyncItemState(ItemState _state)
+    protected void SetSyncItemState(InventoryItem _item)
     {
         if (IsServerInitialized)
-            SetSyncItemStateServer(_state);
+            SetSyncItemStateServer(_item);
         else
-            SetSyncItemStateServerRpc(_state);
+            SetSyncItemStateServerRpc(_item);
     }
 
     #endregion
@@ -106,14 +106,14 @@ public abstract class PickupBase : NetworkBehaviour, IPickupable
     }
 
     [ServerRpc]
-    private void SetSyncItemStateServerRpc(ItemState _state)
+    private void SetSyncItemStateServerRpc(InventoryItem _item)
     {
-        SetSyncItemStateServer(_state);
+        SetSyncItemStateServer(_item);
     }
     [Server]
-    private void SetSyncItemStateServer(ItemState _state)
+    private void SetSyncItemStateServer(InventoryItem _item)
     {
-        syncItemState.Value = _state;
+        syncItem.Value = _item;
     }
 
 

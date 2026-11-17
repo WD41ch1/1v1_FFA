@@ -1,16 +1,16 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using static Unity.VisualScripting.Member;
 
 
 [System.Serializable]
-public class WeaponState : ItemState
+public class WeaponState 
 {
     // 現在マガジンに入っている弾数
     public int currentAmmo;
 
+    public WeaponState()
+    {
+        currentAmmo = 0;
+    }
 
     /// <summary>
     ///　初期化
