@@ -118,9 +118,9 @@ public class ConnectionMonitoringManager : MonoBehaviour
         _networkManager.ClientManager.OnClientConnectionState
             += OnClientConnectionState;
 
-        // サーバー発見イベント
-        _networkDiscovery.ServerFoundCallback
-            += OnServerFound;
+        //// サーバー発見イベント
+        //_networkDiscovery.ServerFoundCallback
+        //    += OnServerFound;
 
         _networkManager.ClientManager.OnAuthenticated
             += OnAuthenticated;
@@ -311,7 +311,7 @@ public class ConnectionMonitoringManager : MonoBehaviour
         transport.SetPort(7777);
         _networkManager.ClientManager.StartConnection();
 
-        await UniTask.WaitUntil(() => _networkManager.IsClientStarted, cancellationToken: ct);
+        //await UniTask.WaitUntil(() => _networkManager.IsClientStarted, cancellationToken: ct);
 
         // 4. ホストの開始ブロードキャストを待つ
     }

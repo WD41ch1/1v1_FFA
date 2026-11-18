@@ -259,18 +259,18 @@ public class InventoryUI : UIBase, IDropHandler
     /// <param name="type"></param>
     /// <param name="amount"></param>
     /// <param name="changeType"></param>
-    private void UpdateAmmo(AmmoType type, int amount, ResourceChangeType changeType)
+    private void UpdateAmmo(ChangeAmmoInfo info)
     {
-        switch (changeType)
+        switch (info.changeType)
         {
             case ResourceChangeType.AddedNew:
-                InitializeSlot(AmmoListPrefab, ammoListTrans, ammoList, type, amount);
+                InitializeSlot(AmmoListPrefab, ammoListTrans, ammoList, info.type, info.amount);
                 break;
             case ResourceChangeType.Updated:
-                UpdateSlot(ammoList, type, amount);
+                UpdateSlot(ammoList, info.type, info.amount);
                 break;
             case ResourceChangeType.Removed:
-                RemovedSlot(ammoList, type, amount);
+                RemovedSlot(ammoList, info.type, info.amount);
                 break;
         }
     }

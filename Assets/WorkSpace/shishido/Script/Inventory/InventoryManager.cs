@@ -57,6 +57,10 @@ public class InventoryManager : NetworkBehaviour
     public readonly SyncVar<int> syncAddAmmoCount = new();
     //  弾薬の消費字に渡す用
     public readonly SyncVar<int> syncUseAmmoCount = new();
+    //  弾薬追加時その弾薬が新規追加かどうか
+    public readonly SyncVar<bool> IsNewAddAmmo = new();
+    //  UI通知用のまとめ情報
+    public readonly SyncVar<ChangeAmmoInfo> syncAmmoInfo = new();
     #endregion
 
     #region Action
@@ -75,7 +79,7 @@ public class InventoryManager : NetworkBehaviour
     public event Action<int, ItemData, ResourceChangeType> OnChangeInventoryItem;
     public event Action<int> OnAddHotbarItem;
     public event Action<int, int> OnSwapHotbarItem;
-    public event Action<AmmoType, int, ResourceChangeType> OnChangeAmmo;
+    public event Action<ChangeAmmoInfo> OnChangeAmmo;
     public event Action<BildingMatType, int, ResourceChangeType> OnChangeBildMat;
     #endregion
 
@@ -261,7 +265,7 @@ public class InventoryManager : NetworkBehaviour
         return true;
     }
 
-    private InventoryItem GenerateNewInventoryItem(ItemData data) 
+    private InventoryItem GenerateNewInventoryItem(ItemData data)
     {
         if (data == null) return null;
 
@@ -273,7 +277,7 @@ public class InventoryManager : NetworkBehaviour
 
                 if (data is WeaponData weaponData)
                 {
-                    WeaponState _state 
+                    WeaponState _state
                         = new WeaponState(weaponData.magazineSize);
                     item = new InventoryItem(data);
                 }
@@ -322,6 +326,7 @@ public class InventoryManager : NetworkBehaviour
     {
         base.OnStartClient();
         slots.OnChange += OnchangeSlots;
+        IsNewAddAmmo.OnChange += OnchangeIsNewAddAmmo;
     }
 
     private void OnchangeSlots(SyncListOperation op, int index, InventoryItem oldItem, InventoryItem newItem, bool asServer)
@@ -350,6 +355,13 @@ public class InventoryManager : NetworkBehaviour
         else
             GameDebug.Warning($"[OnchangeSlots]index:{index}");
 
+    }
+    private void OnchangeIsNewAddAmmo(bool prev, bool next, bool asServer)
+    {
+        GameDebug.Log($"[OnchangeIsNewAddAmmo]" +
+            $"syncAmmoInfo:{syncAmmoInfo.Value.type},{syncAmmoInfo.Value.amount},{syncAmmoInfo.Value.changeType}");
+        //  InventoryUIへ通知
+        OnChangeAmmo?.Invoke(syncAmmoInfo.Value);
     }
 
     [Server]
@@ -1012,7 +1024,12 @@ public class InventoryManager : NetworkBehaviour
     #region 弾薬系
 
 
-
+    /// <summary>
+    /// 弾薬の追加
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="amount"></param>
+    /// <returns></returns>
     public bool AddAmmo(AmmoType type, int amount)
     {
         bool isNew = !ammoDict.ContainsKey(type);
@@ -1031,9 +1048,12 @@ public class InventoryManager : NetworkBehaviour
 
         //  新規追加かどうか
         if (isNew)
-            OnChangeAmmo?.Invoke(type, ammoDict[type], ResourceChangeType.AddedNew);
+            syncAmmoInfo.Value = new ChangeAmmoInfo(type, ammoDict[type], ResourceChangeType.AddedNew);
         else
-            OnChangeAmmo?.Invoke(type, ammoDict[type], ResourceChangeType.Updated);
+            syncAmmoInfo.Value = new ChangeAmmoInfo(type, ammoDict[type], ResourceChangeType.Updated);
+
+        //  同期 + Onchangeの呼び出し
+        IsNewAddAmmo.Value = isNew;
 
         return true;
     }
@@ -1061,7 +1081,10 @@ public class InventoryManager : NetworkBehaviour
         AmmoPickup ap = obj?.GetComponent<AmmoPickup>();
         ap?.Initialize(type, dropAmount);
 
-        OnChangeAmmo?.Invoke(type, ammoDict[type], ResourceChangeType.Removed);
+        ChangeAmmoInfo info 
+            = new ChangeAmmoInfo(type, ammoDict[type], ResourceChangeType.Removed);
+
+        OnChangeAmmo?.Invoke(info);
     }
 
     /// <summary>
@@ -1076,9 +1099,11 @@ public class InventoryManager : NetworkBehaviour
 
         if (TryConsumeResouce(ammoDict, type, amount, out r))
         {
+            ChangeAmmoInfo info 
+                = new ChangeAmmoInfo(type, ammoDict[type], ResourceChangeType.Updated);
+
             //  UI更新通知
-            OnChangeAmmo?.Invoke(type, ammoDict[type],
-                ResourceChangeType.Updated);
+            OnChangeAmmo?.Invoke(info);
 
             flag = true;
         }
