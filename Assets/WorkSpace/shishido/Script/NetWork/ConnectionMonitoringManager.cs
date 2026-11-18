@@ -223,11 +223,15 @@ public class ConnectionMonitoringManager : MonoBehaviour
 
     public async void SearchRoom()
     {
+        GameDebug.Client($"IsClientStarted: {_networkManager.IsClientStarted}");
+
+        await FindAndJoinRoomAsync(ct);
+
+#if false
+
         // すでに検索中なら何もしない
         if (_searchCts != null)
             return;
-
-        GameDebug.Client($"IsClientStarted: {_networkManager.IsClientStarted}");
 
         _searchCts = new CancellationTokenSource();
 
@@ -261,6 +265,7 @@ public class ConnectionMonitoringManager : MonoBehaviour
             _searchCts?.Dispose();
             _searchCts = null;
         }
+#endif
     }
 
     /// <summary>
@@ -286,7 +291,31 @@ public class ConnectionMonitoringManager : MonoBehaviour
         StartClient();
     }
 
-    #endregion
+    async UniTask FindAndJoinRoomAsync(CancellationToken ct)
+    {
+        // 1. サーバー探索
+        string serverAddress = null;
+        _networkDiscovery.ServerFoundCallback += endPoint =>
+        {
+            if (serverAddress == null) serverAddress = endPoint.Address.ToString();
+        };
+        _networkDiscovery.SearchForServers();
+
+        // 2. アドレスが取得できるまで待機
+        await UniTask.WaitUntil(() => serverAddress != null, cancellationToken: ct);
+        _networkDiscovery.StopSearchingOrAdvertising();
+
+        // 3. 接続
+        var transport = _networkManager.TransportManager.Transport;
+        transport.SetClientAddress(serverAddress);
+        transport.SetPort(7777);
+        _networkManager.ClientManager.StartConnection();
+
+        await UniTask.WaitUntil(() => _networkManager.IsClientStarted, cancellationToken: ct);
+
+        // 4. ホストの開始ブロードキャストを待つ
+    }
+#endregion
 
     #region ConnectionMonitoring
 
