@@ -36,12 +36,20 @@ public class InventoryManager : NetworkBehaviour
     public readonly SyncList<InventoryItem> slots = new();
 
     //  弾薬スロット
-    public Dictionary<AmmoType, int> ammoDict =
-        new Dictionary<AmmoType, int>();
+    public readonly SyncDictionary<AmmoType, int> syncAmmoDict
+    = new SyncDictionary<AmmoType, int>();
+
+
+    //public Dictionary<AmmoType, int> ammoDict =
+    //    new Dictionary<AmmoType, int>();
 
     //  資材スロット
-    public Dictionary<BildingMatType, int> bildMatDict
-         = new Dictionary<BildingMatType, int>();
+    public readonly SyncDictionary<BildingMatType, int> syncbildMatDict
+         = new SyncDictionary<BildingMatType, int>();
+
+    //public Dictionary<BildingMatType, int> bildMatDict
+    // = new Dictionary<BildingMatType, int>();
+
 
     #region SyncVar
     //  直前に入ったInventoryItemの値を確認・保持するSyncVar [現状：未使用]
@@ -57,8 +65,6 @@ public class InventoryManager : NetworkBehaviour
     public readonly SyncVar<int> syncAddAmmoCount = new();
     //  弾薬の消費字に渡す用
     public readonly SyncVar<int> syncUseAmmoCount = new();
-    //  弾薬追加時その弾薬が新規追加かどうか
-    public readonly SyncVar<bool> IsNewAddAmmo = new();
     //  UI通知用のまとめ情報
     public readonly SyncVar<ChangeAmmoInfo> syncAmmoInfo = new();
     #endregion
@@ -326,7 +332,15 @@ public class InventoryManager : NetworkBehaviour
     {
         base.OnStartClient();
         slots.OnChange += OnchangeSlots;
-        IsNewAddAmmo.OnChange += OnchangeIsNewAddAmmo;
+        syncAmmoInfo.OnChange += OnchangeIsNewAddAmmo;
+    }
+
+    private void OnchangeIsNewAddAmmo(ChangeAmmoInfo prev, ChangeAmmoInfo next, bool asServer)
+    {
+        GameDebug.Log($"[OnchangeIsNewAddAmmo]" +
+            $"syncAmmoInfo:{next.type},{next.amount},{next.changeType}");
+        //  InventoryUIへ通知
+        OnChangeAmmo?.Invoke(next);
     }
 
     private void OnchangeSlots(SyncListOperation op, int index, InventoryItem oldItem, InventoryItem newItem, bool asServer)
@@ -355,13 +369,6 @@ public class InventoryManager : NetworkBehaviour
         else
             GameDebug.Warning($"[OnchangeSlots]index:{index}");
 
-    }
-    private void OnchangeIsNewAddAmmo(bool prev, bool next, bool asServer)
-    {
-        GameDebug.Log($"[OnchangeIsNewAddAmmo]" +
-            $"syncAmmoInfo:{syncAmmoInfo.Value.type},{syncAmmoInfo.Value.amount},{syncAmmoInfo.Value.changeType}");
-        //  InventoryUIへ通知
-        OnChangeAmmo?.Invoke(syncAmmoInfo.Value);
     }
 
     [Server]
@@ -514,6 +521,28 @@ public class InventoryManager : NetworkBehaviour
     private void SetsyncAddInventoryItemServer(InventoryItem _item)
     {
         syncAddInventoryItem.Value = _item;
+    }
+
+    /// <summary>
+    /// ChangeAmmoInfoのセッター
+    /// </summary>
+    /// <param name="_info"></param>
+    public void SetsyncAmmoInfo(ChangeAmmoInfo _info)
+    {
+        if (IsServerInitialized)
+            SetsyncAmmoInfoServer(this, _info);
+        else
+            SetsyncAmmoInfoServerRpc(this, _info);
+    }
+    [ServerRpc]
+    private void SetsyncAmmoInfoServerRpc(InventoryManager _my, ChangeAmmoInfo _info)
+    {
+        SetsyncAmmoInfoServer(_my, _info);
+    }
+    [Server]
+    private void SetsyncAmmoInfoServer(InventoryManager _my, ChangeAmmoInfo _info)
+    {
+        _my.syncAmmoInfo.Value = _info;
     }
 
     #endregion
@@ -843,7 +872,7 @@ public class InventoryManager : NetworkBehaviour
 
     #endregion
 
-    #region 共通関数
+    #region 共通関数(Server)
     /// <summary>
     /// 共通Add関数
     /// </summary>
@@ -854,7 +883,7 @@ public class InventoryManager : NetworkBehaviour
     /// <param name="maxValue"></param>
     /// <param name="onOverflow"></param>
     private bool AddResource<TKey>(
-    Dictionary<TKey, int> dict,
+    SyncDictionary<TKey, int> dict,
     TKey key,
     int amount,
     int maxValue,
@@ -884,6 +913,7 @@ public class InventoryManager : NetworkBehaviour
 
         return true;
     }
+
     /// <summary>
     /// 共通Droping関数
     /// </summary>
@@ -892,7 +922,7 @@ public class InventoryManager : NetworkBehaviour
     /// <param name="key"></param>
     /// <param name="amount"></param>
     private void DropingResource<TKey>(
-    Dictionary<TKey, int> dict,
+    SyncDictionary<TKey, int> dict,
     TKey key,
     int amount,
     GameObject prefab,
@@ -933,7 +963,7 @@ public class InventoryManager : NetworkBehaviour
     /// <param name="amount"></param>
     /// <returns></returns>
     private bool TryConsumeResouce<TKey>(
-    Dictionary<TKey, int> dict,
+    SyncDictionary<TKey, int> dict,
     TKey key,
     int amount,
     out int r)
@@ -969,7 +999,7 @@ public class InventoryManager : NetworkBehaviour
     /// <param name="key"></param>
     /// <returns></returns>
     private int GetResouce<TKey>(
-        Dictionary<TKey, int> dict, TKey key)
+        SyncDictionary<TKey, int> dict, TKey key)
     {
         if (dict == null)
             return 0;
@@ -1011,10 +1041,10 @@ public class InventoryManager : NetworkBehaviour
     where TKey : Enum
     {
         if (typeof(TKey) == typeof(AmmoType))
-            return ammoDict as Dictionary<TKey, int>;
+            return syncAmmoDict as Dictionary<TKey, int>;
 
         if (typeof(TKey) == typeof(BildingMatType))
-            return bildMatDict as Dictionary<TKey, int>;
+            return syncbildMatDict as Dictionary<TKey, int>;
 
         return null;
     }
@@ -1032,11 +1062,11 @@ public class InventoryManager : NetworkBehaviour
     /// <returns></returns>
     public bool AddAmmo(AmmoType type, int amount)
     {
-        bool isNew = !ammoDict.ContainsKey(type);
+        bool isNew = !syncAmmoDict.ContainsKey(type);
 
         //  Add共通関数実行
         bool canAddResource = AddResource(
-            ammoDict,
+            syncAmmoDict,
             type,
             amount,
             MAX_AMMO,
@@ -1047,13 +1077,11 @@ public class InventoryManager : NetworkBehaviour
             return false;
 
         //  新規追加かどうか
-        if (isNew)
-            syncAmmoInfo.Value = new ChangeAmmoInfo(type, ammoDict[type], ResourceChangeType.AddedNew);
-        else
-            syncAmmoInfo.Value = new ChangeAmmoInfo(type, ammoDict[type], ResourceChangeType.Updated);
-
         //  同期 + Onchangeの呼び出し
-        IsNewAddAmmo.Value = isNew;
+        if (isNew)
+            syncAmmoInfo.Value = new ChangeAmmoInfo(type, syncAmmoDict[type], ResourceChangeType.AddedNew);
+        else
+            syncAmmoInfo.Value = new ChangeAmmoInfo(type, syncAmmoDict[type], ResourceChangeType.Updated);
 
         return true;
     }
@@ -1069,7 +1097,7 @@ public class InventoryManager : NetworkBehaviour
         int dropAmount = 0;
 
         DropingResource(
-        ammoDict,
+        syncAmmoDict,
         type,
         amount,
         AmmodropObj,
@@ -1081,8 +1109,8 @@ public class InventoryManager : NetworkBehaviour
         AmmoPickup ap = obj?.GetComponent<AmmoPickup>();
         ap?.Initialize(type, dropAmount);
 
-        ChangeAmmoInfo info 
-            = new ChangeAmmoInfo(type, ammoDict[type], ResourceChangeType.Removed);
+        ChangeAmmoInfo info
+            = new ChangeAmmoInfo(type, syncAmmoDict[type], ResourceChangeType.Removed);
 
         OnChangeAmmo?.Invoke(info);
     }
@@ -1097,13 +1125,12 @@ public class InventoryManager : NetworkBehaviour
     {
         bool flag;
 
-        if (TryConsumeResouce(ammoDict, type, amount, out r))
+        if (TryConsumeResouce(syncAmmoDict, type, amount, out r))
         {
-            ChangeAmmoInfo info 
-                = new ChangeAmmoInfo(type, ammoDict[type], ResourceChangeType.Updated);
+            ChangeAmmoInfo info
+                = new ChangeAmmoInfo(type, syncAmmoDict[type], ResourceChangeType.Updated);
 
-            //  UI更新通知
-            OnChangeAmmo?.Invoke(info);
+            SetsyncAmmoInfo(info);
 
             flag = true;
         }
@@ -1117,7 +1144,7 @@ public class InventoryManager : NetworkBehaviour
 
     public int GetAmmo(AmmoType type)
     {
-        return GetResouce(ammoDict, type);
+        return GetResouce(syncAmmoDict, type);
     }
 
     #endregion
@@ -1126,15 +1153,12 @@ public class InventoryManager : NetworkBehaviour
 
     public bool AddBildMat(BildingMatType type, int amount)
     {
-        if (bildMatDict == null)
-            return false;
-
         //  新規追加かどうか
-        bool isNew = !bildMatDict.ContainsKey(type);
+        bool isNew = !syncbildMatDict.ContainsKey(type);
 
         //  Add共通関数実行
         bool canAddResource = AddResource(
-            bildMatDict,
+            syncbildMatDict,
             type,
             amount,
             MAX_BILDMAT,
@@ -1145,9 +1169,9 @@ public class InventoryManager : NetworkBehaviour
 
         //  新規追加なら
         if (isNew)
-            OnChangeBildMat?.Invoke(type, bildMatDict[type], ResourceChangeType.AddedNew);
+            OnChangeBildMat?.Invoke(type, syncbildMatDict[type], ResourceChangeType.AddedNew);
         else
-            OnChangeBildMat?.Invoke(type, bildMatDict[type], ResourceChangeType.Updated);
+            OnChangeBildMat?.Invoke(type, syncbildMatDict[type], ResourceChangeType.Updated);
 
         return true;
     }
@@ -1161,7 +1185,7 @@ public class InventoryManager : NetworkBehaviour
     {
 #if true
         DropingResource(
-        bildMatDict,
+        syncbildMatDict,
         type,
         amount,
         MaterialdropObj,
@@ -1173,7 +1197,7 @@ public class InventoryManager : NetworkBehaviour
         MaterialPickup mp = obj?.GetComponent<MaterialPickup>();
         mp?.Initialize(type, dropAmount);
 
-        OnChangeBildMat?.Invoke(type, bildMatDict[type], ResourceChangeType.Removed);
+        OnChangeBildMat?.Invoke(type, syncbildMatDict[type], ResourceChangeType.Removed);
 
 #endif
 
@@ -1189,10 +1213,10 @@ public class InventoryManager : NetworkBehaviour
     {
         bool flag;
 
-        if (TryConsumeResouce(bildMatDict, type, amount, out r))
+        if (TryConsumeResouce(syncbildMatDict, type, amount, out r))
         {
             //  UI更新通知
-            OnChangeBildMat?.Invoke(type, bildMatDict[type],
+            OnChangeBildMat?.Invoke(type, syncbildMatDict[type],
                 ResourceChangeType.Updated);
             flag = true;
         }
@@ -1206,7 +1230,7 @@ public class InventoryManager : NetworkBehaviour
 
     public int GetMat(BildingMatType type)
     {
-        return GetResouce(bildMatDict, type);
+        return GetResouce(syncbildMatDict, type);
     }
 
     #endregion
