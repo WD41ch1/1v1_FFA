@@ -2,6 +2,9 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using FishNet.Object;
 
+// 同名の別クラスと区別するため、UnityのPlayerInputを明示する。
+using UnityPlayerInput = UnityEngine.InputSystem.PlayerInput;
+
 public class PlayerMovement : NetworkBehaviour
 {
     [Header("参照")]
@@ -41,8 +44,11 @@ public class PlayerMovement : NetworkBehaviour
     private Rigidbody rb;
 
     [Header("坂での停止")]
-    [Range(0f, 89f)] public float maxGroundAngle = 55f;
-    [Range(0f, 0.5f)] public float inputDeadZone = 0.1f;
+    [Range(0f, 89f)]
+    public float maxGroundAngle = 55f;
+
+    [Range(0f, 0.5f)]
+    public float inputDeadZone = 0.1f;
 
     private bool isGrounded;
     private bool isJumping;
@@ -136,6 +142,11 @@ public class PlayerMovement : NetworkBehaviour
     private void OnDisable()
     {
         UnlockPosition();
+
+        // PlayerInput側のActionは無効化しない。
+        // 取得した参照だけを破棄する。
+        crouchAction = null;
+        cachedActions = null;
     }
 
     /// <summary>
@@ -177,7 +188,7 @@ public class PlayerMovement : NetworkBehaviour
             animator = GetComponentInChildren<Animator>();
         }
 
-        // 追加：しゃがみの初期化
+        // しゃがみの初期化
         InitializeCrouch();
     }
 
@@ -196,10 +207,10 @@ public class PlayerMovement : NetworkBehaviour
 
         UpdateGrounded();
 
-        // 追加：左Ctrlによるしゃがみ
+        // Input Actionsによるしゃがみ
         UpdateCrouch();
 
-        // 追加：しゃがみ中はジャンプしない。
+        // しゃがみ中はジャンプしない。
         bool jumpRequested =
             input.JumpPressed && !isCrouching;
 
@@ -226,7 +237,7 @@ public class PlayerMovement : NetworkBehaviour
     {
         Vector2 moveInput = GetMoveInput();
 
-        // 追加：しゃがみ中は移動速度を下げる。
+        // しゃがみ中は移動速度を下げる。
         float currentMoveSpeed =
             isCrouching ? crouchMoveSpeed : moveSpeed;
 
@@ -338,7 +349,7 @@ public class PlayerMovement : NetworkBehaviour
 
         float absAngle = Mathf.Abs(angle);
 
-        // 45度以内なら体は回さない
+        // 指定角度以内なら体は回さない
         if (absAngle < idleRotateStartAngle)
             return;
 
@@ -389,7 +400,7 @@ public class PlayerMovement : NetworkBehaviour
         }
     }
 
-    #region 追加：左Ctrlでしゃがむ
+    #region しゃがみ
 
     [Header("しゃがみ")]
     [SerializeField] private CapsuleCollider playerCapsule;
@@ -434,7 +445,8 @@ public class PlayerMovement : NetworkBehaviour
 
         if (animator != null)
         {
-            foreach (AnimatorControllerParameter parameter in animator.parameters)
+            foreach (AnimatorControllerParameter parameter
+                     in animator.parameters)
             {
                 if (parameter.nameHash == CrouchHash &&
                     parameter.type == AnimatorControllerParameterType.Bool)
@@ -459,11 +471,8 @@ public class PlayerMovement : NetworkBehaviour
         if (!crouchReady)
             return;
 
-        // Input Systemで左Ctrlを取得。
-        bool crouchHeld =
-            Application.isFocused &&
-            Keyboard.current != null &&
-            Keyboard.current.leftCtrlKey.isPressed;
+        // キーを直接調べず、Crouch Actionの押下状態を取得する。
+        bool crouchHeld = ReadCrouchHeld();
 
         if (crouchHeld)
         {
@@ -568,6 +577,120 @@ public class PlayerMovement : NetworkBehaviour
         }
 
         return true;
+    }
+
+    #endregion
+
+    #region 追加：Input Actionsからしゃがみ入力を取得
+
+    [Header("しゃがみのInput System設定")]
+    [Tooltip("同じPlayerに付いているPlayer Input。空なら自動取得")]
+    [SerializeField] private UnityPlayerInput crouchPlayerInput;
+
+    [Tooltip("Action Map名/Action名")]
+    [SerializeField] private string crouchActionPath = "Player/Crouch";
+
+    private InputActionAsset cachedActions;
+    private InputAction crouchAction;
+    private string cachedActionPath;
+    private bool warnedCrouchInput;
+
+    private bool ReadCrouchHeld()
+    {
+        if (!IsOwner ||
+            !Application.isFocused ||
+            input == null ||
+            !input.CanProcessInput)
+        {
+            return false;
+        }
+
+        if (!TryResolveCrouchAction())
+            return false;
+
+        // PlayerInputやActionが停止している場合は読まない。
+        if (!crouchPlayerInput.isActiveAndEnabled ||
+    !crouchAction.enabled)
+        {
+            return false;
+        }
+
+        // Bindingを変更すると、新しいキーでしゃがめる。
+        return crouchAction.IsPressed();
+    }
+
+    private bool TryResolveCrouchAction()
+    {
+        if (crouchPlayerInput == null)
+        {
+            crouchPlayerInput = GetComponent<UnityPlayerInput>();
+
+            if (crouchPlayerInput == null)
+            {
+                crouchPlayerInput =
+                    GetComponentInParent<UnityPlayerInput>();
+            }
+        }
+
+        if (crouchPlayerInput == null)
+        {
+            WarnCrouchInput(
+                "同じPlayerにPlayer Inputコンポーネントが必要です。");
+            return false;
+        }
+
+        // このPlayerInputが使用しているActionsを取得する。
+        InputActionAsset actions = crouchPlayerInput.actions;
+
+        if (actions == null)
+        {
+            WarnCrouchInput(
+                "Player InputのActionsが未設定です。");
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(crouchActionPath))
+        {
+            WarnCrouchInput(
+                "Crouch Action PathにPlayer/Crouchを設定してください。");
+            return false;
+        }
+
+        // Actionsの参照やAction名が変更された場合は取り直す。
+        if (cachedActions != actions ||
+            cachedActionPath != crouchActionPath ||
+            crouchAction == null)
+        {
+            cachedActions = actions;
+            cachedActionPath = crouchActionPath;
+
+            crouchAction = actions.FindAction(
+                crouchActionPath,
+                false);
+        }
+
+        if (crouchAction == null)
+        {
+            WarnCrouchInput(
+                $"Input Actionsに「{crouchActionPath}」がありません。" +
+                "しゃがみ用のButton Actionを追加してください。");
+            return false;
+        }
+
+        warnedCrouchInput = false;
+        return true;
+    }
+
+    private void WarnCrouchInput(string message)
+    {
+        if (warnedCrouchInput)
+            return;
+
+        warnedCrouchInput = true;
+
+        Debug.LogWarning(
+            "[しゃがみ入力] " + message,
+            this);
     }
 
     #endregion
