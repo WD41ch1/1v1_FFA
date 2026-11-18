@@ -27,6 +27,11 @@ public class ConnectionManager : MonoBehaviour
         if (_networkManager == null)
             _networkManager = InstanceFinder.NetworkManager;
 
+        if (_networkDiscovery == null)
+        {
+            _networkDiscovery = FindAnyObjectByType<NetworkDiscovery>();
+        }
+
         _networkManager.ClientManager.OnAuthenticated += OnAuthenticated;
         _networkManager.ClientManager.OnClientConnectionState += OnClientConnectionState;
 
@@ -154,6 +159,7 @@ public class ConnectionManager : MonoBehaviour
 
         _searchCts = new CancellationTokenSource();
 
+        // サーバー探索
         try
         {
             _networkDiscovery.SearchForServers();
@@ -174,6 +180,7 @@ public class ConnectionManager : MonoBehaviour
         catch (OperationCanceledException)
         {
             // 検索中に部屋が見つかった場合
+            // ※_networkDiscovery.ServerFoundCallbackに登録されてるeventが呼ばれるためここでは何も記述しない
         }
         finally
         {
