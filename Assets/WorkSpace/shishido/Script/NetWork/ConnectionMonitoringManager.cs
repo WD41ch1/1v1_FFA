@@ -1,9 +1,14 @@
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using FishNet;
+using FishNet.Connection;
+using FishNet.Discovery;
 using FishNet.Managing;
+using FishNet.Managing.Scened;
 using FishNet.Transporting;
 using NaughtyAttributes;
+using System;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
@@ -25,6 +30,9 @@ public class ConnectionMonitoringManager : MonoBehaviour
 
     [SerializeField]
     private NetworkManager _networkManager;
+    [SerializeField]
+    private NetworkDiscovery _networkDiscovery;
+
 
     // 接続が成立したことがあるか
     private bool _wasConnected;
@@ -42,11 +50,19 @@ public class ConnectionMonitoringManager : MonoBehaviour
     private DisConnectMenuState d_state;
     private float toggleTime = 0.2f;
     private bool toggle;
+    private CancellationToken ct;
+    private CancellationTokenSource _searchCts;
 
     #endregion
 
     #region SerializeField
 
+    [Header("接続情報")]
+    [SerializeField] public string _localHost = "127.0.0.1";
+    [SerializeField] private int _derision = 10000;
+
+    [Header("GUI")]
+    [Header("DisConnectGUI")]
     [SerializeField] private GameObject _ConnectionLostOBJ;
     [SerializeField] private GameObject _disConnectOBJ;
     [SerializeField] private Button _backButton;
@@ -58,6 +74,8 @@ public class ConnectionMonitoringManager : MonoBehaviour
 
     private void Awake()
     {
+        ct = this.GetCancellationTokenOnDestroy();
+
         // 既に存在する場合は重複を防ぐ
         if (Instance != null && Instance != this)
         {
@@ -89,11 +107,24 @@ public class ConnectionMonitoringManager : MonoBehaviour
         if (_networkManager == null)
             return;
 
+        if (_networkDiscovery == null)
+        {
+            _networkDiscovery = FindAnyObjectByType<NetworkDiscovery>();
+        }
+
         _networkManager.ClientManager.OnClientConnectionState
             -= OnClientConnectionState;
 
         _networkManager.ClientManager.OnClientConnectionState
             += OnClientConnectionState;
+
+        // サーバー発見イベント
+        _networkDiscovery.ServerFoundCallback
+            += OnServerFound;
+
+        _networkManager.ClientManager.OnAuthenticated
+            += OnAuthenticated;
+
 
         if (_backButton != null)
             _backButton.onClick.AddListener(OnBackLoadScene);
@@ -110,9 +141,154 @@ public class ConnectionMonitoringManager : MonoBehaviour
         _networkManager.ClientManager.OnClientConnectionState
             -= OnClientConnectionState;
 
+        _networkManager.ClientManager.OnAuthenticated
+            -= OnAuthenticated;
+
+
         if (_backButton != null)
             _backButton.onClick.RemoveAllListeners();
+
+        if (_networkDiscovery != null)
+        {
+            _networkDiscovery.ServerFoundCallback -= OnServerFound;
+            _networkDiscovery.StopSearchingOrAdvertising();
+        }
+
     }
+
+    #region 部屋作成
+    public void StartServer()
+    {
+        _networkManager.ServerManager.StartConnection();
+    }
+
+    public void StartClient()
+    {
+        _networkManager.ClientManager.StartConnection();
+    }
+
+
+    public async void CreateRoom()
+    {
+        // 1. サーバー起動
+        _networkManager.TransportManager.Transport.SetPort(7777);
+        _networkManager.ServerManager.StartConnection();
+
+        // IsServerStarted になるまでポーリングで待機
+        await UniTask.WaitUntil(() => _networkManager.IsServerStarted, cancellationToken: ct);
+
+        // 2. アドバタイズ開始（ゲストが LAN で探索できるようにする）
+        _networkDiscovery.AdvertiseServer();
+
+        // 3. ホスト自身もクライアントとして接続（リッスンサーバー）
+        _networkManager.TransportManager.Transport.SetClientAddress(_localHost);
+        StartClient();
+
+        await UniTask.WaitUntil(() => _networkManager.IsClientStarted, cancellationToken: ct);
+
+        // 4. 相手の入室を ServerManager のイベントで検知
+        //_networkManager.ServerManager.OnRemoteConnectionState += OnRemoteConnectionState;
+    }
+
+    void OnRemoteConnectionState(NetworkConnection conn, RemoteConnectionStateArgs args)
+    {
+        if (args.ConnectionState == RemoteConnectionState.Started)
+        {
+            GameDebug.Client($"ゲストが入室しました: {conn.ClientId}");
+            // ゲストが入室したら、ホストはアドバタイズを停止する
+            _networkDiscovery.StopSearchingOrAdvertising();
+            //  ゲストの接続を検知したら、ホストは Lobby シーンに遷移する
+            OnAuthenticated();
+        }
+    }
+
+    public void OnAuthenticated()
+    {
+        //IsConnected = true;
+
+        GameDebug.Client("Serverへの接続に成功しました");
+
+        SceneLoadData loadData = new SceneLoadData(SCENE_LOBBY);
+
+        loadData.ReplaceScenes = ReplaceOption.All;
+
+        _networkManager.SceneManager.LoadGlobalScenes(loadData);
+
+    }
+
+
+    #endregion
+
+    #region 部屋検索
+
+    public async void SearchRoom()
+    {
+        // すでに検索中なら何もしない
+        if (_searchCts != null)
+            return;
+
+        GameDebug.Client($"IsClientStarted: {_networkManager.IsClientStarted}");
+
+        _searchCts = new CancellationTokenSource();
+
+        // サーバー探索
+        try
+        {
+            _networkDiscovery.SearchForServers();
+
+            GameDebug.Client($"IsSearching: {_networkDiscovery.IsSearching}");
+
+            GameDebug.Client("部屋を検索しています...");
+
+            // 5秒間検索
+            await UniTask.Delay(
+                _derision,
+                cancellationToken: _searchCts.Token
+            );
+
+            // 5秒経過しても見つからなかった場合
+            _networkDiscovery.StopSearchingOrAdvertising();
+
+            GameDebug.Client("部屋が見つかりませんでした。");
+        }
+        catch (OperationCanceledException)
+        {
+            // 検索中に部屋が見つかった場合
+            // ※_networkDiscovery.ServerFoundCallbackに登録されてるeventが呼ばれるためここでは何も記述しない
+        }
+        finally
+        {
+            _searchCts?.Dispose();
+            _searchCts = null;
+        }
+    }
+
+    /// <summary>
+    /// サーバーが見つかったときの処理
+    /// </summary>
+    /// <param name="endPoint"></param>
+    private void OnServerFound(System.Net.IPEndPoint endPoint)
+    {
+        GameDebug.Client("[Discovery] サーバーを発見しました！");
+        GameDebug.Client($"IP: {endPoint.Address}");
+
+        // 検索停止
+        _networkDiscovery.StopSearchingOrAdvertising();
+
+        string address = endPoint.Address.ToString();
+
+        GameDebug.Client($"部屋を発見しました: {address}");
+
+        // 発見したサーバーに接続
+        _networkManager.TransportManager.Transport.SetClientAddress(address);
+        _networkManager.TransportManager.Transport.SetPort(7777);
+
+        StartClient();
+    }
+
+    #endregion
+
+    #region ConnectionMonitoring
 
     /// <summary>
     /// Clientの接続状態を監視
@@ -173,6 +349,8 @@ public class ConnectionMonitoringManager : MonoBehaviour
 
         return false;
     }
+
+    #endregion
 
     #region ボタン登録用関数
 
@@ -267,7 +445,7 @@ public class ConnectionMonitoringManager : MonoBehaviour
     public void ToggleDisConnectMenu()
     {
         //  BattleScene出ない場合利用不可
-        if (SceneManager.GetActiveScene().name != SCENE_BATTLE)
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != SCENE_BATTLE)
             return;
 
         toggle = !toggle;
@@ -307,8 +485,6 @@ public class ConnectionMonitoringManager : MonoBehaviour
     }
 
     #endregion
-
-
 
     /// <summary>
     /// Clientの現在状態を取得

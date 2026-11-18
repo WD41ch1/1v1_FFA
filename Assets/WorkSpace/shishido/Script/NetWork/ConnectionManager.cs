@@ -5,61 +5,52 @@ using FishNet.Managing.Scened;
 using FishNet.Transporting;
 using TMPro;
 using UnityEngine;
-using System.Threading;
 using static GameConst;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using FishNet.Discovery;
+using System;
 
 public class ConnectionManager : MonoBehaviour
 {
     [SerializeField] private NetworkManager _networkManager;
-    [SerializeField] private NetworkDiscovery _networkDiscovery;
+    [SerializeField] private ConnectionMonitoringManager _monitoringManager;
     [SerializeField] private TMP_InputField _inputField;
-    [SerializeField] private string _localHost = "127.0.0.1";
     public bool IsConnected { get; private set; }
+
 
     private void Awake()
     {
+
         if (_networkManager == null)
             _networkManager = InstanceFinder.NetworkManager;
 
-        _networkManager.ClientManager.OnAuthenticated += OnAuthenticated;
-        _networkManager.ClientManager.OnClientConnectionState += OnClientConnectionState;
+        _networkManager.ClientManager.OnClientConnectionState
+            += OnClientConnectionState;
 
-        // サーバー発見イベント
-        _networkDiscovery.ServerFoundCallback += OnServerFound;
+    }
+
+    private void Start()
+    {
+        if (_monitoringManager == null)
+        {
+            _monitoringManager = ConnectionMonitoringManager.Instance;
+        }
 
         if (_inputField != null)
-            _inputField.text = _localHost;
+        {
+            WaitGetMonitoringManager();
+            _inputField.text = _monitoringManager._localHost;
+        }
     }
 
     private void OnDestroy()
     {
         if (_networkManager != null)
         {
-            _networkManager.ClientManager.OnAuthenticated -= OnAuthenticated;
-            _networkManager.ClientManager.OnClientConnectionState -= OnClientConnectionState;
+            _networkManager.ClientManager.OnClientConnectionState
+                -= OnClientConnectionState;
         }
-
-        if (_networkDiscovery != null)
-        {
-            _networkDiscovery.ServerFoundCallback -= OnServerFound;
-            _networkDiscovery.StopSearchingOrAdvertising();
-        }
-    }
-
-    private void OnAuthenticated()
-    {
-        IsConnected = true;
-
-        GameDebug.Client("Serverへの接続に成功しました");
-
-        SceneLoadData loadData = new SceneLoadData(SCENE_LOBBY);
-
-        loadData.ReplaceScenes = ReplaceOption.All;
-
-        _networkManager.SceneManager.LoadGlobalScenes(loadData);
-
     }
 
     private void OnClientConnectionState(
@@ -68,56 +59,27 @@ public class ConnectionManager : MonoBehaviour
         GameDebug.Client($"Client状態: {args.ConnectionState}");
     }
 
-    public async void StartHost()
+    public void StartHost()
     {
         //StartServer();
         //StartClient();
 
-        // サーバー起動
-        _networkManager.TransportManager.Transport.SetPort(7777);
-
-        StartServer();
-
-        // サーバー起動完了まで待機
-        await UniTask.WaitUntil(
-            () => _networkManager.IsServerStarted
-        );
-
-        // LAN内に部屋を広告
-        _networkDiscovery.AdvertiseServer();
-
-        // ホスト自身もクライアントとして接続
-        SetIPAddress(_localHost);
-        StartClient();
-    }
-
-    public void StartServer()
-    {
-        _networkManager.ServerManager.StartConnection();
+        _monitoringManager.CreateRoom();
     }
 
     public void StartClient()
     {
-        _networkManager.ClientManager.StartConnection();
+        _monitoringManager.StartClient();
+    }
+
+    public void SearchRoom()
+    {
+        _monitoringManager.SearchRoom();
     }
 
     public void SetIPAddress(string text)
     {
         _networkManager.TransportManager.Transport.SetClientAddress(text);
-    }
-
-    private void OnRemoteConnectionState(
-        NetworkConnection connection,
-        RemoteConnectionStateArgs args)
-    {
-        if (args.ConnectionState != RemoteConnectionState.Started)
-            return;
-
-        Debug.Log(
-            $"Player {connection.ClientId} が接続しました"
-        );
-
-        LoadLobby(connection);
     }
 
     private void LoadLobby(NetworkConnection connection)
@@ -131,39 +93,9 @@ public class ConnectionManager : MonoBehaviour
         );
     }
 
-    #region 部屋検索
-
-    public void SearchRoom()
+    private async void WaitGetMonitoringManager()
     {
-        if (_networkManager.IsClientStarted)
-            return;
-
-        // LAN内のサーバーを検索
-        _networkDiscovery.SearchForServers();
-
-        GameDebug.Client("部屋を検索しています...");
+        CancellationToken ct = this.GetCancellationTokenOnDestroy();
+        await UniTask.WaitUntil(() => _monitoringManager != null, cancellationToken: ct);
     }
-
-    /// <summary>
-    /// サーバーが見つかったときの処理
-    /// </summary>
-    /// <param name="endPoint"></param>
-    private void OnServerFound(System.Net.IPEndPoint endPoint)
-    {
-        // 検索停止
-        _networkDiscovery.StopSearchingOrAdvertising();
-
-        string address = endPoint.Address.ToString();
-
-        GameDebug.Client($"部屋を発見しました: {address}");
-
-        // 発見したサーバーに接続
-        SetIPAddress(address);
-
-        _networkManager.TransportManager.Transport.SetPort(7777);
-
-        StartClient();
-    }
-
-    #endregion
 }
