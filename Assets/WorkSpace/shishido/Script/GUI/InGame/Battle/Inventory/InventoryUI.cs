@@ -281,18 +281,18 @@ public class InventoryUI : UIBase, IDropHandler
     /// <param name="type"></param>
     /// <param name="amount"></param>
     /// <param name="changeType"></param>
-    private void UpdateBIldMat(BildingMatType type, int amount, ResourceChangeType changeType)
+    private void UpdateBIldMat(ChangeBildingMatInfo info)
     {
-        switch (changeType)
+        switch (info.changeType)
         {
             case ResourceChangeType.AddedNew:
-                InitializeSlot(BIldMatListPrefab, BildMatListTrans, BIldMatList, type, amount);
+                InitializeSlot(BIldMatListPrefab, BildMatListTrans, BIldMatList, info.type, info.amount);
                 break;
             case ResourceChangeType.Updated:
-                UpdateSlot(BIldMatList, type, amount);
+                UpdateSlot(BIldMatList, info.type, info.amount);
                 break;
             case ResourceChangeType.Removed:
-                RemovedSlot(BIldMatList, type, amount);
+                RemovedSlot(BIldMatList, info.type, info.amount);
                 break;
         }
     }

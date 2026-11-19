@@ -88,3 +88,14 @@ public enum ResourceChangeType
     Updated,
     Removed
 }
+
+public enum SyncDictCalculation
+{
+    Invaild = -1,       //  無効
+
+    Add = 0,            //  追加
+    Remove = 1,         //  削除
+    Assignment = 2,     //  代入
+    Addition = 3,       //  加算
+    Subtract = 4,       //  減算
+}
