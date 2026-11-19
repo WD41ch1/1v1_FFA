@@ -2723,6 +2723,7 @@ GameObject:
   - component: {fileID: 3652847014429532586}
   - component: {fileID: 3890100773366206426}
   - component: {fileID: 2440286781593958048}
+  - component: {fileID: 4125583780085635184}
   m_Layer: 0
   m_Name: NET_Player#3
   m_TagString: Player
@@ -3292,6 +3293,8 @@ MonoBehaviour:
   standObstacleLayers:
     serializedVersion: 2
     m_Bits: 4294967295
+  crouchPlayerInput: {fileID: 0}
+  crouchActionPath: Player/Crouch
 --- !u!114 &898863480700411928
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3311,10 +3314,7 @@ MonoBehaviour:
   AmmodropObj: {fileID: 584293302234795832, guid: d0c011e2874b6a646ab3d13550880813, type: 3}
   MaterialdropObj: {fileID: 3564781315763711787, guid: ea5437e65bbc0a64eb4dd2e602469e47, type: 3}
   ItemdropObj: {fileID: 625260886240656399, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
-  slots: []
-  references:
-    version: 2
-    RefIds: []
+  viewSyncListSlots: []
 --- !u!114 &6618349034464132242
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3591,6 +3591,18 @@ MonoBehaviour:
   _overrideType: 3
   _updateHostVisibility: 1
   _observerConditions: []
+--- !u!114 &4125583780085635184
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7999714468741671046}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f0e051a72c4fda249be42212d4124502, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &8136727905988223057
 GameObject:
   m_ObjectHideFlags: 0
