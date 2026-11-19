@@ -46,7 +46,7 @@ public class IS_Item : InventorySlotBase<BerItemType>
     public override void Droping()
     {
         //  指定数捨てる
-        if (!inventory.im.ItemDroping(slotNumber, itemData)) return;
+        inventory.im.ItemDroping(slotNumber, itemData);
         //  自身を削除
         Destroy(gameObject);
 

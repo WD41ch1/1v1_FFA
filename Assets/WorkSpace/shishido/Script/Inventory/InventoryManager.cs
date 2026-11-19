@@ -63,6 +63,7 @@ public class InventoryManager : NetworkBehaviour
     // 消費時に渡す用
     public readonly SyncVar<int> syncUseResourceCount = new();
     //  ---UI通知用のまとめ情報---
+    public readonly SyncVar<ChangeInventoryItemInfo> syncInventoryItemInfo = new();
     public readonly SyncVar<ChangeAmmoInfo> syncAmmoInfo = new();
     public readonly SyncVar<ChangeBildingMatInfo> syncBildingMatInfo = new();
     #endregion
@@ -73,14 +74,14 @@ public class InventoryManager : NetworkBehaviour
     public event Action<int, InventoryItem> OnSlotItemReceivedTaskEvent;
 
     //EquipmentManager側装備通知処理
-    public event Action OnDeletingSetItems;
+    public event Action<int> OnDeletingSetItems;
 
     //  ホットバーUI側装備通知処理
     public event Action<int> OnRemoveItem;
     public event Action<int, int> OnUpdateItem;
 
     //  インベントリUI側通知処理
-    public event Action<int, ItemData, ResourceChangeType> OnChangeInventoryItem;
+    public event Action<ChangeInventoryItemInfo> OnChangeInventoryItem;
     public event Action<int> OnAddHotbarItem;
     public event Action<int, int> OnSwapHotbarItem;
     public event Action<ChangeAmmoInfo> OnChangeAmmo;
@@ -210,9 +211,8 @@ public class InventoryManager : NetworkBehaviour
             RequestSlotCounterUpdate(stackIndex, item.itemType);
 
             OnChangeInventoryItem?.Invoke(
-                stackIndex,
-                item,
-                ResourceChangeType.Updated);
+                new ChangeInventoryItemInfo(stackIndex, item, ResourceChangeType.Updated)
+                );
 
             return true;
         }
@@ -263,6 +263,10 @@ public class InventoryManager : NetworkBehaviour
             }
         }
 
+        //  UI通知用のまとめ情報を更新
+        SetsyncInventoryItemInfo(
+            new ChangeInventoryItemInfo(availableSlotNum, item, ResourceChangeType.AddedNew)
+            );
         // スロットに登録
         RegisterSlot(availableSlotNum, inventoryItemNew);
 
@@ -339,6 +343,15 @@ public class InventoryManager : NetworkBehaviour
         syncBildingMatInfo.OnChange += OnchangeIsNewAddBildingMat;
     }
 
+    public override void OnStopClient()
+    {
+        base.OnStopClient();
+        slots.OnChange -= OnchangeSlots;
+        syncUseResourceCount.OnChange -= OnchangeUseResourceCount;
+        syncAmmoInfo.OnChange -= OnchangeIsNewAddAmmo;
+        syncBildingMatInfo.OnChange -= OnchangeIsNewAddBildingMat;
+    }
+
     private void OnchangeUseResourceCount(int prev, int next, bool asServer)
     {
 
@@ -356,6 +369,11 @@ public class InventoryManager : NetworkBehaviour
         GameDebug.Log($"[OnchangeIsNewAddBildingMat]" +
             $"syncBildingMatInfo:{next.type},{next.amount},{next.changeType}");
 
+        //  nullチェック
+        ChangeBildingMatInfo? changeBildingMatInfo = next;
+        if (!changeBildingMatInfo.HasValue)
+            return;
+
         //  InventoryUIへ通知
         OnChangeBildMat?.Invoke(next);
     }
@@ -372,16 +390,17 @@ public class InventoryManager : NetworkBehaviour
             viewSyncListSlots[index] = newItem;
 
             // UIなどへ通知
-            OnChangeInventoryItem?.Invoke(
-                index,
-                newItem.data,
-                ResourceChangeType.AddedNew);
+            OnChangeInventoryItem?.Invoke(syncInventoryItemInfo.Value);
 
             //  ホットバー上のアイコン表示
             OnAddHotbarItem?.Invoke(index);
 
             //  ホットバーのカウンターアップデート
-            RequestSlotCounterUpdate(index, newItem.data.itemType);
+            //  Remoev時はカウンター更新しない
+            if (newItem != null)
+                RequestSlotCounterUpdate(index, newItem.data.itemType);
+            else
+                OnRemoveItem?.Invoke(index);
         }
         else
             GameDebug.Warning($"[OnchangeSlots]index:{index}");
@@ -475,6 +494,7 @@ public class InventoryManager : NetworkBehaviour
     [Server]
     private void RemoveSlotsServer(InventoryManager myManager, int _removeSlotNum)
     {
+        // RemoveAt() は使わない（後ろのスロットがずれてしまうため）
         myManager.slots[_removeSlotNum] = null;
     }
 
@@ -693,6 +713,28 @@ public class InventoryManager : NetworkBehaviour
     }
 
     /// <summary>
+    /// syncInventoryItemInfoのセッター
+    /// </summary>
+    /// <param name="_info"></param>
+    public void SetsyncInventoryItemInfo(ChangeInventoryItemInfo _info)
+    {
+        if (IsServerInitialized)
+            SetsyncInventoryItemInfoServer(this, _info);
+        else
+            SetsyncInventoryItemInfoServerRpc(this, _info);
+    }
+    [ServerRpc]
+    private void SetsyncInventoryItemInfoServerRpc(InventoryManager _my, ChangeInventoryItemInfo _info)
+    {
+        SetsyncInventoryItemInfoServer(_my, _info);
+    }
+    [Server]
+    private void SetsyncInventoryItemInfoServer(InventoryManager _my, ChangeInventoryItemInfo _info)
+    {
+        _my.syncInventoryItemInfo.Value = _info;
+    }
+
+    /// <summary>
     /// ChangeAmmoInfoのセッター
     /// </summary>
     /// <param name="_info"></param>
@@ -817,19 +859,16 @@ public class InventoryManager : NetworkBehaviour
             return false;
         }
 
-        // スロットを空にする
-        // RemoveAt() は使わない（後ろのスロットがずれてしまうため）
-        slots[slotNum] = null;
 
-        // 必要に応じて、既存のインベントリ更新イベントを呼び出す
-        // 例：OnRemoveItem?.Invoke(slotNum);
-        //  見た目の削除要求
-        OnDeletingSetItems.Invoke();
+        OnDeletingSetItems?.Invoke(slotNum);
+
         //  インベントリ側UIの更新要求
         ItemData data = item.data;
-        OnChangeInventoryItem.Invoke(slotNum, data, ResourceChangeType.Removed);
-        //  ホットバー側UIの更新要求
-        OnRemoveItem.Invoke(slotNum);
+        SetsyncInventoryItemInfo(
+            new ChangeInventoryItemInfo(slotNum, data, ResourceChangeType.Removed)
+            );
+        // スロットを空にする
+        RemoveSlots(slotNum);
 
         return true;
     }
@@ -878,7 +917,8 @@ public class InventoryManager : NetworkBehaviour
     /// <summary>
     /// アイテムをドロップする
     /// </summary>
-    public bool ItemDroping(
+    [ServerRpc]
+    public void ItemDroping(
         int number,
         ItemData dropData,
         InventoryItem state = null)
@@ -888,7 +928,7 @@ public class InventoryManager : NetworkBehaviour
         {
             GameDebug.Warning(
                 "[InventoryManager] ドロップする ItemData が null です。");
-            return false;
+            return;
         }
 
         // ドロップ対象の状態を取得
@@ -908,28 +948,19 @@ public class InventoryManager : NetworkBehaviour
 
         if (item == null)
         {
-            Destroy(obj);
-
             GameDebug.Warning(
                 "[InventoryManager] ItemPickup が見つかりません。");
-            return false;
+            return;
         }
 
         item.Initialize(dropData, dropState);
 
-        // ネットワーク上にスポーン
-        InstanceFinder.ServerManager.Spawn(obj);
-
         // インベントリからアイテムを削除
         RemoveItem(number);
 
-        // UIなどへ通知
-        OnChangeInventoryItem?.Invoke(
-            number,
-            dropData,
-            ResourceChangeType.Removed);
+        // ネットワーク上にスポーン
+        Spawn(obj);
 
-        return true;
     }
 
     private InventoryItem CopyItemState(InventoryItem source)
@@ -1120,7 +1151,9 @@ public class InventoryManager : NetworkBehaviour
             }
         }
 
+        //  生成したオブジェクトを返す
         nob = obj;
+        //  Dictionary内のリソースを減算
         SetSyncDictionary(key, SyncDictCalculation.Subtract, Amount);
     }
 
@@ -1331,7 +1364,7 @@ public class InventoryManager : NetworkBehaviour
     /// </summary>
     /// <param name="type"></param>
     /// <param name="amount"></param>
-    [Server]
+    [ServerRpc]
     public void AmmoDroping(AmmoType type, int amount)
     {
         DropingResource(
@@ -1348,12 +1381,15 @@ public class InventoryManager : NetworkBehaviour
             return;
         }
 
+        //  ネットワーク上にスポーン
         Spawn(obj);
 
+        //  UI更新用情報作成
+        ChangeAmmoInfo info
+            = new ChangeAmmoInfo(type, syncAmmoDict[type], ResourceChangeType.Removed);
+
         //  Onchange軽油でUIに更新通知
-        SetsyncAmmoInfo(
-            new ChangeAmmoInfo(type, syncAmmoDict[type], ResourceChangeType.Removed)
-            );
+        SetsyncAmmoInfo(info);
     }
 
     /// <summary>
@@ -1433,7 +1469,7 @@ public class InventoryManager : NetworkBehaviour
     /// </summary>
     /// <param name="type"></param>
     /// <param name="amount"></param>
-    [Server]
+    [ServerRpc]
     public void MatDroping(BildingMatType type, int amount)
     {
 #if true
@@ -1451,12 +1487,15 @@ public class InventoryManager : NetworkBehaviour
             return;
         }
 
+        //  ネットワーク上にスポーン
         Spawn(obj);
 
+        //  UI更新用情報作成
+        ChangeBildingMatInfo info
+            = new ChangeBildingMatInfo(type, syncBildMatDict[type], ResourceChangeType.Removed);
+
         //  Onchange軽油でUIに更新通知
-        SetsyncBildingMatInfo(
-            new ChangeBildingMatInfo(type, syncBildMatDict[type], ResourceChangeType.Removed)
-            );
+        SetsyncBildingMatInfo(info);
 #endif
 
     }

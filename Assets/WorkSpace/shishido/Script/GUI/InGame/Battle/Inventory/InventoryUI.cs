@@ -117,8 +117,12 @@ public class InventoryUI : UIBase, IDropHandler
     /// <param name="type"></param>
     /// <param name="amount"></param>
     /// <param name="changeType"></param>
-    private void UpdateItem(int slotNum, ItemData data, ResourceChangeType changeType)
+    private void UpdateItem(ChangeInventoryItemInfo info)
     {
+        int slotNum = info.slotNum;
+        ItemData data = info.data;
+        ResourceChangeType changeType = info.changeType;
+
         switch (changeType)
         {
             case ResourceChangeType.AddedNew:

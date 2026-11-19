@@ -11,26 +11,10 @@ public class AssaultRifle : WeaponBase
         if (_owner == null || _itemData == null || _itemState == null)
             return false;
 
-        GameDebug.Server(
-            $"[Initialize Server]" +
-            $" Object:{gameObject.name}" +
-            $" InstanceID:{GetInstanceID()}" +
-            $" IsServer:{IsServerInitialized}" +
-            $" IsClient:{IsClientInitialized}"
-        );
-
-
         weaponView = _itemView;
 
         if (weaponView == null)
             return false;
-
-        GameDebug.Log(
-            $"[Initialize ItemData]" +
-            $" Name:{_itemData?.name}" +
-            $" Type:{_itemData?.GetType().FullName}" +
-            $" IsWeaponData:{_itemData is WeaponData}"
-        );
 
         //  使用者情報登録
         if (!InformationRegistr(_owner, _itemData, _itemState))
