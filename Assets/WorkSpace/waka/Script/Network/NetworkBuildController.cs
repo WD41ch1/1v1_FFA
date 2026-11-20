@@ -31,6 +31,10 @@ public class NetworkBuildController : NetworkBehaviour
     private BildingMatType reservedType;
     private int reservedAmount;
 
+    // 追加：建築成功音
+    private NetworkSoundEmitter buildSoundEmitter;
+    private bool warnedMissingSoundEmitter;
+
     private void Awake()
     {
         if (wall == null)
@@ -46,6 +50,7 @@ public class NetworkBuildController : NetworkBehaviour
             cone = GetComponentInChildren<BuildCone>(true);
 
         inventory = GetComponent<InventoryManager>();
+        buildSoundEmitter = GetComponent<NetworkSoundEmitter>();
     }
 
     private bool TryGetOccupancySettings(
@@ -110,7 +115,7 @@ public class NetworkBuildController : NetworkBehaviour
             return;
         }
 
-        // 材料を消費する前に、受信済みの建築記録で確認
+        // 材料を消費する前に、受信済みの建築記録で確認する。
         if (NetworkBuildPiece.Occupied(
             type,
             position,
@@ -180,7 +185,9 @@ public class NetworkBuildController : NetworkBehaviour
         if (Time.time < nextServerTime)
         {
             BuildResultTargetRpc(
-                Owner, requestId, false,
+                Owner,
+                requestId,
+                false,
                 "建築間隔が短すぎます。");
             return;
         }
@@ -202,7 +209,9 @@ public class NetworkBuildController : NetworkBehaviour
             maxBuildDistance)
         {
             BuildResultTargetRpc(
-                Owner, requestId, false,
+                Owner,
+                requestId,
+                false,
                 "Prefab設定または建築距離を確認してください。");
             return;
         }
@@ -212,7 +221,9 @@ public class NetworkBuildController : NetworkBehaviour
             ground.value == 0)
         {
             BuildResultTargetRpc(
-                Owner, requestId, false,
+                Owner,
+                requestId,
+                false,
                 "完成PrefabにNetworkObject・NetworkBuildPieceと" +
                 "Ground Layerの設定が必要です。");
             return;
@@ -224,7 +235,9 @@ public class NetworkBuildController : NetworkBehaviour
             out float pivotFromBottom))
         {
             BuildResultTargetRpc(
-                Owner, requestId, false,
+                Owner,
+                requestId,
+                false,
                 "階段・屋根のGrid SizeとPivot設定を確認してください。");
             return;
         }
@@ -237,7 +250,9 @@ public class NetworkBuildController : NetworkBehaviour
         if (!Finite(placementYaw))
         {
             BuildResultTargetRpc(
-                Owner, requestId, false,
+                Owner,
+                requestId,
+                false,
                 "回転設定が不正です。");
             return;
         }
@@ -247,7 +262,7 @@ public class NetworkBuildController : NetworkBehaviour
 
         Physics.SyncTransforms();
 
-        // サーバーの記録を使って最終判定
+        // サーバーの記録を使って最終判定する。
         if (NetworkBuildPiece.Occupied(
             type,
             position,
@@ -257,7 +272,9 @@ public class NetworkBuildController : NetworkBehaviour
             true))
         {
             BuildResultTargetRpc(
-                Owner, requestId, false,
+                Owner,
+                requestId,
+                false,
                 "その場所は使用済みです。" +
                 "階段と屋根は同じマス・同じ高さに重ねられません。");
             return;
@@ -266,7 +283,9 @@ public class NetworkBuildController : NetworkBehaviour
         if (!CanPlace(type, position, rotation))
         {
             BuildResultTargetRpc(
-                Owner, requestId, false,
+                Owner,
+                requestId,
+                false,
                 "サーバー側の設置条件を満たしません。");
             return;
         }
@@ -282,7 +301,9 @@ public class NetworkBuildController : NetworkBehaviour
             string.IsNullOrEmpty(builder.PlayerId))
         {
             BuildResultTargetRpc(
-                Owner, requestId, false,
+                Owner,
+                requestId,
+                false,
                 "PlayerルートのNetworkPlayerTeamと" +
                 "初期化状態を確認してください。");
             return;
@@ -294,7 +315,7 @@ public class NetworkBuildController : NetworkBehaviour
         NetworkBuildPiece piece =
             placed.GetComponent<NetworkBuildPiece>();
 
-        // Spawn前に、種類・占有マス・建築者を登録
+        // Spawn前に、種類・占有マス・建築者を登録する。
         piece.Configure(
             type,
             ground,
@@ -311,13 +332,21 @@ public class NetworkBuildController : NetworkBehaviour
             Destroy(placed);
 
             BuildResultTargetRpc(
-                Owner, requestId, false,
+                Owner,
+                requestId,
+                false,
                 "Spawn失敗。Prefab登録を確認してください。");
             return;
         }
 
+        // 追加：建築成功時だけ、全観測クライアントへ音を通知する。
+        PlayBuildSoundOnServer(placed.transform.position);
+
         BuildResultTargetRpc(
-            Owner, requestId, true, "");
+            Owner,
+            requestId,
+            true,
+            "");
     }
 
     [TargetRpc]
@@ -450,4 +479,35 @@ public class NetworkBuildController : NetworkBehaviour
 
         return prefab != null;
     }
+
+    #region 追加：建築成功音
+
+    private void PlayBuildSoundOnServer(Vector3 position)
+    {
+        if (buildSoundEmitter == null)
+        {
+            buildSoundEmitter =
+                GetComponent<NetworkSoundEmitter>();
+        }
+
+        if (buildSoundEmitter == null)
+        {
+            if (!warnedMissingSoundEmitter)
+            {
+                warnedMissingSoundEmitter = true;
+
+                Debug.LogWarning(
+                    "建築音：PlayerにNetworkSoundEmitterを追加してください。",
+                    this);
+            }
+
+            return;
+        }
+
+        buildSoundEmitter.PlayOnServer(
+            GameSoundId.BuildWood,
+            position);
+    }
+
+    #endregion
 }

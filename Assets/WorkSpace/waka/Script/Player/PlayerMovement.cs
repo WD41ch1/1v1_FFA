@@ -62,15 +62,11 @@ public class PlayerMovement : NetworkBehaviour
         base.OnStartClient();
 
         if (!IsOwner)
-        {
             enabled = false;
-        }
 
 #if UNITY_EDITOR
-        // Unity Editorでのみ
         GameDebug.Log($"{gameObject.name}:Editer");
 #else
-        // Editor以外（ビルド時）でのみ
         GameDebug.Log($"{gameObject.name}:ビルド");
 #endif
     }
@@ -147,6 +143,8 @@ public class PlayerMovement : NetworkBehaviour
         // 取得した参照だけを破棄する。
         crouchAction = null;
         cachedActions = null;
+
+        ResetFootstepTracking();
     }
 
     /// <summary>
@@ -184,24 +182,31 @@ public class PlayerMovement : NetworkBehaviour
         rb.freezeRotation = true;
 
         if (animator == null)
-        {
             animator = GetComponentInChildren<Animator>();
-        }
 
-        // しゃがみの初期化
         InitializeCrouch();
+
+        if (movementSoundEmitter == null)
+        {
+            movementSoundEmitter =
+                GetComponent<NetworkSoundEmitter>();
+        }
     }
 
     private void FixedUpdate()
     {
         if (!IsOwner)
+        {
+            ResetFootstepTracking();
             return;
+        }
 
         if (myPlayer == null || !myPlayer.IsInitialized ||
             rb == null || input == null ||
             cameraTransform == null || groundCheck == null)
         {
             UnlockPosition();
+            ResetFootstepTracking();
             return;
         }
 
@@ -231,6 +236,9 @@ public class PlayerMovement : NetworkBehaviour
         // 静止した建築上で、物理演算による微小な滑りも防ぐ。
         if (shouldLock && isGrounded)
             LockPosition();
+
+        // 追加：地上を走っているときだけ足音を鳴らす。
+        UpdateRunningFootstep();
     }
 
     private void Move()
@@ -241,7 +249,7 @@ public class PlayerMovement : NetworkBehaviour
         float currentMoveSpeed =
             isCrouching ? crouchMoveSpeed : moveSpeed;
 
-        // カメラのY回転だけ使う
+        // カメラのY回転だけ使う。
         Quaternion cameraYawRotation =
             Quaternion.Euler(0f, cameraTransform.eulerAngles.y, 0f);
 
@@ -254,13 +262,11 @@ public class PlayerMovement : NetworkBehaviour
             right * moveInput.x;
 
         if (moveDirection.magnitude > 1f)
-        {
             moveDirection.Normalize();
-        }
 
         if (isGrounded)
         {
-            // 地面にいる間は重力を打ち消し、坂の面に沿って移動する。
+            // 地面にいる間は重力を打ち消し、坂に沿って移動する。
             if (rb.useGravity)
                 rb.AddForce(-Physics.gravity, ForceMode.Acceleration);
 
@@ -280,10 +286,9 @@ public class PlayerMovement : NetworkBehaviour
             rb.velocity = velocity;
         }
 
-        // 2D Blend Tree用にアニメーションを更新
+        // 2D Blend Tree用にアニメーションを更新する。
         if (animator != null)
         {
-            // 斜め入力も長さ1以内にする
             Vector2 animationInput =
                 Vector2.ClampMagnitude(moveInput, 1f);
 
@@ -293,14 +298,12 @@ public class PlayerMovement : NetworkBehaviour
                 0.1f,
                 Time.fixedDeltaTime);
 
-            // 左：-1、右：1、停止：0
             animator.SetFloat(
                 MoveXHash,
                 animationInput.x,
                 0.1f,
                 Time.fixedDeltaTime);
 
-            // 後退：-1、前進：1、停止：0
             animator.SetFloat(
                 MoveYHash,
                 animationInput.y,
@@ -308,7 +311,7 @@ public class PlayerMovement : NetworkBehaviour
                 Time.fixedDeltaTime);
         }
 
-        // 移動中は体をカメラ正面へ向ける
+        // 移動中は体をカメラ正面へ向ける。
         if (moveInput.sqrMagnitude > 0.01f)
         {
             Quaternion targetRotation =
@@ -326,7 +329,6 @@ public class PlayerMovement : NetworkBehaviour
     {
         Vector2 moveInput = GetMoveInput();
 
-        // 入力中はMove側で回転する
         if (moveInput.sqrMagnitude > 0.01f)
             return;
 
@@ -349,11 +351,10 @@ public class PlayerMovement : NetworkBehaviour
 
         float absAngle = Mathf.Abs(angle);
 
-        // 指定角度以内なら体は回さない
         if (absAngle < idleRotateStartAngle)
             return;
 
-        // ADS中なら回さない
+        // ADS中なら回さない。
         if (myPlayer.inputController.isADS)
             return;
 
@@ -384,6 +385,8 @@ public class PlayerMovement : NetworkBehaviour
             rb.AddForce(
                 Vector3.up * jumpForce,
                 ForceMode.Impulse);
+
+            // ジャンプ音は鳴らさない。
         }
 
         input.ResetJump();
@@ -471,30 +474,21 @@ public class PlayerMovement : NetworkBehaviour
         if (!crouchReady)
             return;
 
-        // キーを直接調べず、Crouch Actionの押下状態を取得する。
         bool crouchHeld = ReadCrouchHeld();
 
         if (crouchHeld)
         {
-            // 地面にいるときだけ、しゃがみ始める。
             if (isGrounded && !isCrouching)
-            {
                 SetCrouching(true);
-            }
         }
         else if (isCrouching)
         {
-            // 頭上に障害物がある間は立ち上がらない。
             if (CanStandUp())
-            {
                 SetCrouching(false);
-            }
         }
 
         if (animator != null && hasCrouchParameter)
-        {
             animator.SetBool(CrouchHash, isCrouching);
-        }
     }
 
     private void SetCrouching(bool crouching)
@@ -546,8 +540,7 @@ public class PlayerMovement : NetworkBehaviour
         Vector3 bottom = center - up * halfSegment;
         Vector3 top = center + up * halfSegment;
 
-        // 地面に接しているだけで立てなくなることを避けるため、
-        // 検査用の半径を少しだけ小さくする。
+        // 地面に接しているだけで立てなくなることを避ける。
         float margin = Mathf.Min(0.02f, radius * 0.1f);
         float checkRadius = Mathf.Max(0.001f, radius - margin);
 
@@ -572,7 +565,6 @@ public class PlayerMovement : NetworkBehaviour
                 continue;
             }
 
-            // 立ったときの範囲に障害物がある。
             return false;
         }
 
@@ -581,7 +573,7 @@ public class PlayerMovement : NetworkBehaviour
 
     #endregion
 
-    #region 追加：Input Actionsからしゃがみ入力を取得
+    #region Input Actionsからしゃがみ入力を取得
 
     [Header("しゃがみのInput System設定")]
     [Tooltip("同じPlayerに付いているPlayer Input。空なら自動取得")]
@@ -608,14 +600,12 @@ public class PlayerMovement : NetworkBehaviour
         if (!TryResolveCrouchAction())
             return false;
 
-        // PlayerInputやActionが停止している場合は読まない。
         if (!crouchPlayerInput.isActiveAndEnabled ||
-    !crouchAction.enabled)
+            !crouchAction.enabled)
         {
             return false;
         }
 
-        // Bindingを変更すると、新しいキーでしゃがめる。
         return crouchAction.IsPressed();
     }
 
@@ -639,7 +629,6 @@ public class PlayerMovement : NetworkBehaviour
             return false;
         }
 
-        // このPlayerInputが使用しているActionsを取得する。
         InputActionAsset actions = crouchPlayerInput.actions;
 
         if (actions == null)
@@ -656,7 +645,6 @@ public class PlayerMovement : NetworkBehaviour
             return false;
         }
 
-        // Actionsの参照やAction名が変更された場合は取り直す。
         if (cachedActions != actions ||
             cachedActionPath != crouchActionPath ||
             crouchAction == null)
@@ -691,6 +679,113 @@ public class PlayerMovement : NetworkBehaviour
         Debug.LogWarning(
             "[しゃがみ入力] " + message,
             this);
+    }
+
+    #endregion
+
+    #region 追加：オンライン走行音
+
+    [Header("走行時の足音")]
+    [SerializeField]
+    private NetworkSoundEmitter movementSoundEmitter;
+
+    [Tooltip("実際の移動速度がこの値未満なら足音を止める")]
+    [SerializeField, Min(0.01f)]
+    private float footstepMinimumSpeed = 0.5f;
+
+    private Vector3 previousFootstepPosition;
+    private bool footstepPositionReady;
+    private bool warnedMissingSoundEmitter;
+
+    private void ResetFootstepTracking()
+    {
+        footstepPositionReady = false;
+        SetRunningSound(false);
+    }
+
+    private void SetRunningSound(bool running)
+    {
+        if (movementSoundEmitter == null)
+        {
+            movementSoundEmitter =
+                GetComponent<NetworkSoundEmitter>();
+        }
+
+        if (movementSoundEmitter == null)
+        {
+            if (running && !warnedMissingSoundEmitter)
+            {
+                warnedMissingSoundEmitter = true;
+
+                Debug.LogWarning(
+                    "PlayerにNetworkSoundEmitterを追加してください。",
+                    this);
+            }
+
+            return;
+        }
+
+        movementSoundEmitter.SetRunning(running);
+    }
+
+    private void UpdateRunningFootstep()
+    {
+        Vector3 currentPosition = rb.position;
+
+        if (!footstepPositionReady)
+        {
+            previousFootstepPosition = currentPosition;
+            footstepPositionReady = true;
+
+            SetRunningSound(false);
+            return;
+        }
+
+        Vector3 displacement =
+            currentPosition - previousFootstepPosition;
+
+        previousFootstepPosition = currentPosition;
+
+        bool canPlay =
+            IsOwner &&
+            Application.isFocused &&
+            input != null &&
+            input.CanProcessInput &&
+            isGrounded &&
+            !isJumping &&
+            !isCrouching &&
+            GetMoveInput() != Vector2.zero;
+
+        // 停止・ジャンプ・しゃがみ・入力停止では、
+        // 再生中の長い足音もここで止める。
+        if (!canPlay)
+        {
+            SetRunningSound(false);
+            return;
+        }
+
+        float distance = Vector3.ProjectOnPlane(
+            displacement,
+            groundNormal).magnitude;
+
+        // テレポートなどを走行と判定しない。
+        float teleportThreshold = Mathf.Max(
+            1f,
+            moveSpeed * Time.fixedDeltaTime * 4f);
+
+        if (distance > teleportThreshold)
+        {
+            SetRunningSound(false);
+            return;
+        }
+
+        float actualSpeed =
+            distance / Mathf.Max(0.0001f, Time.fixedDeltaTime);
+
+        // 壁に向かって入力していても、
+        // 実際に移動していなければ鳴らさない。
+        SetRunningSound(
+            actualSpeed >= Mathf.Max(0.01f, footstepMinimumSpeed));
     }
 
     #endregion

@@ -20,5 +20,8 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/WorkSpace/waka/Scenes/BattleScene.unity
     guid: 5712a1bf2523ae9428f49317c17c309c
+  - enabled: 0
+    path: "Assets/WorkSpace/waka/Scenes/BattleScene_\u03B2.unity"
+    guid: fcc76820c4c6ba14f926cf5c86918522
   m_configObjects:
     com.unity.input.settings: {fileID: 11400000, guid: 9e7be553448fa2546aea5752021cbcf7, type: 2}
