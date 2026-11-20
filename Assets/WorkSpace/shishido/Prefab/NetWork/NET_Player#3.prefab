@@ -2843,7 +2843,7 @@ Rigidbody:
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 0
+  m_Constraints: 80
   m_CollisionDetection: 0
 --- !u!136 &-4276482007876789280
 CapsuleCollider:
@@ -3377,6 +3377,12 @@ MonoBehaviour:
   _cameraHolder: {fileID: 1044011579711449581}
   canvasPrefab: {fileID: 5154976365679985728, guid: 32e0bca70d3e0a94aa923a7b382cfb00, type: 3}
   playerType: 0
+  Armature: {fileID: 8701545879766135002}
+  SM_Bag: {fileID: 8348718558936927320}
+  SM_Body: {fileID: 6030640245062658674}
+  SM_Dagger: {fileID: 9084914106297218543}
+  SM_Head: {fileID: 4494737267865418146}
+  SM_Legs: {fileID: 8861769319398769218}
   inputController: {fileID: 3830073925755514194}
   controller: {fileID: 3278360314800298617}
   cameraController: {fileID: 0}

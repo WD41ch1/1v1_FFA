@@ -92,6 +92,39 @@ public class MatchManager : nobManagerBase
         //    loadData
         //);
     }
+
+    [ServerRpc]
+    public void RequestRespawn(PlayerManager target)
+    {
+        //  サーバーが閉じているもしくは対象がまだ生きていたら
+        if (!IsServerInitialized||
+            target.playerHealth.syncIsDead.Value)
+            return;
+
+        GameDebug.Log($"[RequestRespawn]");
+
+        //  Respawn処理
+        Respawn(target);
+    }
+
+    [Server]
+    private void Respawn(PlayerManager target)
+    {
+        // ① Inventory・装備を初期化
+        //target.inventoryManager.ResetInventory();
+        //target.equipmentManager.ResetEquipment();
+
+        // ② HP・シールドを初期化 + 死亡状態を解除
+        target.playerHealth.ResetStatus();
+
+        // ③ Respawn地点に移動
+        //transform.SetPositionAndRotation(
+        //    respawnPosition,
+        //    respawnRotation
+        //);
+
+        //target.SetActivPlayerModel(target,true);
+    }
     #endregion
 
     #region アイテム取得管理
@@ -206,7 +239,8 @@ public class MatchManager : nobManagerBase
     {
         DamageInfo info = CreateDamageInfo(attacker, hit,  data);
 
-        target.playerHealth.TakeDamage(info);
+        DamageResult result 
+            = target.playerHealth.TakeDamage(target.playerHealth,info);
     }
 
     /// <summary>
