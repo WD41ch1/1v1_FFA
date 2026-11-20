@@ -1,0 +1,74 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &473636567671446617
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2369800418713609797}
+  - component: {fileID: 4787608605295808362}
+  m_Layer: 0
+  m_Name: AudioManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2369800418713609797
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 473636567671446617}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 458.11646, y: 387.42233, z: 288.8058}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4787608605295808362
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 473636567671446617}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03d23cba1cfcf1e4b861d4cdf1a8d07b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sounds:
+  - id: 0
+    clips:
+    - {fileID: 8300000, guid: d86dd98805f85454bac44c2c5749c797, type: 3}
+    volume: 0.55
+    minPitch: 0.95
+    maxPitch: 1.05
+    minDistance: 1.5
+    maxDistance: 20
+  - id: 20
+    clips:
+    - {fileID: 8300000, guid: 0353ca39ccc58e5439fabb6426015dd0, type: 3}
+    volume: 0.75
+    minPitch: 0.95
+    maxPitch: 1.05
+    minDistance: 2
+    maxDistance: 35
+  - id: 22
+    clips:
+    - {fileID: 8300000, guid: 3e2264d7621368245b64f2e179403a43, type: 3}
+    volume: 0.65
+    minPitch: 0.98
+    maxPitch: 1.05
+    minDistance: 2
+    maxDistance: 25
+  voiceCount: 32
+  masterVolume: 1
+  outputMixer: {fileID: 0}

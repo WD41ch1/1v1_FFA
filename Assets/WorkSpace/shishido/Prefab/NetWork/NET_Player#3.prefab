@@ -2724,6 +2724,7 @@ GameObject:
   - component: {fileID: 3890100773366206426}
   - component: {fileID: 2440286781593958048}
   - component: {fileID: 4125583780085635184}
+  - component: {fileID: 125745709620723358}
   m_Layer: 0
   m_Name: NET_Player#3
   m_TagString: Player
@@ -3295,6 +3296,8 @@ MonoBehaviour:
     m_Bits: 4294967295
   crouchPlayerInput: {fileID: 0}
   crouchActionPath: Player/Crouch
+  movementSoundEmitter: {fileID: 0}
+  footstepMinimumSpeed: 0.5
 --- !u!114 &898863480700411928
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3603,6 +3606,28 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f0e051a72c4fda249be42212d4124502, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &125745709620723358
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7999714468741671046}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 92b2c76738608bf40aff85ebe7165d22, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 3890100773366206426}
+  _networkObjectCache: {fileID: 0}
+  maxRequestDistance: 12
+  minimumInterval: 0.025
+  runningClip: {fileID: 8300000, guid: d86dd98805f85454bac44c2c5749c797, type: 3}
+  runningVolume: 0.55
+  runningPitch: 1
+  runningMinDistance: 1.5
+  runningMaxDistance: 20
 --- !u!1 &8136727905988223057
 GameObject:
   m_ObjectHideFlags: 0

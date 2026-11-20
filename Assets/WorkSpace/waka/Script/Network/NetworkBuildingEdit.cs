@@ -33,6 +33,8 @@ public class NetworkBuildingEdit : NetworkBehaviour
     private uint nextRequest;
     private uint pendingRequest;
 
+    private bool warnedMissingSoundEmitter;
+
     public int Revision =>
         IsServerInitialized ? revision : appliedRevision;
 
@@ -177,6 +179,9 @@ public class NetworkBuildingEdit : NetworkBehaviour
 
         appliedRevision = snapshot.revision;
         Physics.SyncTransforms();
+
+        // ここでは音を鳴らさない。
+        // 初回受信・途中参加で過去の編集音が鳴るのを防ぐ。
     }
 
     public bool RequestEdit(
@@ -219,7 +224,7 @@ public class NetworkBuildingEdit : NetworkBehaviour
         pending = true;
         pendingRequest = ++nextRequest;
 
-        // ホストでも二重適用しないよう先にグリッドを閉じる
+        // ホストでも二重適用しないよう先にグリッドを閉じる。
         source.CancelEdit();
 
         EditServerRpc(
@@ -333,6 +338,9 @@ public class NetworkBuildingEdit : NetworkBehaviour
             BuildSupportManager.Register(support);
         }
 
+        // 追加：サーバーが編集を適用したときだけ音を通知する。
+        PlayEditSoundOnServer(playerObject);
+
         ResultTargetRpc(
             sender,
             requestId,
@@ -428,6 +436,8 @@ public class NetworkBuildingEdit : NetworkBehaviour
                 "[編集同期] 編集できません：" + reason,
                 this);
         }
+
+        // 成功音はサーバー側から通知済みなので、ここでは鳴らさない。
     }
 
     public override void OnStopClient()
@@ -451,7 +461,7 @@ public class NetworkBuildingEdit : NetworkBehaviour
         GameObject prefab,
         UnityEngine.Object context)
     {
-        // 空欄なら編集スクリプト側で形状を自動生成する
+        // 空欄なら編集スクリプト側で形状を自動生成する。
         if (prefab == null)
             return true;
 
@@ -581,6 +591,38 @@ public class NetworkBuildingEdit : NetworkBehaviour
 
         return path;
     }
+
+    #region 追加：編集成功音
+
+    private void PlayEditSoundOnServer(NetworkObject editorPlayer)
+    {
+        if (editorPlayer == null)
+            return;
+
+        // 建築の所有者ではなく、実際に編集したPlayerから通知する。
+        NetworkSoundEmitter soundEmitter =
+            editorPlayer.GetComponent<NetworkSoundEmitter>();
+
+        if (soundEmitter == null)
+        {
+            if (!warnedMissingSoundEmitter)
+            {
+                warnedMissingSoundEmitter = true;
+
+                Debug.LogWarning(
+                    "編集音：PlayerにNetworkSoundEmitterを追加してください。",
+                    this);
+            }
+
+            return;
+        }
+
+        soundEmitter.PlayOnServer(
+            GameSoundId.BuildEdit,
+            transform.position);
+    }
+
+    #endregion
 }
 
 // 以下の3つも、このファイル内に残してください。
