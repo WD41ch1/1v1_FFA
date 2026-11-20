@@ -13,12 +13,9 @@ MonoBehaviour:
   m_Name: Item_1003
   m_EditorClassIdentifier: 
   itemId: 1003
-  itemIcon: {fileID: 21300000, guid: 501740e93da556747aecfd85063d9b87, type: 3}
-  rarityBackGroundIcon: {fileID: 0}
   ItemName: "\u30B7\u30E7\u30C3\u30C8\u30AC\u30F3"
   itemType: 0
-  AppearancePrefab: {fileID: 0}
-  wearPrefab: {fileID: 0}
+  weaponAnimationType: 0
   maxStack: 1
   weaponDamage: 9
   fireMode: 2

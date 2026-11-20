@@ -1,6 +1,8 @@
+using FishNet.Demo.AdditiveScenes;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
 using System;
+using System.Diagnostics;
 using UnityEngine;
 using static UnityEngine.Rendering.DebugUI;
 
@@ -15,11 +17,16 @@ public class PlayerHealth : NetworkBehaviour
     public readonly SyncVar<float> currentShield = new SyncVar<float>();
     private float MaxShield;
 
+    //  死亡通知フラグ
     public bool IsDead => currentHealth.Value <= 0;
+    public readonly SyncVar<bool> syncIsDead = new SyncVar<bool>();
+    public readonly SyncVar<DamageInfo> syncDeadInfo = new SyncVar<DamageInfo>();
 
     //  UI通知アクション変数
     public event Action<float, float> OnHealthChanged;
     public event Action<float, float> OnShieldChanged;
+    public event Action<DamageInfo> OnDead;
+
 
     //  UI用:シールド破壊通知
     public bool haveShield;
@@ -95,6 +102,7 @@ public class PlayerHealth : NetworkBehaviour
         //  ※SyncVar軽油なので、値が変わると自動で更新される
         currentHealth.OnChange += HealthChanged;
         currentShield.OnChange += ShieldChanged;
+        syncIsDead.OnChange += OnChangeIsDead;
 
         GameDebug.Log(
             $"PlayerHealth[OnStartClient]," +
@@ -121,7 +129,7 @@ public class PlayerHealth : NetworkBehaviour
     /// <param name="damageInfo"></param>
     /// <returns></returns>
     [Server]
-    public DamageResult TakeDamage(DamageInfo damageInfo)
+    public DamageResult TakeDamage(PlayerHealth target, DamageInfo damageInfo)
     {
         DamageResult result = new DamageResult();
         float remainingDamage =
@@ -165,7 +173,7 @@ public class PlayerHealth : NetworkBehaviour
         {
             result.IsDead = true;
 
-            Die();
+            Die(target, damageInfo);
         }
 
         return result;
@@ -234,18 +242,46 @@ public class PlayerHealth : NetworkBehaviour
     /// <summary>
     /// 死亡処理
     /// </summary>
-    [ServerRpc]
-    private void Die()
+    [Server]
+    private void Die(PlayerHealth my, DamageInfo info)
     {
-        Debug.Log($"{lastAttacker?.name}に倒された");
-
-
+        GameDebug.Log($"{lastAttacker?.name}に倒された");
+        my.syncIsDead.Value = true;
+        my.syncDeadInfo.Value = info;
         //  ダウンアニメーションor死亡アニメーション再生
 
+        //NetworkObject nob =
+        //    my.gameObject.GetComponent<NetworkObject>();
+        //Despawn(nob);
+    }
 
-        //  シーンから消す
-        this.gameObject.SetActive(false);
-        //Despawn();
+    private void OnChangeIsDead(bool prev, bool next, bool asServer)
+    {
+        if (next)
+        {
+            //  シーンから消す
+            myPlayer.SetActivPlayerModel(myPlayer,false);
+            myPlayer.SetActivPlayerModelLocal(false);
+            //  UIの表示
+            OnDead?.Invoke(syncDeadInfo.Value);
+        }
+        else
+        {
+            myPlayer.SetActivPlayerModel(myPlayer, true);
+            myPlayer.SetActivPlayerModelLocal(true);
+        }
+    }
+
+    /// <summary>
+    /// Respawn時の処理
+    /// </summary>
+    public void ResetStatus()
+    {
+        //  死亡状態解除
+        SetsyncIsDead(false);
+        //  HP・シールドを初期化
+        SetSyncVar_Health(this, MaxHealth,MaxHealth);
+        SetSyncVar_Shield(this, MaxShield, MaxShield);
     }
 
     #endregion
@@ -270,6 +306,28 @@ public class PlayerHealth : NetworkBehaviour
         OnShieldChanged?.Invoke(MaxShield, shield);
     }
 
+    #region SyncSetter
+
+    public void SetsyncIsDead(bool _flag)
+    {
+        if (IsServerInitialized)
+            SetsyncIsDeadServer(_flag);
+        else
+            SetsyncIsDeadServerRpc(_flag);
+    }
+
+    [ServerRpc]
+    private void SetsyncIsDeadServerRpc(bool _flag)
+    {
+        SetsyncIsDeadServer(_flag);
+    }
+    [Server]
+    private void SetsyncIsDeadServer(bool _flag)
+    {
+        syncIsDead.Value = _flag;
+    }
+
+    #endregion
 
     #region Action
 

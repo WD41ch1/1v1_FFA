@@ -211,31 +211,8 @@ public abstract class WeaponBase : ItemBase
         if (!TryGetWeaponResources(out WeaponData data, out PlayerManager owner))
             return;
 
-        //if (IsServerInitialized)
-        //{
-        //    FireInternal(this);
-        //}
-        //else if (IsClientInitialized)
-        //{
-        //    FireServerRpc(this);
-        //}
-
         Fire();
-
     }
-
-    [ServerRpc/*(RequireOwnership = false)*/]
-    private void FireServerRpc(WeaponBase script)
-    {
-        FireInternal(script);
-    }
-
-    [Server]
-    private void FireInternal(WeaponBase script)
-    {
-        script.Fire();
-    }
-
 
     /// <summary>
     /// スコープを覗く(ADS)

@@ -116,7 +116,7 @@ public class EquipmentManager : NetworkBehaviour
         if (!await CreateEquipItem(data, slotNum))
             return false;
 
-        SetCurrentSlot(this, slotNum);
+        SetCurrentSlot(slotNum);
 
         // 装備成功後に、そのアイテムのアニメーションへ変更
         ApplyEquippedAnimation(data);
@@ -249,20 +249,27 @@ public class EquipmentManager : NetworkBehaviour
         if (weaponUpperBodyController != null)
             weaponUpperBodyController.ClearWeapon();
 
+        //  見た目の削除
         if (createItem != null)
         {
             Destroy(createItem);
             createItem = null;
         }
+
+        //  ProcessDataの削除
         RemoveCurrentProcess();
 
         currentItemView = null;
     }
 
 
-    public void DeletingSetItems()
+    public void DeletingSetItems(int slotNum)
     {
-        UnEquip();
+        //  削除使用としているスロットが現在装備中のスロットと同じ場合は、装備を外す
+        if (slotNum == currentSlot.Value)
+        {
+            UnEquip();
+        }
     }
 
     public void NextItemEquip()
@@ -520,8 +527,20 @@ public class EquipmentManager : NetworkBehaviour
         currentProcess.Value = null;
     }
 
+    private void SetCurrentSlot(int num)
+    {
+        if(IsServerInitialized)
+            SetCurrentSlotServer(this, num);
+        else
+            SetCurrentSlotServerRpc(this, num);
+    }
     [ServerRpc]
-    private void SetCurrentSlot(EquipmentManager script, int num)
+    private void SetCurrentSlotServerRpc(EquipmentManager script, int num)
+    {
+        SetCurrentSlotServer(script, num);
+    }
+    [Server]
+    private void SetCurrentSlotServer(EquipmentManager script, int num)
     {
         script.currentSlot.Value = num;
     }

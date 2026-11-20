@@ -51,6 +51,7 @@ public enum FireMode
 /// </summary>
 public enum AmmoType
 {
+    Invaild = -1,           //  無効
     SmallAmmo = 0,          //  小
     MiddleAmmo = 1,         //  中
     BigAmmo = 2,            //  大
@@ -62,6 +63,8 @@ public enum AmmoType
 /// </summary>
 public enum BildingMatType
 {
+    Invaild = -1,           //  無効
+
     Wood,
     Brick,
     Iron,
@@ -84,7 +87,27 @@ public enum HitPart
 /// </summary>
 public enum ResourceChangeType
 {
+    Invaild = -1,           //  無効
+
     AddedNew,
     Updated,
     Removed
+}
+
+public enum ChangeInfoState
+{
+    Invaild = -1,       //  無効
+    Updated = 0,        //  更新
+    Reset = 1,          //  リセット
+}
+
+public enum SyncDictCalculation
+{
+    Invaild = -1,       //  無効
+
+    Add = 0,            //  追加
+    Remove = 1,         //  削除
+    Assignment = 2,     //  代入
+    Addition = 3,       //  加算
+    Subtract = 4,       //  減算
 }

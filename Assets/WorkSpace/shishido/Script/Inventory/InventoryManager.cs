@@ -20,14 +20,16 @@ public class InventoryManager : NetworkBehaviour
     [SerializeField]
     public ItemData pickel;
     [Header("---ドロップオブジェクト---")]
-    [SerializeField] public GameObject AmmodropObj;
-    [SerializeField] public GameObject MaterialdropObj;
-    [SerializeField] public GameObject ItemdropObj;
+    [SerializeField] public NetworkObject AmmodropObj;
+    [SerializeField] public NetworkObject MaterialdropObj;
+    [SerializeField] public NetworkObject ItemdropObj;
 
     //  アイテムスロット
     [SerializeField]
     private List<InventoryItem> viewSyncListSlots;
     #endregion
+
+    #region メインSync
     //=======================================================
     //              大本の個数管理変数
     //=======================================================
@@ -36,14 +38,16 @@ public class InventoryManager : NetworkBehaviour
     public readonly SyncList<InventoryItem> slots = new();
 
     //  弾薬スロット
-    public Dictionary<AmmoType, int> ammoDict =
-        new Dictionary<AmmoType, int>();
+    public readonly SyncDictionary<AmmoType, int> syncAmmoDict
+    = new SyncDictionary<AmmoType, int>();
 
     //  資材スロット
-    public Dictionary<BildingMatType, int> bildMatDict
-         = new Dictionary<BildingMatType, int>();
+    public readonly SyncDictionary<BildingMatType, int> syncBildMatDict
+         = new SyncDictionary<BildingMatType, int>();
 
-    #region SyncVar
+    #endregion
+
+    #region その他SyncVar
     //  直前に入ったInventoryItemの値を確認・保持するSyncVar [現状：未使用]
     private readonly SyncVar<InventoryItem> syncAddInventoryItem = new();
     //  用途不明
@@ -53,14 +57,15 @@ public class InventoryManager : NetworkBehaviour
     //  SlotCounterの更新情報を渡す用
     private readonly SyncVar<InventoryItem> syncUpdateRequestItem = new();
 
-    //  弾薬の追加時に渡す用
-    public readonly SyncVar<int> syncAddAmmoCount = new();
-    //  弾薬の消費字に渡す用
-    public readonly SyncVar<int> syncUseAmmoCount = new();
-    //  弾薬追加時その弾薬が新規追加かどうか
-    public readonly SyncVar<bool> IsNewAddAmmo = new();
-    //  UI通知用のまとめ情報
+    //  ---共通resourceのSyncVar---
+    // 追加時に渡す用
+    public readonly SyncVar<int> syncAddResourceCount = new();
+    // 消費時に渡す用
+    public readonly SyncVar<int> syncUseResourceCount = new();
+    //  ---UI通知用のまとめ情報---
+    public readonly SyncVar<ChangeInventoryItemInfo> syncInventoryItemInfo = new();
     public readonly SyncVar<ChangeAmmoInfo> syncAmmoInfo = new();
+    public readonly SyncVar<ChangeBildingMatInfo> syncBildingMatInfo = new();
     #endregion
 
     #region Action
@@ -69,18 +74,18 @@ public class InventoryManager : NetworkBehaviour
     public event Action<int, InventoryItem> OnSlotItemReceivedTaskEvent;
 
     //EquipmentManager側装備通知処理
-    public event Action OnDeletingSetItems;
+    public event Action<int> OnDeletingSetItems;
 
     //  ホットバーUI側装備通知処理
     public event Action<int> OnRemoveItem;
     public event Action<int, int> OnUpdateItem;
 
     //  インベントリUI側通知処理
-    public event Action<int, ItemData, ResourceChangeType> OnChangeInventoryItem;
+    public event Action<ChangeInventoryItemInfo> OnChangeInventoryItem;
     public event Action<int> OnAddHotbarItem;
     public event Action<int, int> OnSwapHotbarItem;
     public event Action<ChangeAmmoInfo> OnChangeAmmo;
-    public event Action<BildingMatType, int, ResourceChangeType> OnChangeBildMat;
+    public event Action<ChangeBildingMatInfo> OnChangeBildMat;
     #endregion
 
     private void Awake()
@@ -206,9 +211,8 @@ public class InventoryManager : NetworkBehaviour
             RequestSlotCounterUpdate(stackIndex, item.itemType);
 
             OnChangeInventoryItem?.Invoke(
-                stackIndex,
-                item,
-                ResourceChangeType.Updated);
+                new ChangeInventoryItemInfo(stackIndex, item, ResourceChangeType.Updated)
+                );
 
             return true;
         }
@@ -259,6 +263,10 @@ public class InventoryManager : NetworkBehaviour
             }
         }
 
+        //  UI通知用のまとめ情報を更新
+        SetsyncInventoryItemInfo(
+            new ChangeInventoryItemInfo(availableSlotNum, item, ResourceChangeType.AddedNew)
+            );
         // スロットに登録
         RegisterSlot(availableSlotNum, inventoryItemNew);
 
@@ -325,8 +333,49 @@ public class InventoryManager : NetworkBehaviour
     public override void OnStartClient()
     {
         base.OnStartClient();
+        //  メインインベントリ変更通知
         slots.OnChange += OnchangeSlots;
-        IsNewAddAmmo.OnChange += OnchangeIsNewAddAmmo;
+        //  共通resource変更通知
+        syncUseResourceCount.OnChange += OnchangeUseResourceCount;
+
+        //  弾薬・建材のUI変更通知 + α
+        syncAmmoInfo.OnChange += OnchangeIsNewAddAmmo;
+        syncBildingMatInfo.OnChange += OnchangeIsNewAddBildingMat;
+    }
+
+    public override void OnStopClient()
+    {
+        base.OnStopClient();
+        slots.OnChange -= OnchangeSlots;
+        syncUseResourceCount.OnChange -= OnchangeUseResourceCount;
+        syncAmmoInfo.OnChange -= OnchangeIsNewAddAmmo;
+        syncBildingMatInfo.OnChange -= OnchangeIsNewAddBildingMat;
+    }
+
+    private void OnchangeUseResourceCount(int prev, int next, bool asServer)
+    {
+
+    }
+
+    private void OnchangeIsNewAddAmmo(ChangeAmmoInfo prev, ChangeAmmoInfo next, bool asServer)
+    {
+        GameDebug.Log($"[OnchangeIsNewAddAmmo]" +
+            $"syncAmmoInfo:{next.type},{next.amount},{next.changeType}");
+        //  InventoryUIへ通知
+        OnChangeAmmo?.Invoke(next);
+    }
+    private void OnchangeIsNewAddBildingMat(ChangeBildingMatInfo prev, ChangeBildingMatInfo next, bool asServer)
+    {
+        GameDebug.Log($"[OnchangeIsNewAddBildingMat]" +
+            $"syncBildingMatInfo:{next.type},{next.amount},{next.changeType}");
+
+        //  nullチェック
+        ChangeBildingMatInfo? changeBildingMatInfo = next;
+        if (!changeBildingMatInfo.HasValue)
+            return;
+
+        //  InventoryUIへ通知
+        OnChangeBildMat?.Invoke(next);
     }
 
     private void OnchangeSlots(SyncListOperation op, int index, InventoryItem oldItem, InventoryItem newItem, bool asServer)
@@ -341,27 +390,21 @@ public class InventoryManager : NetworkBehaviour
             viewSyncListSlots[index] = newItem;
 
             // UIなどへ通知
-            OnChangeInventoryItem?.Invoke(
-                index,
-                newItem.data,
-                ResourceChangeType.AddedNew);
+            OnChangeInventoryItem?.Invoke(syncInventoryItemInfo.Value);
 
             //  ホットバー上のアイコン表示
             OnAddHotbarItem?.Invoke(index);
 
             //  ホットバーのカウンターアップデート
-            RequestSlotCounterUpdate(index, newItem.data.itemType);
+            //  Remoev時はカウンター更新しない
+            if (newItem != null)
+                RequestSlotCounterUpdate(index, newItem.data.itemType);
+            else
+                OnRemoveItem?.Invoke(index);
         }
         else
             GameDebug.Warning($"[OnchangeSlots]index:{index}");
 
-    }
-    private void OnchangeIsNewAddAmmo(bool prev, bool next, bool asServer)
-    {
-        GameDebug.Log($"[OnchangeIsNewAddAmmo]" +
-            $"syncAmmoInfo:{syncAmmoInfo.Value.type},{syncAmmoInfo.Value.amount},{syncAmmoInfo.Value.changeType}");
-        //  InventoryUIへ通知
-        OnChangeAmmo?.Invoke(syncAmmoInfo.Value);
     }
 
     [Server]
@@ -430,6 +473,115 @@ public class InventoryManager : NetworkBehaviour
         );
 
         myManager.slots[_registerSlotNum] = _inventoryItem;
+    }
+
+    /// <summary>
+    /// スロットからアイテムを削除
+    /// </summary>
+    /// <param name="_removeSlotNum"></param>
+    public void RemoveSlots(int _removeSlotNum)
+    {
+        if (IsServerInitialized)
+            RemoveSlotsServer(this, _removeSlotNum);
+        else
+            RemoveSlotsServerRpc(this, _removeSlotNum);
+    }
+    [ServerRpc]
+    private void RemoveSlotsServerRpc(InventoryManager myManager, int _removeSlotNum)
+    {
+        RemoveSlotsServer(myManager, _removeSlotNum);
+    }
+    [Server]
+    private void RemoveSlotsServer(InventoryManager myManager, int _removeSlotNum)
+    {
+        // RemoveAt() は使わない（後ろのスロットがずれてしまうため）
+        myManager.slots[_removeSlotNum] = null;
+    }
+
+    /// <summary>
+    /// syncAmmoDictのセッター
+    /// </summary>
+    /// <param name="calc"></param>
+    /// <param name="type"></param>
+    /// <param name="count"></param>
+    public void SetsyncAmmoDict(SyncDictCalculation calc, AmmoType type, int count)
+    {
+        if (IsServerInitialized)
+            SetsyncAmmoDictServer(this, calc, type, count);
+        else
+            SetsyncAmmoDictServerRpc(this, calc, type, count);
+    }
+    [ServerRpc]
+    private void SetsyncAmmoDictServerRpc(InventoryManager my, SyncDictCalculation calc, AmmoType type, int count)
+    {
+        SetsyncAmmoDictServer(my, calc, type, count);
+    }
+    [Server]
+    private void SetsyncAmmoDictServer(InventoryManager my, SyncDictCalculation calc, AmmoType type, int count)
+    {
+        switch (calc)
+        {
+            case SyncDictCalculation.Invaild:
+                return;
+            case SyncDictCalculation.Add:
+                my.syncAmmoDict.Add(type, count);
+                break;
+            case SyncDictCalculation.Remove:
+                my.syncAmmoDict.Remove(type);
+                break;
+            case SyncDictCalculation.Assignment:
+                my.syncAmmoDict[type] = count;
+                break;
+            case SyncDictCalculation.Addition:
+                my.syncAmmoDict[type] += count;
+                break;
+            case SyncDictCalculation.Subtract:
+                my.syncAmmoDict[type] -= count;
+                break;
+        }
+    }
+
+    /// <summary>
+    /// syncBildMatDictのセッター
+    /// </summary>
+    /// <param name="calc"></param>
+    /// <param name="type"></param>
+    /// <param name="count"></param>
+    public void SetsyncBildMatDict(SyncDictCalculation calc, BildingMatType type, int count)
+    {
+        if (IsServerInitialized)
+            SetsyncBildMatDictServer(this, calc, type, count);
+        else
+            SetsyncBildMatDictServerRpc(this, calc, type, count);
+    }
+    [ServerRpc]
+    private void SetsyncBildMatDictServerRpc(InventoryManager my, SyncDictCalculation calc, BildingMatType type, int count)
+    {
+        SetsyncBildMatDictServer(my, calc, type, count);
+    }
+    [Server]
+    private void SetsyncBildMatDictServer(InventoryManager my, SyncDictCalculation calc, BildingMatType type, int count)
+    {
+        switch (calc)
+        {
+            case SyncDictCalculation.Invaild:
+                return;
+            case SyncDictCalculation.Add:
+                my.syncBildMatDict.Add(type, count);
+                break;
+            case SyncDictCalculation.Remove:
+                my.syncBildMatDict.Remove(type);
+                break;
+            case SyncDictCalculation.Assignment:
+                my.syncBildMatDict[type] = count;
+                break;
+            case SyncDictCalculation.Addition:
+                my.syncBildMatDict[type] += count;
+                break;
+            case SyncDictCalculation.Subtract:
+                my.syncBildMatDict[type] -= count;
+                break;
+        }
     }
 
     /// <summary>
@@ -516,6 +668,116 @@ public class InventoryManager : NetworkBehaviour
         syncAddInventoryItem.Value = _item;
     }
 
+    /// <summary>
+    /// syncAddResourceCountのセッター
+    /// </summary>
+    /// <param name="_count"></param>
+    public void SetsyncAddResourceCount(int _count)
+    {
+        if (IsServerInitialized)
+            SetsyncAddResourceCountServer(this, _count);
+        else
+            SetsyncAddResourceCountServerRpc(this, _count);
+    }
+    [ServerRpc]
+    private void SetsyncAddResourceCountServerRpc(InventoryManager _my, int _count)
+    {
+        SetsyncAddResourceCountServer(_my, _count);
+    }
+    [Server]
+    private void SetsyncAddResourceCountServer(InventoryManager _my, int _count)
+    {
+        _my.syncAddResourceCount.Value = _count;
+    }
+
+    /// <summary>
+    /// syncUseResourceCountのセッター
+    /// </summary>
+    /// <param name="_count"></param>
+    public void SetsyncUseResourceCount(int _count)
+    {
+        if (IsServerInitialized)
+            SetsyncUseResourceCountServer(this, _count);
+        else
+            SetsyncUseResourceCountServerRpc(this, _count);
+    }
+    [ServerRpc]
+    private void SetsyncUseResourceCountServerRpc(InventoryManager _my, int _count)
+    {
+        SetsyncUseResourceCountServer(_my, _count);
+    }
+    [Server]
+    private void SetsyncUseResourceCountServer(InventoryManager _my, int _count)
+    {
+        _my.syncUseResourceCount.Value = _count;
+    }
+
+    /// <summary>
+    /// syncInventoryItemInfoのセッター
+    /// </summary>
+    /// <param name="_info"></param>
+    public void SetsyncInventoryItemInfo(ChangeInventoryItemInfo _info)
+    {
+        if (IsServerInitialized)
+            SetsyncInventoryItemInfoServer(this, _info);
+        else
+            SetsyncInventoryItemInfoServerRpc(this, _info);
+    }
+    [ServerRpc]
+    private void SetsyncInventoryItemInfoServerRpc(InventoryManager _my, ChangeInventoryItemInfo _info)
+    {
+        SetsyncInventoryItemInfoServer(_my, _info);
+    }
+    [Server]
+    private void SetsyncInventoryItemInfoServer(InventoryManager _my, ChangeInventoryItemInfo _info)
+    {
+        _my.syncInventoryItemInfo.Value = _info;
+    }
+
+    /// <summary>
+    /// ChangeAmmoInfoのセッター
+    /// </summary>
+    /// <param name="_info"></param>
+    public void SetsyncAmmoInfo(ChangeAmmoInfo _info)
+    {
+        if (IsServerInitialized)
+            SetsyncAmmoInfoServer(this, _info);
+        else
+            SetsyncAmmoInfoServerRpc(this, _info);
+    }
+    [ServerRpc]
+    private void SetsyncAmmoInfoServerRpc(InventoryManager _my, ChangeAmmoInfo _info)
+    {
+        SetsyncAmmoInfoServer(_my, _info);
+    }
+    [Server]
+    private void SetsyncAmmoInfoServer(InventoryManager _my, ChangeAmmoInfo _info)
+    {
+        _my.syncAmmoInfo.Value = _info;
+    }
+
+    /// <summary>
+    /// ChangeBildingMatInfoのセッター
+    /// </summary>
+    /// <param name="_info"></param>
+    public void SetsyncBildingMatInfo(ChangeBildingMatInfo _info)
+    {
+        if (IsServerInitialized)
+            SetsyncBildingMatInfoServer(this, _info);
+        else
+            SetsyncBildingMatInfoServerRpc(this, _info);
+    }
+    [ServerRpc]
+    private void SetsyncBildingMatInfoServerRpc(InventoryManager _my, ChangeBildingMatInfo _info)
+    {
+        SetsyncBildingMatInfoServer(_my, _info);
+    }
+    [Server]
+    private void SetsyncBildingMatInfoServer(InventoryManager _my, ChangeBildingMatInfo _info)
+    {
+        _my.syncBildingMatInfo.Value = _info;
+    }
+
     #endregion
 
     #region UniTask
@@ -597,59 +859,16 @@ public class InventoryManager : NetworkBehaviour
             return false;
         }
 
-        // スロットを空にする
-        // RemoveAt() は使わない（後ろのスロットがずれてしまうため）
-        slots[slotNum] = null;
 
-        // 必要に応じて、既存のインベントリ更新イベントを呼び出す
-        // 例：OnRemoveItem?.Invoke(slotNum);
-        //  見た目の削除要求
-        OnDeletingSetItems.Invoke();
+        OnDeletingSetItems?.Invoke(slotNum);
+
         //  インベントリ側UIの更新要求
         ItemData data = item.data;
-        OnChangeInventoryItem.Invoke(slotNum, data, ResourceChangeType.Removed);
-        //  ホットバー側UIの更新要求
-        OnRemoveItem.Invoke(slotNum);
-
-        return true;
-    }
-
-    /// <summary>
-    /// インベントリ内部のアイテムデータを削除
-    /// </summary>
-    public bool RemoveItem(InventoryItem data)
-    {
-        //  アイテムからスロット番号を取得
-        int number = slots.IndexOf(data);
-
-        // スロット番号の範囲チェック
-        if (number < 0 || number >= slots.Count)
-        {
-            GameDebug.Warning($"[RemoveItem] 無効なスロット番号: {number}");
-            return false;
-        }
-
-        // 対象スロットのアイテムを取得
-        InventoryItem item = slots[number];
-
-        // アイテムが存在しない場合は削除しない
-        if (item == null || item.data == null)
-        {
-            GameDebug.Warning($"[RemoveItem] スロット {number} は空です");
-            return false;
-        }
-
-
+        SetsyncInventoryItemInfo(
+            new ChangeInventoryItemInfo(slotNum, data, ResourceChangeType.Removed)
+            );
         // スロットを空にする
-        slots[number] = null;
-
-        //  見た目の削除要求
-        OnDeletingSetItems.Invoke();
-        //  インベントリ側UIの更新要求
-        ItemData itemdata = item.data;
-        OnChangeInventoryItem.Invoke(number, itemdata, ResourceChangeType.Removed);
-        //  ホットバー側UIの更新要求
-        OnRemoveItem.Invoke(number);
+        RemoveSlots(slotNum);
 
         return true;
     }
@@ -698,7 +917,8 @@ public class InventoryManager : NetworkBehaviour
     /// <summary>
     /// アイテムをドロップする
     /// </summary>
-    public bool ItemDroping(
+    [ServerRpc]
+    public void ItemDroping(
         int number,
         ItemData dropData,
         InventoryItem state = null)
@@ -708,7 +928,7 @@ public class InventoryManager : NetworkBehaviour
         {
             GameDebug.Warning(
                 "[InventoryManager] ドロップする ItemData が null です。");
-            return false;
+            return;
         }
 
         // ドロップ対象の状態を取得
@@ -718,7 +938,7 @@ public class InventoryManager : NetworkBehaviour
         InventoryItem dropState = CopyItemState(sourceState);
 
         // ドロップオブジェクトを生成
-        GameObject obj = Instantiate(
+        NetworkObject obj = Instantiate(
             ItemdropObj,
             transform.position + transform.forward * 5f,
             Quaternion.identity);
@@ -728,28 +948,19 @@ public class InventoryManager : NetworkBehaviour
 
         if (item == null)
         {
-            Destroy(obj);
-
             GameDebug.Warning(
                 "[InventoryManager] ItemPickup が見つかりません。");
-            return false;
+            return;
         }
 
         item.Initialize(dropData, dropState);
 
-        // ネットワーク上にスポーン
-        InstanceFinder.ServerManager.Spawn(obj);
-
         // インベントリからアイテムを削除
         RemoveItem(number);
 
-        // UIなどへ通知
-        OnChangeInventoryItem?.Invoke(
-            number,
-            dropData,
-            ResourceChangeType.Removed);
+        // ネットワーク上にスポーン
+        Spawn(obj);
 
-        return true;
     }
 
     private InventoryItem CopyItemState(InventoryItem source)
@@ -843,9 +1054,10 @@ public class InventoryManager : NetworkBehaviour
 
     #endregion
 
-    #region 共通関数
+    #region 共通関数(Server)
     /// <summary>
     /// 共通Add関数
+    /// ※呼び出し元が[Server]を使用しているため、この関数は[Server]を使用しない
     /// </summary>
     /// <typeparam name="TKey"></typeparam>
     /// <param name="dict"></param>
@@ -854,7 +1066,7 @@ public class InventoryManager : NetworkBehaviour
     /// <param name="maxValue"></param>
     /// <param name="onOverflow"></param>
     private bool AddResource<TKey>(
-    Dictionary<TKey, int> dict,
+    SyncDictionary<TKey, int> dict,
     TKey key,
     int amount,
     int maxValue,
@@ -866,6 +1078,7 @@ public class InventoryManager : NetworkBehaviour
         // キーが存在しなければ追加
         if (!dict.ContainsKey(key))
         {
+            //  [Server]経由で呼び出されるためSetSyncDictionaryは使用せず、直接追加する
             dict.Add(key, amount);
         }
         else
@@ -884,6 +1097,7 @@ public class InventoryManager : NetworkBehaviour
 
         return true;
     }
+
     /// <summary>
     /// 共通Droping関数
     /// </summary>
@@ -892,36 +1106,87 @@ public class InventoryManager : NetworkBehaviour
     /// <param name="key"></param>
     /// <param name="amount"></param>
     private void DropingResource<TKey>(
-    Dictionary<TKey, int> dict,
+    SyncDictionary<TKey, int> dict,
     TKey key,
     int amount,
-    GameObject prefab,
+    NetworkObject prefab,
     Transform trans,
-    out GameObject obj,
-    out int dropAmount)
+    out NetworkObject nob)
+        where TKey : Enum
     {
         //  キーが無ければ
         if (!dict.TryGetValue(key, out int current))
         {
-            obj = null;
-            dropAmount = 0;
+            nob = null;
             return;
         }
 
-        dropAmount = Mathf.Min(current, amount);
-        dict[key] -= dropAmount;
+        int Amount = Mathf.Min(current, amount);
 
-        if (dropAmount == 0)
+        if (Amount == 0)
         {
-            obj = null;
+            nob = null;
             return;
         }
 
         //  ドロップオブジェクトを生成
-        obj = Instantiate(
+        NetworkObject obj = Instantiate(
             prefab,
             trans.position + trans.forward * 5f,
             Quaternion.identity);
+
+        if (obj == null)
+        {
+            nob = null;
+            return;
+        }
+        //  生成ができていればドロップオブジェクトの初期化
+        else
+        {
+            if (!DropResourceInit(obj, key, Amount))
+            {
+                GameDebug.Warning($"[DropingResource]DropOBJ初期化に失敗しました");
+                nob = null;
+                return;
+            }
+        }
+
+        //  生成したオブジェクトを返す
+        nob = obj;
+        //  Dictionary内のリソースを減算
+        SetSyncDictionary(key, SyncDictCalculation.Subtract, Amount);
+    }
+
+    private bool DropResourceInit<TKey>(
+        NetworkObject _nob,
+        TKey key,
+        int amount)
+        where TKey : Enum
+    {
+        if (typeof(TKey) == typeof(AmmoType))
+        {
+            AmmoType ammoType =
+                (AmmoType)Enum.ToObject(typeof(AmmoType), key);
+
+            _nob.GetComponent<AmmoPickup>()
+                .Initialize(ammoType, amount);
+            return true;
+        }
+        else if (typeof(TKey) == typeof(BildingMatType))
+        {
+            BildingMatType bildType =
+                (BildingMatType)Enum.ToObject(typeof(BildingMatType), key);
+
+            _nob.GetComponent<MaterialPickup>()
+                .Initialize(bildType, amount);
+            return true;
+        }
+        else
+        {
+            GameDebug.Warning($"[DropResourceInit]:ジェネリックタイプの変数を変換できませんでした, " +
+                $"未対応の型: {typeof(TKey)}");
+            return false;
+        }
     }
 
     /// <summary>
@@ -932,14 +1197,12 @@ public class InventoryManager : NetworkBehaviour
     /// <param name="key"></param>
     /// <param name="amount"></param>
     /// <returns></returns>
-    private bool TryConsumeResouce<TKey>(
-    Dictionary<TKey, int> dict,
+    private bool TryConsumeResource<TKey>(
+    SyncDictionary<TKey, int> dict,
     TKey key,
-    int amount,
-    out int r)
+    int amount)
+        where TKey : Enum
     {
-        r = 0;
-
         // 弾種が存在するか確認
         if (!dict.TryGetValue(key, out int currentAmmo))
         {
@@ -953,9 +1216,10 @@ public class InventoryManager : NetworkBehaviour
             amount = currentAmmo;
         }
 
-        // 消費
-        dict[key] -= amount;
-        r = amount;
+        //  消費
+        SetSyncDictionary(key, SyncDictCalculation.Subtract, amount);
+        //  消費数を同期
+        SetsyncUseResourceCount(amount);
 
         return true;
     }
@@ -969,7 +1233,7 @@ public class InventoryManager : NetworkBehaviour
     /// <param name="key"></param>
     /// <returns></returns>
     private int GetResouce<TKey>(
-        Dictionary<TKey, int> dict, TKey key)
+        SyncDictionary<TKey, int> dict, TKey key)
     {
         if (dict == null)
             return 0;
@@ -999,7 +1263,7 @@ public class InventoryManager : NetworkBehaviour
 
         //   Dictionary内のリソースが無くなれば
         if (dict[key] == 0)
-            dict.Remove(key);
+            SetSyncDictionary(key, SyncDictCalculation.Remove, 0);
     }
 
     /// <summary>
@@ -1007,16 +1271,54 @@ public class InventoryManager : NetworkBehaviour
     /// </summary>
     /// <typeparam name="TKey"></typeparam>
     /// <returns></returns>
-    private Dictionary<TKey, int> GetDictionary<TKey>()
+    private SyncDictionary<TKey, int> GetDictionary<TKey>()
     where TKey : Enum
     {
         if (typeof(TKey) == typeof(AmmoType))
-            return ammoDict as Dictionary<TKey, int>;
+            return syncAmmoDict as SyncDictionary<TKey, int>;
 
         if (typeof(TKey) == typeof(BildingMatType))
-            return bildMatDict as Dictionary<TKey, int>;
+            return syncBildMatDict as SyncDictionary<TKey, int>;
 
         return null;
+    }
+
+    /// <summary>
+    /// 共通SyncDictionaryのセッター
+    /// </summary>
+    /// <typeparam name="TKey"></typeparam>
+    /// <param name="key"></param>
+    /// <param name="calc"></param>
+    /// <param name="value"></param>
+    private void SetSyncDictionary<TKey>(TKey key, SyncDictCalculation calc, int value)
+        where TKey : Enum
+    {
+        if (calc == SyncDictCalculation.Invaild)
+        {
+            GameDebug.Warning($"[SetSyncDictionary]:計算方法が無効です, " +
+                    $"calc:{calc}");
+            return;
+        }
+
+        if (typeof(TKey) == typeof(AmmoType))
+        {
+            AmmoType ammoType =
+                (AmmoType)Enum.ToObject(typeof(AmmoType), key);
+            SetsyncAmmoDict(calc, ammoType, value);
+            return;
+        }
+
+        else if (typeof(TKey) == typeof(BildingMatType))
+        {
+            BildingMatType BildType =
+                (BildingMatType)Enum.ToObject(typeof(BildingMatType), key);
+
+            SetsyncBildMatDict(calc, BildType, value);
+            return;
+        }
+
+        GameDebug.Warning($"[SetSyncDictionary]:ジェネリックタイプの変数を変換できませんでした, " +
+            $"未対応の型: {typeof(TKey)}");
     }
 
     #endregion
@@ -1026,17 +1328,18 @@ public class InventoryManager : NetworkBehaviour
 
     /// <summary>
     /// 弾薬の追加
+    /// ※呼び出し元が[Server]を使用しているため、この関数は[Server]を使用しない
     /// </summary>
     /// <param name="type"></param>
     /// <param name="amount"></param>
     /// <returns></returns>
     public bool AddAmmo(AmmoType type, int amount)
     {
-        bool isNew = !ammoDict.ContainsKey(type);
+        bool isNew = !syncAmmoDict.ContainsKey(type);
 
         //  Add共通関数実行
         bool canAddResource = AddResource(
-            ammoDict,
+            syncAmmoDict,
             type,
             amount,
             MAX_AMMO,
@@ -1047,13 +1350,11 @@ public class InventoryManager : NetworkBehaviour
             return false;
 
         //  新規追加かどうか
-        if (isNew)
-            syncAmmoInfo.Value = new ChangeAmmoInfo(type, ammoDict[type], ResourceChangeType.AddedNew);
-        else
-            syncAmmoInfo.Value = new ChangeAmmoInfo(type, ammoDict[type], ResourceChangeType.Updated);
-
         //  同期 + Onchangeの呼び出し
-        IsNewAddAmmo.Value = isNew;
+        if (isNew)
+            syncAmmoInfo.Value = new ChangeAmmoInfo(type, syncAmmoDict[type], ResourceChangeType.AddedNew);
+        else
+            syncAmmoInfo.Value = new ChangeAmmoInfo(type, syncAmmoDict[type], ResourceChangeType.Updated);
 
         return true;
     }
@@ -1063,28 +1364,32 @@ public class InventoryManager : NetworkBehaviour
     /// </summary>
     /// <param name="type"></param>
     /// <param name="amount"></param>
+    [ServerRpc]
     public void AmmoDroping(AmmoType type, int amount)
     {
-        GameObject obj;
-        int dropAmount = 0;
-
         DropingResource(
-        ammoDict,
+        syncAmmoDict,
         type,
         amount,
         AmmodropObj,
         transform,
-        out obj,
-        out dropAmount);
+        out NetworkObject obj);
 
-        //  AmmoPickupを取得
-        AmmoPickup ap = obj?.GetComponent<AmmoPickup>();
-        ap?.Initialize(type, dropAmount);
+        if (obj == null)
+        {
+            GameDebug.Warning($"[AmmoDroping]:DropOBJの生成に失敗しました");
+            return;
+        }
 
-        ChangeAmmoInfo info 
-            = new ChangeAmmoInfo(type, ammoDict[type], ResourceChangeType.Removed);
+        //  ネットワーク上にスポーン
+        Spawn(obj);
 
-        OnChangeAmmo?.Invoke(info);
+        //  UI更新用情報作成
+        ChangeAmmoInfo info
+            = new ChangeAmmoInfo(type, syncAmmoDict[type], ResourceChangeType.Removed);
+
+        //  Onchange軽油でUIに更新通知
+        SetsyncAmmoInfo(info);
     }
 
     /// <summary>
@@ -1096,15 +1401,17 @@ public class InventoryManager : NetworkBehaviour
     public bool TryConsumeAmmo(AmmoType type, int amount, out int r)
     {
         bool flag;
+        r = 0;
 
-        if (TryConsumeResouce(ammoDict, type, amount, out r))
+        if (TryConsumeResource(syncAmmoDict, type, amount))
         {
-            ChangeAmmoInfo info 
-                = new ChangeAmmoInfo(type, ammoDict[type], ResourceChangeType.Updated);
+            ChangeAmmoInfo info
+                = new ChangeAmmoInfo(type, syncAmmoDict[type], ResourceChangeType.Updated);
 
-            //  UI更新通知
-            OnChangeAmmo?.Invoke(info);
+            SetsyncAmmoInfo(info);
 
+            //  消費数を取得し返す
+            r = syncUseResourceCount.Value;
             flag = true;
         }
         else
@@ -1117,24 +1424,28 @@ public class InventoryManager : NetworkBehaviour
 
     public int GetAmmo(AmmoType type)
     {
-        return GetResouce(ammoDict, type);
+        return GetResouce(syncAmmoDict, type);
     }
 
     #endregion
 
     #region 建材系
 
+    /// <summary>
+    /// 建材の追加
+    /// ※呼び出し元が[Server]を使用しているため、この関数は[Server]を使用しない
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="amount"></param>
+    /// <returns></returns>
     public bool AddBildMat(BildingMatType type, int amount)
     {
-        if (bildMatDict == null)
-            return false;
-
         //  新規追加かどうか
-        bool isNew = !bildMatDict.ContainsKey(type);
+        bool isNew = !syncBildMatDict.ContainsKey(type);
 
         //  Add共通関数実行
         bool canAddResource = AddResource(
-            bildMatDict,
+            syncBildMatDict,
             type,
             amount,
             MAX_BILDMAT,
@@ -1143,11 +1454,12 @@ public class InventoryManager : NetworkBehaviour
         if (!canAddResource)
             return false;
 
-        //  新規追加なら
+        //  新規追加かどうか
+        //  同期 + Onchangeの呼び出し
         if (isNew)
-            OnChangeBildMat?.Invoke(type, bildMatDict[type], ResourceChangeType.AddedNew);
+            syncBildingMatInfo.Value = new ChangeBildingMatInfo(type, syncBildMatDict[type], ResourceChangeType.AddedNew);
         else
-            OnChangeBildMat?.Invoke(type, bildMatDict[type], ResourceChangeType.Updated);
+            syncBildingMatInfo.Value = new ChangeBildingMatInfo(type, syncBildMatDict[type], ResourceChangeType.Updated);
 
         return true;
     }
@@ -1157,24 +1469,33 @@ public class InventoryManager : NetworkBehaviour
     /// </summary>
     /// <param name="type"></param>
     /// <param name="amount"></param>
+    [ServerRpc]
     public void MatDroping(BildingMatType type, int amount)
     {
 #if true
         DropingResource(
-        bildMatDict,
+        syncBildMatDict,
         type,
         amount,
         MaterialdropObj,
         transform,
-        out GameObject obj,
-        out int dropAmount);
+        out NetworkObject obj);
 
-        //  AmmoPickupを取得
-        MaterialPickup mp = obj?.GetComponent<MaterialPickup>();
-        mp?.Initialize(type, dropAmount);
+        if (obj == null)
+        {
+            GameDebug.Warning($"[MatDroping]:DropOBJの生成に失敗しました");
+            return;
+        }
 
-        OnChangeBildMat?.Invoke(type, bildMatDict[type], ResourceChangeType.Removed);
+        //  ネットワーク上にスポーン
+        Spawn(obj);
 
+        //  UI更新用情報作成
+        ChangeBildingMatInfo info
+            = new ChangeBildingMatInfo(type, syncBildMatDict[type], ResourceChangeType.Removed);
+
+        //  Onchange軽油でUIに更新通知
+        SetsyncBildingMatInfo(info);
 #endif
 
     }
@@ -1188,12 +1509,17 @@ public class InventoryManager : NetworkBehaviour
     public bool TryConsumeBildMat(BildingMatType type, int amount, out int r)
     {
         bool flag;
+        r = 0;
 
-        if (TryConsumeResouce(bildMatDict, type, amount, out r))
+        if (TryConsumeResource(syncBildMatDict, type, amount))
         {
             //  UI更新通知
-            OnChangeBildMat?.Invoke(type, bildMatDict[type],
-                ResourceChangeType.Updated);
+            ChangeBildingMatInfo info
+                = new ChangeBildingMatInfo(type, syncBildMatDict[type], ResourceChangeType.Updated);
+            SetsyncBildingMatInfo(info);
+
+            //  消費数を取得し返す
+            r = syncUseResourceCount.Value;
             flag = true;
         }
         else
@@ -1206,7 +1532,7 @@ public class InventoryManager : NetworkBehaviour
 
     public int GetMat(BildingMatType type)
     {
-        return GetResouce(bildMatDict, type);
+        return GetResouce(syncBildMatDict, type);
     }
 
     #endregion

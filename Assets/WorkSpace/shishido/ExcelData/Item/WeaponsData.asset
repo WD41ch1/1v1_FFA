@@ -42,7 +42,7 @@ MonoBehaviour:
       fireAccuracy: 0
       recoilValue: 0
       adsSpeed: 0
-      adsMultiplier: 0
+      adsMultiplier: 1
       distanceAttenuation: 0
       headMultiplier: 2
       bodyMultiplier: 1

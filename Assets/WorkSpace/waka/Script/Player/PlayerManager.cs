@@ -1,10 +1,11 @@
-using FishNet.Object;
-using UnityEngine;
-using static GameConst;
-using static CheckReferenceUtility;
-using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
+using FishNet.Object;
+using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
+using UnityEngine;
+using static CheckReferenceUtility;
+using static GameConst;
 
 /// <summary>
 /// Playerについているclassを管理するクラス
@@ -28,7 +29,13 @@ public class PlayerManager : NetworkBehaviour
     [SerializeField]
     private PlayerType playerType;
 
-    private CancellationToken _token;
+    [Header("PlayerのModel")]
+    [SerializeField] private GameObject Armature;
+    [SerializeField] private GameObject SM_Bag;
+    [SerializeField] private GameObject SM_Body;
+    [SerializeField] private GameObject SM_Dagger;
+    [SerializeField] private GameObject SM_Head;
+    [SerializeField] private GameObject SM_Legs;
 
     #endregion
 
@@ -54,6 +61,7 @@ public class PlayerManager : NetworkBehaviour
     //  生成されるCanvasの格納場所
     private GameObject _playerCanvas = null;
 
+    private CancellationToken _token;
     #endregion
 
     #region Components
@@ -537,7 +545,7 @@ public class PlayerManager : NetworkBehaviour
     /// <param name="_wbase"></param>
     /// <param name="_data"></param>
     /// <returns></returns>
-    public WeaponDamageSyncData CreateWeaponDamageSyncData( WeaponData _data)
+    public WeaponDamageSyncData CreateWeaponDamageSyncData(WeaponData _data)
     {
         WeaponDamageSyncData syncData = new WeaponDamageSyncData();
 
@@ -573,6 +581,43 @@ public class PlayerManager : NetworkBehaviour
     {
         return IsOwner;
     }
+
+    #endregion
+
+    #region その他Setter(Server系も含む)
+
+    public void SetActivPlayerModel(PlayerManager my, bool flag)
+    {
+        if (IsServerInitialized)
+            SetActivPlayerModelServer(my, flag);
+        else
+            SetActivPlayerModelServerRpc(my, flag);
+    }
+    [ServerRpc]
+    private void SetActivPlayerModelServerRpc(PlayerManager my, bool flag)
+    {
+        SetActivPlayerModelServer(my, flag);
+    }
+    [Server]
+    private void SetActivPlayerModelServer(PlayerManager my, bool flag)
+    {
+        my.Armature?.SetActive(flag);
+        my.SM_Bag?.SetActive(flag);
+        my.SM_Body?.SetActive(flag);
+        my.SM_Dagger?.SetActive(flag);
+        my.SM_Head?.SetActive(flag);
+        my.SM_Legs?.SetActive(flag);
+    }
+    public void SetActivPlayerModelLocal( bool flag)
+    {
+        Armature?.SetActive(flag);
+        SM_Bag?.SetActive(flag);
+        SM_Body?.SetActive(flag);
+        SM_Dagger?.SetActive(flag);
+        SM_Head?.SetActive(flag);
+        SM_Legs?.SetActive(flag);
+    }
+
 
     #endregion
 }
