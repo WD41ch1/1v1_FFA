@@ -1,5 +1,7 @@
+using FishNet.Connection;
 using TMPro;
 using UnityEngine;
+using UnityEngine.ProBuilder.Shapes;
 using UnityEngine.UI;
 
 public class DeadResult : UIBase
@@ -8,6 +10,8 @@ public class DeadResult : UIBase
     [SerializeField] private Button RespawnButton;
     [SerializeField] private Button ExitButton;
 
+    private NetworkConnection connection;
+
     protected override void OnInitialize()
     {
         //  イベント登録
@@ -15,13 +19,14 @@ public class DeadResult : UIBase
         RespawnButton.onClick.AddListener(OnRespawnButtonClicked);
         ExitButton.onClick.AddListener(OnExitButtonClicked);
 
-        Hide();
+        Hidepanel();
     }
 
-    public void ShowDeadResult(DamageInfo result)
+    public void ShowDeadResult(DamageInfo result,NetworkConnection con)
     {
+        connection = con;
         SetKilledByPlayer(result.Attacker.name);
-        Show();
+        Showpanel();
     }
 
     public void SetKilledByPlayer(string playerName)
@@ -35,8 +40,8 @@ public class DeadResult : UIBase
 
     public void OnRespawnButtonClicked()
     {
-        MatchManager.Instance?.RequestRespawn(myPlayer);
-        Hide();
+        MatchManager.Instance?.RequestRespawn(connection);
+        Destroy(this.transform.parent.gameObject);
     }
 
     public void OnExitButtonClicked()
@@ -49,12 +54,12 @@ public class DeadResult : UIBase
     #endregion
 
     #region 表示切替
-    public override void Show()
+    public  void Showpanel()
     {
         this.gameObject.SetActive(true);
     }
 
-    public override void Hide()
+    public  void Hidepanel()
     {
         this.gameObject.SetActive(false);
     }

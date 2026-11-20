@@ -1,3 +1,4 @@
+using FishNet.Connection;
 using FishNet.Demo.AdditiveScenes;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
@@ -25,7 +26,7 @@ public class PlayerHealth : NetworkBehaviour
     //  UI通知アクション変数
     public event Action<float, float> OnHealthChanged;
     public event Action<float, float> OnShieldChanged;
-    public event Action<DamageInfo> OnDead;
+    public event Action<DamageInfo, NetworkConnection> OnDead;
 
 
     //  UI用:シールド破壊通知
@@ -246,29 +247,27 @@ public class PlayerHealth : NetworkBehaviour
     private void Die(PlayerHealth my, DamageInfo info)
     {
         GameDebug.Log($"{lastAttacker?.name}に倒された");
-        my.syncIsDead.Value = true;
         my.syncDeadInfo.Value = info;
+        SetsyncIsDead(my,true);
         //  ダウンアニメーションor死亡アニメーション再生
 
-        //NetworkObject nob =
-        //    my.gameObject.GetComponent<NetworkObject>();
-        //Despawn(nob);
+        NetworkObject nob =
+            my.gameObject.GetComponent<NetworkObject>();
+        Despawn(nob);
     }
 
     private void OnChangeIsDead(bool prev, bool next, bool asServer)
     {
         if (next)
         {
-            //  シーンから消す
-            myPlayer.SetActivPlayerModel(myPlayer,false);
-            myPlayer.SetActivPlayerModelLocal(false);
+            ////  モデル非表示
+            ////  ネットワーク上
+            //myPlayer.SetActivPlayerModel(myPlayer, false);            ;
+            ////  ローカル
+            //myPlayer.SetActivPlayerModelLocal(false);
+
             //  UIの表示
-            OnDead?.Invoke(syncDeadInfo.Value);
-        }
-        else
-        {
-            myPlayer.SetActivPlayerModel(myPlayer, true);
-            myPlayer.SetActivPlayerModelLocal(true);
+            OnDead?.Invoke(syncDeadInfo.Value,myPlayer.Owner);
         }
     }
 
@@ -277,8 +276,6 @@ public class PlayerHealth : NetworkBehaviour
     /// </summary>
     public void ResetStatus()
     {
-        //  死亡状態解除
-        SetsyncIsDead(false);
         //  HP・シールドを初期化
         SetSyncVar_Health(this, MaxHealth,MaxHealth);
         SetSyncVar_Shield(this, MaxShield, MaxShield);
@@ -308,23 +305,23 @@ public class PlayerHealth : NetworkBehaviour
 
     #region SyncSetter
 
-    public void SetsyncIsDead(bool _flag)
+    public void SetsyncIsDead(PlayerHealth my, bool _flag)
     {
         if (IsServerInitialized)
-            SetsyncIsDeadServer(_flag);
+            SetsyncIsDeadServer(my, _flag);
         else
-            SetsyncIsDeadServerRpc(_flag);
+            SetsyncIsDeadServerRpc(my,_flag);
     }
 
     [ServerRpc]
-    private void SetsyncIsDeadServerRpc(bool _flag)
+    private void SetsyncIsDeadServerRpc(PlayerHealth my,bool _flag)
     {
-        SetsyncIsDeadServer(_flag);
+        SetsyncIsDeadServer(my,_flag);
     }
     [Server]
-    private void SetsyncIsDeadServer(bool _flag)
+    private void SetsyncIsDeadServer(PlayerHealth my, bool _flag)
     {
-        syncIsDead.Value = _flag;
+        my.syncIsDead.Value = _flag;
     }
 
     #endregion

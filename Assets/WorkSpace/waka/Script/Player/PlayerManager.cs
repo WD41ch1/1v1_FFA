@@ -593,7 +593,7 @@ public class PlayerManager : NetworkBehaviour
         else
             SetActivPlayerModelServerRpc(my, flag);
     }
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     private void SetActivPlayerModelServerRpc(PlayerManager my, bool flag)
     {
         SetActivPlayerModelServer(my, flag);

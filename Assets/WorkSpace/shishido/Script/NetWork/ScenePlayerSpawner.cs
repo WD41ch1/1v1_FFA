@@ -70,7 +70,7 @@ public class ScenePlayerSpawner : NetworkBehaviour
     /// playerPrefabの生成
     /// </summary>
     /// <param name="connection"></param>
-    private void SpawnPlayer(NetworkConnection connection)
+    public void SpawnPlayer(NetworkConnection connection)
     {
         //  FishNetのプーリングシステムを使用した生成
         NetworkObject obj = NetworkManager.GetPooledInstantiated(_playerPrefab, asServer: true);

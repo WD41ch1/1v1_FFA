@@ -22,8 +22,13 @@ public class MatchManager : nobManagerBase
     private List<NetworkConnection> matchPlayers
     = new List<NetworkConnection>();
 
-    private readonly SyncVar<bool> syncSuccess = new SyncVar<bool>();
+    private readonly SyncVar<bool> syncSuccess
+        = new SyncVar<bool>();
 
+    private readonly SyncList<PlayerManager> deadPlayerList
+        = new SyncList<PlayerManager>();
+    private readonly SyncList<NetworkConnection> PlayerList
+        = new SyncList<NetworkConnection>();
     #endregion
 
     #region Initialize
@@ -93,38 +98,6 @@ public class MatchManager : nobManagerBase
         //);
     }
 
-    [ServerRpc]
-    public void RequestRespawn(PlayerManager target)
-    {
-        //  サーバーが閉じているもしくは対象がまだ生きていたら
-        if (!IsServerInitialized||
-            target.playerHealth.syncIsDead.Value)
-            return;
-
-        GameDebug.Log($"[RequestRespawn]");
-
-        //  Respawn処理
-        Respawn(target);
-    }
-
-    [Server]
-    private void Respawn(PlayerManager target)
-    {
-        // ① Inventory・装備を初期化
-        //target.inventoryManager.ResetInventory();
-        //target.equipmentManager.ResetEquipment();
-
-        // ② HP・シールドを初期化 + 死亡状態を解除
-        target.playerHealth.ResetStatus();
-
-        // ③ Respawn地点に移動
-        //transform.SetPositionAndRotation(
-        //    respawnPosition,
-        //    respawnRotation
-        //);
-
-        //target.SetActivPlayerModel(target,true);
-    }
     #endregion
 
     #region アイテム取得管理
@@ -228,6 +201,131 @@ public class MatchManager : nobManagerBase
 
     #endregion
 
+    #region 死亡状態管理
+
+
+    /// <summary>
+    /// 対象Playerの見た目削除
+    /// </summary>
+    public void DespawnPalyer(PlayerManager target)
+    {
+        if (IsServerInitialized) DespawnPalyerServer(target);
+        else DespawnPalyerServerRpc(target);
+    }
+    [ServerRpc(RequireOwnership = false)]
+    private void DespawnPalyerServerRpc(PlayerManager target)
+    {
+        DespawnPalyerServer(target);
+    }
+    [Server]
+    private void DespawnPalyerServer(PlayerManager target)
+    {
+        // 対象がまだ生きていたら
+        if (!target.playerHealth.syncIsDead.Value)
+            return;
+
+        target.SetActivPlayerModel(target, false);
+        AddDeadList(target);
+    }
+
+    public void AddDeadList(PlayerManager target)
+    {
+        SetsyncDeadPlayerList(target);
+    }
+
+    public void SetsyncDeadPlayerList(PlayerManager target)
+    {
+        if (IsServerInitialized)
+            SetsyncDeadPlayerListServer(target);
+        else
+            SetsyncDeadPlayerListServerRpc(target);
+
+    }
+    [ServerRpc]
+    private void SetsyncDeadPlayerListServerRpc(PlayerManager target)
+    {
+        SetsyncDeadPlayerListServer(target);
+    }
+    [Server]
+    private void SetsyncDeadPlayerListServer(PlayerManager target)
+    {
+        deadPlayerList.Add(target);
+    }
+
+
+    public void RequestRespawn(PlayerManager target)
+    {
+        // 対象がまだ生きていたら
+        if (!target.playerHealth.syncIsDead.Value)
+            return;
+
+        GameDebug.Log($"[RequestRespawn]");
+
+        //  Respawn処理
+        TargetPaleryRespawn(target);
+    }
+
+    public void RequestRespawn(NetworkConnection target)
+    {
+        GameDebug.Log($"[RequestRespawn]");
+
+        //  Respawn処理
+        TargetPaleryRespawn(target);
+    }
+
+    [Server]
+    private void TargetPaleryRespawn(NetworkConnection target)
+    {
+        ScenePlayerSpawner ps = FindAnyObjectByType<ScenePlayerSpawner>();
+        ps?.SpawnPlayer(target);
+    }
+
+
+    private void TargetPaleryRespawn(PlayerManager target)
+    {
+        //  対象が死亡リストにあるか
+        if (!deadPlayerList.Contains(target))
+            return;
+
+        Respawn(target);
+
+    }
+
+    public void Respawn(PlayerManager target)
+    {
+        if (IsServerInitialized)
+            RespawnServer(target);
+        else
+            RespawnServerRpc(target);
+    }
+    [ServerRpc(RequireOwnership = false)]
+    private void RespawnServerRpc(PlayerManager target)
+    {
+        RespawnServer(target);
+    }
+    [Server]
+    private void RespawnServer(PlayerManager target)
+    {
+        // ① Inventory・装備を初期化
+        //target.inventoryManager.ResetInventory();
+        //target.equipmentManager.ResetEquipment();
+
+        // ② HP・シールドを初期化 + 死亡状態を解除
+        target.playerHealth.ResetStatus();
+        target.playerHealth.SetsyncIsDead(target.playerHealth, false);
+
+        // ③ Respawn地点に移動
+        //transform.SetPositionAndRotation(
+        //    respawnPosition,
+        //    respawnRotation
+        //);
+
+        //target.SetActivPlayerModel(target,true);
+    }
+
+
+    #endregion
+
     #region ダメージ管理
 
     public void RequestTakeDamage(
@@ -237,10 +335,10 @@ public class MatchManager : nobManagerBase
         WeaponDamageSyncData data
         )
     {
-        DamageInfo info = CreateDamageInfo(attacker, hit,  data);
+        DamageInfo info = CreateDamageInfo(attacker, hit, data);
 
-        DamageResult result 
-            = target.playerHealth.TakeDamage(target.playerHealth,info);
+        DamageResult result
+            = target.playerHealth.TakeDamage(target.playerHealth, info);
     }
 
     /// <summary>
