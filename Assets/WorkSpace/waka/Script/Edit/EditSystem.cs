@@ -1,5 +1,9 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 using FishNet.Object;
+
+// 同名のクラスとの混同を防ぐ。
+using UnityPlayerInput = UnityEngine.InputSystem.PlayerInput;
 
 public interface IBuildingEditTarget
 {
@@ -24,8 +28,15 @@ public class EditSystem : MonoBehaviour
     public LayerMask obstructionMask = ~0;
     public float editDistance = 6f;
 
-    [Header("操作キー")]
-    public KeyCode editKey = KeyCode.E;
+    [Header("編集開始のInput Actions")]
+    [Tooltip("空ならPlayerから自動取得する")]
+    [SerializeField]
+    private UnityPlayerInput editPlayerInput;
+
+    [SerializeField]
+    private string editActionPath = "Player/Edit";
+
+    [Header("その他の操作キー")]
     public KeyCode resetKey = KeyCode.R;
     public KeyCode cancelKey = KeyCode.Escape;
 
@@ -42,12 +53,25 @@ public class EditSystem : MonoBehaviour
     private float messageUntil;
 
     private NetworkObject playerNetworkObject;
+    private PlayerInputController inputController;
     private bool wasLocalOwner;
 
-    private bool CanProcessInput =>
+    private InputActionAsset cachedActions;
+    private InputAction editAction;
+    private string cachedActionPath;
+    private bool warnedEditInput;
+
+    private bool IsLocalOwner =>
         playerNetworkObject != null &&
         playerNetworkObject.IsClientInitialized &&
         playerNetworkObject.IsOwner;
+
+    private bool CanProcessInput =>
+        IsLocalOwner &&
+        Application.isFocused &&
+        !KeybindSession.BlocksGameplay &&
+        inputController != null &&
+        inputController.CanProcessInput;
 
     private void Awake()
     {
@@ -63,6 +87,15 @@ public class EditSystem : MonoBehaviour
         }
 
         player = playerNetworkObject.transform;
+
+        inputController =
+            player.GetComponent<PlayerInputController>();
+
+        if (inputController == null)
+        {
+            inputController =
+                player.GetComponentInChildren<PlayerInputController>(true);
+        }
 
         buildingSystem =
             player.GetComponentInChildren<BuildingSystem>(true);
@@ -81,6 +114,7 @@ public class EditSystem : MonoBehaviour
     {
         message = text;
         messageUntil = Time.unscaledTime + 4f;
+
         Debug.LogWarning("[編集] " + text, this);
     }
 
@@ -98,7 +132,7 @@ public class EditSystem : MonoBehaviour
 
     private void Update()
     {
-        bool localOwner = CanProcessInput;
+        bool localOwner = IsLocalOwner;
 
         if (!localOwner)
         {
@@ -106,6 +140,7 @@ public class EditSystem : MonoBehaviour
             {
                 CancelEditing();
                 playerCamera = null;
+                ClearEditActionCache();
             }
 
             wasLocalOwner = false;
@@ -113,6 +148,22 @@ public class EditSystem : MonoBehaviour
         }
 
         wasLocalOwner = true;
+
+        // 設定画面や入力停止中は編集をキャンセルする。
+        if (!CanProcessInput)
+        {
+            CancelEditing();
+            return;
+        }
+
+        // Escを押したフレームでは新しく編集を始めない。
+        // キー設定画面の開閉はKeybindSettingsUIが担当する。
+        if (Keyboard.current != null &&
+            Keyboard.current.escapeKey.wasPressedThisFrame)
+        {
+            CancelEditing();
+            return;
+        }
 
         if (playerCamera == null && player != null)
         {
@@ -122,7 +173,7 @@ public class EditSystem : MonoBehaviour
 
         if (waitingForRelease)
         {
-            if (!Input.GetMouseButton(0))
+            if (!IsLeftMouseHeld())
                 RestoreBuilding();
 
             return;
@@ -137,8 +188,112 @@ public class EditSystem : MonoBehaviour
             return;
         }
 
-        if (Input.GetKeyDown(editKey))
+        // 固定のEキーではなく、変更後のInput Actionを読む。
+        if (WasEditPressed())
             TryBeginEdit();
+    }
+
+    private bool WasEditPressed()
+    {
+        if (!TryResolveEditAction())
+            return false;
+
+        if (!editPlayerInput.isActiveAndEnabled ||
+            !editAction.enabled)
+        {
+            return false;
+        }
+
+        return editAction.WasPressedThisFrame();
+    }
+
+    private bool TryResolveEditAction()
+    {
+        // キー変更を適用しているPlayerInputと同じものを使う。
+        if (inputController != null &&
+            inputController.playerInput != null)
+        {
+            editPlayerInput = inputController.playerInput;
+        }
+
+        if (editPlayerInput == null && player != null)
+        {
+            editPlayerInput =
+                player.GetComponent<UnityPlayerInput>();
+
+            if (editPlayerInput == null)
+            {
+                editPlayerInput =
+                    player.GetComponentInChildren<UnityPlayerInput>(true);
+            }
+        }
+
+        if (editPlayerInput == null)
+        {
+            WarnEditInput(
+                "PlayerにPlayer Inputコンポーネントが必要です。");
+            return false;
+        }
+
+        InputActionAsset actions = editPlayerInput.actions;
+
+        if (actions == null)
+        {
+            WarnEditInput(
+                "Player InputのActionsが未設定です。");
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(editActionPath))
+        {
+            WarnEditInput(
+                "Edit Action PathをPlayer/Editにしてください。");
+            return false;
+        }
+
+        if (cachedActions != actions ||
+            cachedActionPath != editActionPath ||
+            editAction == null)
+        {
+            cachedActions = actions;
+            cachedActionPath = editActionPath;
+            editAction = actions.FindAction(editActionPath, false);
+        }
+
+        if (editAction == null)
+        {
+            WarnEditInput(
+                "Input Actionsに「" + editActionPath +
+                "」がありません。PlayerにEditを追加してください。");
+            return false;
+        }
+
+        warnedEditInput = false;
+        return true;
+    }
+
+    private void WarnEditInput(string text)
+    {
+        if (warnedEditInput)
+            return;
+
+        warnedEditInput = true;
+        Debug.LogWarning("[編集入力] " + text, this);
+    }
+
+    private void ClearEditActionCache()
+    {
+        // PlayerInput側のActionは無効化しない。
+        editAction = null;
+        cachedActions = null;
+        cachedActionPath = null;
+        warnedEditInput = false;
+    }
+
+    private static bool IsLeftMouseHeld()
+    {
+        return Mouse.current != null &&
+               Mouse.current.leftButton.isPressed;
     }
 
     private void UpdateEditing()
@@ -160,6 +315,7 @@ public class EditSystem : MonoBehaviour
             return;
         }
 
+        // リセットとキャンセルは、元のキー設定を維持する。
         if (Input.GetKeyDown(cancelKey))
         {
             EndEdit(false);
@@ -178,18 +334,26 @@ public class EditSystem : MonoBehaviour
             playerCamera.transform.position,
             playerCamera.transform.forward);
 
-        if (Input.GetMouseButtonDown(0))
+        Mouse mouse = Mouse.current;
+
+        if (mouse == null)
+        {
+            selecting = false;
+            return;
+        }
+
+        if (mouse.leftButton.wasPressedThisFrame)
         {
             selecting = true;
             message = "";
             target.Paint(ray, true);
         }
-        else if (selecting && Input.GetMouseButton(0))
+        else if (selecting && mouse.leftButton.isPressed)
         {
             target.Paint(ray, false);
         }
 
-        if (selecting && Input.GetMouseButtonUp(0))
+        if (selecting && mouse.leftButton.wasReleasedThisFrame)
         {
             selecting = false;
             TryConfirm();
@@ -364,7 +528,7 @@ public class EditSystem : MonoBehaviour
             return;
         }
 
-        // WallEditからNetworkBuildingEditへ要求が送られる。
+        // 編集対象からNetworkBuildingEditへ要求が送られる。
         if (target.ConfirmEdit(player, out string reason))
         {
             EndEdit(true);
@@ -402,6 +566,7 @@ public class EditSystem : MonoBehaviour
     private void OnDisable()
     {
         CancelEditing();
+        ClearEditActionCache();
         wasLocalOwner = false;
     }
 

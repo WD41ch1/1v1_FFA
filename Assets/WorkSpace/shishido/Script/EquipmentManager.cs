@@ -118,8 +118,14 @@ public class EquipmentManager : NetworkBehaviour
 
         SetCurrentSlot(slotNum);
 
-        // 装備成功後に、そのアイテムのアニメーションへ変更
+        // 装備成功後に、そのアイテムのアニメーションへ変更。
         ApplyEquippedAnimation(data);
+
+        // 武器の装備に成功したときだけ鳴らす。
+        WeaponBase equippedWeapon = GetcurrentWeapon();
+
+        if (equippedWeapon != null)
+            equippedWeapon.PlayEquipSound();
 
         return true;
     }

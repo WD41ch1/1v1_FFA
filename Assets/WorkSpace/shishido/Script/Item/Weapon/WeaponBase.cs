@@ -279,19 +279,25 @@ public abstract class WeaponBase : ItemBase
     /// <param name="reloadTime"></param>
     /// <param name="_approvalValue"></param>
     /// <returns></returns>
-    protected virtual IEnumerator ReloadAnimation(float reloadTime, int _approvalValue)
+    protected virtual IEnumerator ReloadAnimation(
+       float reloadTime,
+       int _approvalValue)
     {
+        // 補充する弾がない場合は、音もアニメーションも開始しない。
+        if (isReloading || _approvalValue <= 0)
+            yield break;
+
         isReloading = true;
 
-        //  追加：リロードアニメーション通知
         NotifyReloadAnimation();
+
+        // リロード開始時に1回だけ通知。
+        PlayWeaponSound(GameSoundId.Reload);
 
         yield return new WaitForSeconds(reloadTime);
 
-        //  弾補充     
         weaponState.currentAmmo += _approvalValue;
 
-        //  HotBerSlotの更新
         AmmoCheker();
 
         isReloading = false;
@@ -573,6 +579,67 @@ public abstract class WeaponBase : ItemBase
         }
 
         controller.NotifyWeaponReload(type);
+    }
+
+    #endregion
+
+    #region 武器サウンド
+
+    private bool warnedMissingWeaponSoundEmitter;
+
+    protected void PlayWeaponSound(GameSoundId soundId)
+    {
+        if (!TryGetWeaponResources(
+                out WeaponData data,
+                out PlayerManager owner))
+        {
+            return;
+        }
+
+        // 現在の射撃・リロード操作は所有者側で実行される。
+        // 所有者だけが通知し、重複再生を防ぐ。
+        if (!owner.IsClientInitialized || !owner.IsOwner)
+            return;
+
+        NetworkSoundEmitter emitter =
+            owner.GetComponent<NetworkSoundEmitter>();
+
+        if (emitter == null)
+        {
+            if (!warnedMissingWeaponSoundEmitter)
+            {
+                warnedMissingWeaponSoundEmitter = true;
+
+                Debug.LogWarning(
+                    "武器音：PlayerにNetworkSoundEmitterが必要です。",
+                    this);
+            }
+
+            return;
+        }
+
+        emitter.RequestSound(soundId, owner.transform.position);
+    }
+
+    protected void NotifyWeaponFireSound()
+    {
+        GameSoundId soundId;
+
+        if (this is ShotGun)
+            soundId = GameSoundId.ShotgunFire;
+        else if (this is Pistol)
+            soundId = GameSoundId.PistolFire;
+        else if (this is SubmachineGun)
+            soundId = GameSoundId.SubmachineFire;
+        else
+            soundId = GameSoundId.AssaultFire;
+
+        PlayWeaponSound(soundId);
+    }
+
+    public void PlayEquipSound()
+    {
+        PlayWeaponSound(GameSoundId.WeaponEquip);
     }
 
     #endregion

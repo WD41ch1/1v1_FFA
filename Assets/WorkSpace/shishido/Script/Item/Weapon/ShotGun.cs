@@ -88,7 +88,8 @@ public class ShotGun : WeaponBase
 
         //  弾数消費
         weaponState.currentAmmo--;
-
+        // 弾を消費して発射したときだけ鳴らす。
+        NotifyWeaponFireSound();
         isShooting = false;
     }
 
@@ -110,40 +111,45 @@ public class ShotGun : WeaponBase
         StartCoroutine(ReloadAnimation(data.reloadTime, 0));
     }
 
-    protected override IEnumerator ReloadAnimation(float reloadTime, int _approvalValue)
+    protected override IEnumerator ReloadAnimation(
+        float reloadTime,
+        int _approvalValue)
     {
-        if (!TryGetWeaponResources(out WeaponData data, out PlayerManager owner))
-            yield return null;
+        if (!TryGetWeaponResources(
+                out WeaponData data,
+                out PlayerManager owner))
+        {
+            yield break;
+        }
+
+        if (isReloading)
+            yield break;
 
         isReloading = true;
 
         while (weaponState.currentAmmo < data.magazineSize)
         {
-            // 射撃されたらリロード中断
-            //if (isShooting)
-            //    break;
+            int approvalValue;
 
-            int approvalValue = 0;
-
-            // 弾を1発消費
             if (!owner.TryConsumeAmmo(
-                data.ammoType,
-                1,
-                out approvalValue))
+                    data.ammoType,
+                    1,
+                    out approvalValue) ||
+                approvalValue <= 0)
             {
-                // 弾切れ
                 break;
             }
 
-            // リロード時間
+            // 1発を詰めるたびに、短い装填音を再生する。
+            PlayWeaponSound(GameSoundId.ShotgunReload);
+
             yield return new WaitForSeconds(reloadTime);
 
-            // マガジンに補充
-            weaponState.currentAmmo += approvalValue;
+            weaponState.currentAmmo = Mathf.Min(
+                weaponState.currentAmmo + approvalValue,
+                data.magazineSize);
 
-            // 上限チェック
-            if (weaponState.currentAmmo > data.magazineSize)
-                weaponState.currentAmmo = data.magazineSize;
+            AmmoCheker();
         }
 
         isReloading = false;

@@ -13,6 +13,10 @@ public enum GameSoundId
     AssaultFire = 10,
     PistolFire = 11,
     Reload = 12,
+    WeaponEquip = 13,
+    ShotgunFire = 14,
+    SubmachineFire = 15,
+    ShotgunReload = 16,
 
     BuildWood = 20,
     BuildBreak = 21,

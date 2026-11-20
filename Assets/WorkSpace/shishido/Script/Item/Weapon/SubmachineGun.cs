@@ -61,7 +61,8 @@ public class SubmachineGun : WeaponBase
 
         //  弾数消費
         weaponState.currentAmmo--;
-
+        // 弾を消費して発射したときだけ鳴らす。
+        NotifyWeaponFireSound();
         //  UIの更新
         AmmoCheker();
 

@@ -84,7 +84,10 @@ public class KeybindSettingsUI : MonoBehaviour
         new Entry("Wall", "Building/Wall"),
         new Entry("Ramp", "Building/Ramp"),
         new Entry("Floor", "Building/Floor"),
-        new Entry("Roof", "Building/Cone")
+        new Entry("Roof", "Building/Cone"),
+
+        // 建築編集キー。
+        new Entry("Edit", "Player/Edit")
     };
 
     private InputActionAsset workingActions;
@@ -161,7 +164,6 @@ public class KeybindSettingsUI : MonoBehaviour
         resetButton.onClick.AddListener(ResetSettings);
 
         ready = true;
-
         settingsPanel.SetActive(false);
 
         SetTitle("Key Settings");
