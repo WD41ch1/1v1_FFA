@@ -2979,8 +2979,8 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 3830073925755514194}
         m_TargetAssemblyTypeName: PlayerInputController, Assembly-CSharp
-        m_MethodName: 
-        m_Mode: 1
+        m_MethodName: OnEquipPickelSlot
+        m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
@@ -3235,6 +3235,10 @@ MonoBehaviour:
         m_CallState: 2
     m_ActionId: 02c534f8-1282-4fa8-b75d-5b34b087b48a
     m_ActionName: Player/Inventory[/Keyboard/g]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 46877d7e-6161-4b4b-9a37-337b9616671b
+    m_ActionName: Player/Crouch[/Keyboard/leftCtrl]
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
   m_DefaultActionMap: Player
@@ -3314,9 +3318,9 @@ MonoBehaviour:
   _addedNetworkObject: {fileID: 3890100773366206426}
   _networkObjectCache: {fileID: 0}
   pickel: {fileID: 11400000, guid: 659ad35d1007c8649b911de55e5c8426, type: 2}
-  AmmodropObj: {fileID: 584293302234795832, guid: d0c011e2874b6a646ab3d13550880813, type: 3}
-  MaterialdropObj: {fileID: 3564781315763711787, guid: ea5437e65bbc0a64eb4dd2e602469e47, type: 3}
-  ItemdropObj: {fileID: 625260886240656399, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
+  AmmodropObj: {fileID: 1149745999169553978, guid: d0c011e2874b6a646ab3d13550880813, type: 3}
+  MaterialdropObj: {fileID: 419435582216428704, guid: ea5437e65bbc0a64eb4dd2e602469e47, type: 3}
+  ItemdropObj: {fileID: 7052916900198836612, guid: 270a4558ab61a694fb38a5ff2e3d1377, type: 3}
   viewSyncListSlots: []
 --- !u!114 &6618349034464132242
 MonoBehaviour:
@@ -3381,6 +3385,12 @@ MonoBehaviour:
   _cameraHolder: {fileID: 1044011579711449581}
   canvasPrefab: {fileID: 5154976365679985728, guid: 32e0bca70d3e0a94aa923a7b382cfb00, type: 3}
   playerType: 0
+  Armature: {fileID: 0}
+  SM_Bag: {fileID: 0}
+  SM_Body: {fileID: 0}
+  SM_Dagger: {fileID: 0}
+  SM_Head: {fileID: 0}
+  SM_Legs: {fileID: 0}
   inputController: {fileID: 3830073925755514194}
   controller: {fileID: 3278360314800298617}
   cameraController: {fileID: 0}

@@ -152,10 +152,16 @@ public class EquipmentManager : NetworkBehaviour
         if (processData == null || processData.processPrefab == null)
             return false;
 
-        //  InventoryItemの状態を取得
-        InventoryItem state = myPlayer.inventoryManager.GetInvetoryItem(slotNum);
-        if (state == null)
-            return false;
+        InventoryItem state = null;
+
+        //  ピッケルは除外
+        if (slotNum != PICKEL_SLOT)
+        {
+            //  InventoryItemの状態を取得
+            state = myPlayer.inventoryManager.GetInvetoryItem(slotNum);
+            if (state == null)
+                return false;
+        }
 
         //  すでに装備中のアイテムがあれば外す
         if (GetcurrentItem() != null || createItem != null)
@@ -285,7 +291,7 @@ public class EquipmentManager : NetworkBehaviour
 
             if (myPlayer.inventoryManager.GetItem(index) != null)
             {
-                Equip(index);
+                _ = Equip(index);
                 return;
             }
         }
@@ -304,7 +310,7 @@ public class EquipmentManager : NetworkBehaviour
 
             if (myPlayer.inventoryManager.GetItem(index) != null)
             {
-                Equip(index);
+                _ = Equip(index);
                 return;
             }
         }
@@ -529,7 +535,7 @@ public class EquipmentManager : NetworkBehaviour
 
     private void SetCurrentSlot(int num)
     {
-        if(IsServerInitialized)
+        if (IsServerInitialized)
             SetCurrentSlotServer(this, num);
         else
             SetCurrentSlotServerRpc(this, num);

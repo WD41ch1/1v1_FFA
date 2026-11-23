@@ -83,6 +83,18 @@ public class ScenePlayerSpawner : NetworkBehaviour
         _playerList.Add(obj);
     }
 
+    public void RespawnPlayer(NetworkConnection connection)
+    {
+        //  FishNetのプーリングシステムを使用した生成
+        NetworkObject obj = NetworkManager.GetPooledInstantiated(_playerPrefab, asServer: true);
+
+        //グローバルシーンが存在しない場合
+        if (_addToDefaultScene)
+            _networkManager.SceneManager.AddOwnerToDefaultScene(obj);
+
+        Spawn(obj, connection);
+    }
+
     private void OnChangeList(SyncListOperation op, int index, NetworkObject oldItem, NetworkObject newItem, bool asServer)
     {
         if (_viewplayerList.Contains(newItem) || newItem == null)

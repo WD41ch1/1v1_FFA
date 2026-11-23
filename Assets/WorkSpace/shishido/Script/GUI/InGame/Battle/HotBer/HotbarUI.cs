@@ -36,6 +36,9 @@ public class HotbarUI : UIBase
         myPlayer.inventoryManager.OnSwapHotbarItem += SwapSlotData;
         myPlayer.inventoryManager.OnRemoveItem += UpdateSlotIcon;
         myPlayer.inventoryManager.OnUpdateItem += UpdateSlotCounter;
+
+        //  Pickelのアイコン設定
+        UpdateSlotIcon(PICKEL_SLOT);
     }
 
     /// <summary>
@@ -44,11 +47,30 @@ public class HotbarUI : UIBase
     /// <param name="num"></param>
     public void UpdateSelectFrame(int num)
     {
+        if (num == PICKEL_SLOT)
+        {
+            AllSlotDeselected();
+            PickaxaSlot.OnSelected(true);
+        }
+        else
+        {
+            //  ピッケルのセレクト状態を解除
+            PickaxaSlot.OnSelected(false);
+
+            foreach (BerSlot slot in SlotIcons)
+            {
+                if (slot.slotNumber == num)
+                    slot.OnSelected(true);
+                else
+                    slot.OnSelected(false);
+            }
+        }
+    }
+
+    private void AllSlotDeselected()
+    {
         foreach (BerSlot slot in SlotIcons)
         {
-            if (slot.slotNumber == num)
-                slot.OnSelected(true);
-            else
                 slot.OnSelected(false);
         }
     }
@@ -77,10 +99,18 @@ public class HotbarUI : UIBase
     /// <param name="number"></param>
     public void ShowItemIcon(int number)
     {
-        if (!isInitialized ||
-            SlotIcons == null || SlotIcons.Count < number + 1 ||
-            myPlayer.inventoryManager == null)
+        if (!isInitialized ||myPlayer.inventoryManager == null)
             return;
+
+        if (SlotIcons == null || SlotIcons.Count < number + 1)
+        {
+            if(number == PICKEL_SLOT)
+            {
+                ItemData data = myPlayer.inventoryManager.pickel;
+                PickaxaSlot.SetIconData(data);
+            }
+            return;
+        }
 
         //  指定番号のアイテムデータを取得
         ItemData itemData = myPlayer.inventoryManager.GetItem(number);

@@ -14,11 +14,15 @@ public class ItemDataManager : MonoBehaviour
     [SerializeField]
     [Tooltip("itemDataListからWeaponDataのみを抽出したリスト")]
     private List<WeaponData> weaponDataList = new();
+    [SerializeField]
+    [Tooltip("itemDataListからpickaxaDataのみを抽出したリスト")]
+    private List<PickaxeData> pickaxaDataList = new();
 
 
     // IDから見た目データを取得するための辞書
     private Dictionary<int, ItemData> itemDataDictionary = new();
     private Dictionary<int, WeaponData> weaponDataDictionary = new();
+    private Dictionary<int, PickaxeData> pickaxaDataDictionary = new();
     #endregion
 
     #region モデルSO:武器系
@@ -89,6 +93,7 @@ public class ItemDataManager : MonoBehaviour
     {
         itemDataDictionary.Clear();
         weaponDataDictionary.Clear();
+        pickaxaDataDictionary.Clear();
         modelDataDictionary.Clear();
         MatmodelDataDictionary.Clear();
         processlDataDictionary.Clear();
@@ -96,6 +101,8 @@ public class ItemDataManager : MonoBehaviour
 
         //  WeaponDataの抽出
         ExtractWeaponData();
+        //  PickaxaDataの抽出
+        ExtractPickaxaData();
 
         foreach (ItemData data in itemDataList)
         {
@@ -131,6 +138,23 @@ public class ItemDataManager : MonoBehaviour
                 continue;
             }
             weaponDataDictionary.Add(data.itemId, data);
+        }
+
+        foreach (PickaxeData data in pickaxaDataList)
+        {
+            if (data == null)
+            {
+                GameDebug.Warning(
+                    "ItemModelManager: pickaxaDataが未登録です。");
+                continue;
+            }
+            if (pickaxaDataDictionary.ContainsKey(data.itemId))
+            {
+                GameDebug.Error(
+                    $"ItemModelManager: pickaxaDataのIDが重複しています: {data.itemId}");
+                continue;
+            }
+            pickaxaDataDictionary.Add(data.itemId, data);
         }
 
         foreach (AppearanceModelData data in modelDataList)
@@ -235,6 +259,17 @@ public class ItemDataManager : MonoBehaviour
             itemId, out weaponData);
     }
 
+    /// <summary>
+    /// IDから抽出したPickaxaDataを取得
+    /// </summary>
+    public bool TryGetPickaxaData(
+        int itemId,
+        out PickaxeData pickaxeData)
+    {
+        return pickaxaDataDictionary.TryGetValue(
+            itemId, out pickaxeData);
+    }
+
     private void ExtractWeaponData()
     {
         if (itemDataList == null || itemDataList.Count == 0)
@@ -247,6 +282,21 @@ public class ItemDataManager : MonoBehaviour
             if (data is WeaponData weaponData)
             {
                 weaponDataList.Add(weaponData);
+            }
+        }
+    }
+    private void ExtractPickaxaData()
+    {
+        if (itemDataList == null || itemDataList.Count == 0)
+            return;
+
+        //  itemDataListからWeaponDataのみを抽出してweaponDataListに追加
+        for (int i = 0; i < itemDataList.Count; i++)
+        {
+            ItemData data = itemDataList[i];
+            if (data is PickaxeData pickData)
+            {
+                pickaxaDataList.Add(pickData);
             }
         }
     }

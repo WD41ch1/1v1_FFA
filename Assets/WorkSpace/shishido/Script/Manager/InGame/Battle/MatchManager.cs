@@ -269,15 +269,18 @@ public class MatchManager : nobManagerBase
     {
         GameDebug.Log($"[RequestRespawn]");
 
+        ScenePlayerSpawner ps
+                = FindAnyObjectByType<ScenePlayerSpawner>();
+
         //  Respawn処理
-        TargetPaleryRespawn(target);
+        TargetPaleryRespawn(target, ps);
     }
 
     [Server]
-    private void TargetPaleryRespawn(NetworkConnection target)
+    private void TargetPaleryRespawn(NetworkConnection target
+        , ScenePlayerSpawner playerSpawner)
     {
-        ScenePlayerSpawner ps = FindAnyObjectByType<ScenePlayerSpawner>();
-        ps?.SpawnPlayer(target);
+        playerSpawner?.RespawnPlayer(target);
     }
 
 

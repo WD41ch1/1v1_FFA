@@ -17,6 +17,9 @@ public abstract class ItemBase : NetworkBehaviour
     protected readonly SyncVar<InventoryItem> syncInventoryItem
     = new SyncVar<InventoryItem>();
 
+    protected readonly SyncVar<PickaxeData> syncPickaxaData
+    = new SyncVar<PickaxeData>();
+
     /// <summary>
     /// 初期化
     /// </summary>
@@ -68,5 +71,31 @@ public abstract class ItemBase : NetworkBehaviour
     {
         _script.syncInventoryItem.Value = _item;
     }
+
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="_script"></param>
+    /// <param name="_data"></param>
+    public void SetSyncPickaxaData(WeaponBase _script, PickaxeData _data)
+    {
+        if (IsServerInitialized)
+            SetSyncPickaxaDataServer(_script, _data);
+        else
+            SetSyncPickaxaDataServerRpc(_script, _data);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void SetSyncPickaxaDataServerRpc(WeaponBase _script, PickaxeData _data)
+    {
+        SetSyncPickaxaDataServer(_script, _data);
+    }
+    [Server]
+    private void SetSyncPickaxaDataServer(WeaponBase _script, PickaxeData _data)
+    {
+        _script.syncPickaxaData.Value = _data;
+    }
+
 
 }

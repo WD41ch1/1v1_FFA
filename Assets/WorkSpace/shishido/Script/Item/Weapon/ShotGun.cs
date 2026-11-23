@@ -89,6 +89,9 @@ public class ShotGun : WeaponBase
         //  弾数消費
         weaponState.currentAmmo--;
 
+        //  UIの更新
+        AmmoCheker();
+
         isShooting = false;
     }
 
@@ -140,6 +143,9 @@ public class ShotGun : WeaponBase
 
             // マガジンに補充
             weaponState.currentAmmo += approvalValue;
+
+            //  HotBerSlotの更新
+            AmmoCheker();
 
             // 上限チェック
             if (weaponState.currentAmmo > data.magazineSize)

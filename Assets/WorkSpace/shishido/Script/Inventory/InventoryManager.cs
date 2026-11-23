@@ -905,8 +905,9 @@ public class InventoryManager : NetworkBehaviour
         InventoryItem toItem = slots[toSlotNum];
 
         // アイテムそのものを交換する
-        slots[fromSlotNum] = toItem;
-        slots[toSlotNum] = fromItem;
+        RegisterSlot(fromSlotNum, toItem);
+        RegisterSlot(toSlotNum, fromItem);
+
 
         // 必要に応じて、既存のインベントリ更新イベントを呼び出す
         // 例：OnSwapHotbarItem?.Invoke(fromSlotNum, toSlotNum);
@@ -1012,7 +1013,7 @@ public class InventoryManager : NetworkBehaviour
         // 取得要求
         RequestItem(slotNum);
         //  Slot内のデータ取得
-        InventoryItem item = syncUpdateRequestItem.Value;
+        InventoryItem item = slots[slotNum];
 
         if (item == null)
             return;
@@ -1047,6 +1048,9 @@ public class InventoryManager : NetworkBehaviour
             result = false;
 
         if (0 <= number && number <= slots.Count)
+            result = true;
+        //  ピッケル用スロットであれば
+        else if(number == PICKEL_SLOT)
             result = true;
 
         return result;
@@ -1129,10 +1133,16 @@ public class InventoryManager : NetworkBehaviour
             return;
         }
 
+        if(prefab == null)
+        {
+            nob = null;
+            return;
+        }
+
         //  ドロップオブジェクトを生成
         NetworkObject obj = Instantiate(
             prefab,
-            trans.position + trans.forward * 5f,
+            trans.position + trans.forward * 2f,
             Quaternion.identity);
 
         if (obj == null)
