@@ -5,7 +5,9 @@ using FishNet.Object;
 using FishNet.Object.Synchronizing;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class ScenePlayerSpawner : NetworkBehaviour
 {
@@ -13,8 +15,13 @@ public class ScenePlayerSpawner : NetworkBehaviour
 
     [SerializeField] private NetworkObject _playerPrefab;
 
-    private readonly SyncList<NetworkObject> _playerList = new SyncList<NetworkObject>();
-    [SerializeField] private List<NetworkObject> _viewplayerList;
+    public readonly SyncList<NetworkObject> _playerOBJList
+        = new SyncList<NetworkObject>();
+    private readonly SyncList<NetworkConnection> _playerList
+        = new SyncList<NetworkConnection>();
+
+    [SerializeField] public List<NetworkObject> _viewplayerOBJList;
+    [SerializeField] public List<NetworkConnection> _viewplayerList;
 
     /// <summary>
     /// SceneManager を通じてグローバルシーンが指定されていない場合、アクティブなシーンにプレイヤーを追加するように設定します
@@ -23,25 +30,51 @@ public class ScenePlayerSpawner : NetworkBehaviour
     [SerializeField]
     private bool _addToDefaultScene = true;
 
+    [SerializeField]
+    [Tooltip("プレイヤーが出現する可能性のあるエリア")]
+    public Transform[] Spawns = new Transform[0];
+    private int _nextSpawn;
+
     private void Awake()
     {
         if (_networkManager == null)
             _networkManager = InstanceFinder.NetworkManager;
+
+        _viewplayerList = new List<NetworkConnection>();
     }
 
     public override void OnStartServer()
     {
         SceneManager.OnClientLoadedStartScenes += OnClientLoadedStartScenes;
+        _playerOBJList.OnChange += OnChangeOBJList;
         _playerList.OnChange += OnChangeList;
     }
-
 
     public override void OnStopServer()
     {
         if (SceneManager != null)
             SceneManager.OnClientLoadedStartScenes -= OnClientLoadedStartScenes;
 
+        _playerOBJList.OnChange -= OnChangeOBJList;
         _playerList.OnChange -= OnChangeList;
+    }
+
+    private void OnChangeOBJList(SyncListOperation op, int index, NetworkObject oldItem, NetworkObject newItem, bool asServer)
+    {
+        if (_viewplayerOBJList == null ||
+            _viewplayerOBJList.Contains(newItem) || newItem == null)
+            return;
+
+        _viewplayerOBJList.Add(newItem);
+    }
+
+    private void OnChangeList(SyncListOperation op, int index, NetworkConnection oldItem, NetworkConnection newItem, bool asServer)
+    {
+        if (_viewplayerList == null ||
+            _viewplayerList.Contains(newItem) || newItem == null)
+            return;
+
+        _viewplayerList.Add(newItem);
     }
 
     private void OnClientLoadedStartScenes(NetworkConnection connection, bool asServer)
@@ -72,15 +105,22 @@ public class ScenePlayerSpawner : NetworkBehaviour
     /// <param name="connection"></param>
     public void SpawnPlayer(NetworkConnection connection)
     {
+        Vector3 position;
+        Quaternion rotation;
+
+        SetSpawn(_playerPrefab.transform, out position, out rotation);
+
         //  FishNetのプーリングシステムを使用した生成
-        NetworkObject obj = NetworkManager.GetPooledInstantiated(_playerPrefab, asServer: true);
+        NetworkObject obj = NetworkManager.GetPooledInstantiated(_playerPrefab, position, rotation, true);
 
         //グローバルシーンが存在しない場合
         if (_addToDefaultScene)
             _networkManager.SceneManager.AddOwnerToDefaultScene(obj);
 
         Spawn(obj, connection, gameObject.scene);
-        _playerList.Add(obj);
+
+        _playerOBJList.Add(obj);
+        _playerList.Add(connection);
     }
 
     public void RespawnPlayer(NetworkConnection connection)
@@ -88,18 +128,49 @@ public class ScenePlayerSpawner : NetworkBehaviour
         //  FishNetのプーリングシステムを使用した生成
         NetworkObject obj = NetworkManager.GetPooledInstantiated(_playerPrefab, asServer: true);
 
-        //グローバルシーンが存在しない場合
-        if (_addToDefaultScene)
-            _networkManager.SceneManager.AddOwnerToDefaultScene(obj);
-
         Spawn(obj, connection);
     }
 
-    private void OnChangeList(SyncListOperation op, int index, NetworkObject oldItem, NetworkObject newItem, bool asServer)
+    /// <summary>
+    /// スポーン位置と回転を設定
+    /// </summary>
+    /// <param name = "pos"></param>
+    /// <param name = "rot"></param>
+    private void SetSpawn(Transform prefab, out Vector3 pos, out Quaternion rot)
     {
-        if (_viewplayerList.Contains(newItem) || newItem == null)
+        // No spawns specified.
+        if (Spawns.Length == 0)
+        {
+            SetSpawnUsingPrefab(prefab, out pos, out rot);
             return;
+        }
 
-        _viewplayerList.Add(newItem);
+        Transform result = Spawns[_nextSpawn];
+        if (result == null)
+        {
+            SetSpawnUsingPrefab(prefab, out pos, out rot);
+        }
+        else
+        {
+            pos = result.position;
+            rot = result.rotation;
+        }
+
+        // Increase next spawn and reset if needed.
+        _nextSpawn++;
+        if (_nextSpawn >= Spawns.Length)
+            _nextSpawn = 0;
+    }
+
+    /// <summary>
+    /// セットは、プレハブの値を使用して生成
+    /// </summary>
+    /// <param name = "prefab"></param>
+    /// <param name = "pos"></param>
+    /// <param name = "rot"></param>
+    private void SetSpawnUsingPrefab(Transform prefab, out Vector3 pos, out Quaternion rot)
+    {
+        pos = prefab.position;
+        rot = prefab.rotation;
     }
 }

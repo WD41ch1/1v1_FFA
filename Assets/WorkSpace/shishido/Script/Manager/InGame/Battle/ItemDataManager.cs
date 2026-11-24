@@ -6,6 +6,8 @@ public class ItemDataManager : MonoBehaviour
 {
     public static ItemDataManager Instance { get; private set; }
 
+    public bool IsInitialized = false;
+
     #region ItemData(大本)
     [Header("大本のデータ")]
     [SerializeField]
@@ -86,6 +88,8 @@ public class ItemDataManager : MonoBehaviour
 
         // ID検索用の辞書を構築
         BuildDictionary();
+
+        IsInitialized = true;
     }
 
 

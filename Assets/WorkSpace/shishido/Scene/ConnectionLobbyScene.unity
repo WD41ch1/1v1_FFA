@@ -2181,6 +2181,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: MatchManager
       objectReference: {fileID: 0}
+    - target: {fileID: 7481986124234229494, guid: 1ad2e1340e5dc6647a3959dd4c6ac878, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

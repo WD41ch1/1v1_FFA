@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using FishNet;
 using FishNet.Connection;
 using FishNet.Managing;
@@ -6,6 +7,9 @@ using FishNet.Object;
 using FishNet.Object.Synchronizing;
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class MatchManager : nobManagerBase
@@ -19,16 +23,23 @@ public class MatchManager : nobManagerBase
     private NetworkManager _networkManager;
     private LobbyManager _lobbyManager;
 
-    private List<NetworkConnection> matchPlayers
-    = new List<NetworkConnection>();
 
     private readonly SyncVar<bool> syncSuccess
         = new SyncVar<bool>();
 
     private readonly SyncList<PlayerManager> deadPlayerList
         = new SyncList<PlayerManager>();
-    private readonly SyncList<NetworkConnection> PlayerList
-        = new SyncList<NetworkConnection>();
+
+    private HashSet<NetworkConnection> initializedPlayers = new();
+    private readonly SyncVar<bool> initialized = new(false);
+
+    [SerializeField]
+    private int countDownSeconds = 5;
+    private bool isCountingDown = false;
+
+    private CancellationToken destroyToken;
+
+
     #endregion
 
     #region Initialize
@@ -47,12 +58,20 @@ public class MatchManager : nobManagerBase
         }
 
         Instance = this;
+
+        destroyToken = this.GetCancellationTokenOnDestroy();
     }
 
     public override void OnStartServer()
     {
         base.OnStartServer();
         syncSuccess.OnChange += onChangeSuccess;
+        initialized.OnChange += onChangeInit;
+    }
+
+    private void onChangeInit(bool prev, bool next, bool asServer)
+    {
+        GameDebug.Server("全てのPlayerの初期化が完了");
     }
 
     private void onChangeSuccess(bool prev, bool next, bool asServer)
@@ -64,38 +83,131 @@ public class MatchManager : nobManagerBase
 
     #region 試合管理
 
-    public void StartBattle()
+
+    [Server]
+    public void AddInitializeComplete(NetworkConnection conn)
     {
-        if (!IsServerInitialized)
-            return;
+        initializedPlayers.Add(conn);
 
-        SceneLoadData sceneLoadData =
-            new SceneLoadData("BattleScene");
-
-        InstanceFinder.SceneManager.LoadConnectionScenes(
-            sceneLoadData
-        );
+        if (initializedPlayers.Count >= ServerManager.Clients.Count)
+        {
+            //StartMatch();
+            initialized.Value = true;
+            StartCountdownAsync(destroyToken).Forget();
+        }
     }
 
-    public void StartMatch(
-        NetworkConnection playerA,
-        NetworkConnection playerB)
+    /// <summary>
+    /// カウントダウン開始
+    /// </summary>
+    [Server]
+    private async UniTaskVoid StartCountdownAsync(CancellationToken token)
     {
-        if (!IsServerInitialized)
+        // 二重実行防止
+        if (isCountingDown)
             return;
 
-        matchPlayers.Clear();
+        isCountingDown = true;
 
-        matchPlayers.Add(playerA);
-        matchPlayers.Add(playerB);
+        for (int i = countDownSeconds; i > 0; i--)
+        {
+            GameDebug.Server($"試合開始まで残り {i} 秒");
 
-        SceneLoadData loadData =
-            new SceneLoadData("Battle");
+            // クライアントに残り時間を通知する処理をここに追加
 
-        //InstanceFinder.SceneManager.LoadConnectionScenes(
-        //    matchPlayers,
-        //    loadData
-        //);
+            await UniTask.Delay(
+                1000,
+                cancellationToken: token
+            );
+        }
+
+        GameDebug.Server("試合開始！");
+
+        StartMatch();
+    }
+
+    /// <summary>
+    /// 試合開始
+    /// </summary>
+    [Server]
+    private void StartMatch()
+    {
+        // 試合開始処理
+
+    }
+    #endregion
+
+    #region 装備配布
+    public void GiveMatchDefaultItemRequest(PlayerManager target)
+    {
+        if (IsServerInitialized)
+            _ = GiveMatchDefaultItemServer(target);
+        else
+            GiveMatchDefaultItemServerRpc(target);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void GiveMatchDefaultItemServerRpc(PlayerManager target)
+    {
+        _ = GiveMatchDefaultItemServer(target);
+    }
+    [Server]
+    public async Task GiveMatchDefaultItemServer(PlayerManager target)
+    {
+        if (target == null) return;
+
+        if (!ItemDataManager.Instance.IsInitialized)
+        {
+            if (ItemDataManager.Instance == null)
+                return;
+
+            //  ItemDataManagerの初期化が終わるまで待つ
+            await UniTask.WaitUntil(
+                () => ItemDataManager.Instance.IsInitialized == true
+                );
+        }
+
+        InventoryManager inventory = target.inventoryManager;
+
+        //  武器
+        await AsyncAddItems(target, () => { inventory.AddItem(TryGetItemData(1003)); }, 10);   //  SG
+        await AsyncAddItems(target, () => { inventory.AddItem(TryGetItemData(1004)); }, 10);   //  SMG
+        await AsyncAddItems(target, () => { inventory.AddItem(TryGetItemData(1001)); }, 10);   //  AR
+        //  弾薬           
+        await AsyncAddItems(target, () => { inventory.AddAmmo(AmmoType.MiddleAmmo, 500); }, 10);
+        await AsyncAddItems(target, () => { inventory.AddAmmo(AmmoType.SmallAmmo, 500); }, 10);
+        await AsyncAddItems(target, () => { inventory.AddAmmo(AmmoType.ShotgunAmmo, 100); }, 10);
+        //  建材            
+        await AsyncAddItems(target, () => { inventory.AddBildMat(BildingMatType.Wood, 500); }, 10);
+        await AsyncAddItems(target, () => { inventory.AddBildMat(BildingMatType.Brick, 500); }, 10);
+        await AsyncAddItems(target, () => { inventory.AddBildMat(BildingMatType.Iron, 500); }, 10);
+    }
+
+    private ItemData TryGetItemData(int itemID)
+    {
+        ItemData data = null;
+
+        if (!ItemDataManager.Instance.TryGetItemData(
+             itemID, out data))
+        {
+            return null;
+        }
+
+        return data;
+    }
+
+    private async UniTask AsyncAddItems(PlayerManager target, Action action, int waitFrame = 1)
+    {
+        if (!DoOnce.TryExecute(target))
+            return;
+
+        await UniTask.DelayFrame(waitFrame);
+
+        action?.Invoke();
+
+        await UniTask.DelayFrame(1);
+
+        DoOnce.Reset(target);
     }
 
     #endregion
@@ -252,19 +364,6 @@ public class MatchManager : nobManagerBase
         deadPlayerList.Add(target);
     }
 
-
-    public void RequestRespawn(PlayerManager target)
-    {
-        // 対象がまだ生きていたら
-        if (!target.playerHealth.syncIsDead.Value)
-            return;
-
-        GameDebug.Log($"[RequestRespawn]");
-
-        //  Respawn処理
-        TargetPaleryRespawn(target);
-    }
-
     public void RequestRespawn(NetworkConnection target)
     {
         GameDebug.Log($"[RequestRespawn]");
@@ -276,23 +375,30 @@ public class MatchManager : nobManagerBase
         TargetPaleryRespawn(target, ps);
     }
 
+    public void TargetPaleryRespawn(NetworkConnection target
+        , ScenePlayerSpawner playerSpawner)
+    {
+        if (IsServerInitialized)
+            TargetPaleryRespawnServer(target, playerSpawner);
+        else
+            TargetPaleryRespawnServerRpc(target, playerSpawner);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void TargetPaleryRespawnServerRpc(NetworkConnection target
+        , ScenePlayerSpawner playerSpawner)
+    {
+        TargetPaleryRespawnServer(target, playerSpawner);
+    }
+
     [Server]
-    private void TargetPaleryRespawn(NetworkConnection target
+    private void TargetPaleryRespawnServer(NetworkConnection target
         , ScenePlayerSpawner playerSpawner)
     {
         playerSpawner?.RespawnPlayer(target);
     }
 
 
-    private void TargetPaleryRespawn(PlayerManager target)
-    {
-        //  対象が死亡リストにあるか
-        if (!deadPlayerList.Contains(target))
-            return;
-
-        Respawn(target);
-
-    }
 
     public void Respawn(PlayerManager target)
     {
@@ -331,6 +437,13 @@ public class MatchManager : nobManagerBase
 
     #region ダメージ管理
 
+    /// <summary>
+    /// ダメージ処理要求
+    /// </summary>
+    /// <param name="attacker"></param>
+    /// <param name="target"></param>
+    /// <param name="hit"></param>
+    /// <param name="data"></param>
     public void RequestTakeDamage(
         PlayerManager attacker,
         PlayerManager target,
@@ -343,22 +456,38 @@ public class MatchManager : nobManagerBase
         DamageResult result
             = target.playerHealth.TakeDamage(target.playerHealth, info);
     }
+    //  ピッケル用
+    public void RequestTakeDamage(
+        PlayerManager attacker,
+        PlayerManager target,
+        HitPart hit,
+        PickaxeData data
+        )
+    {
+        if (attacker == null || target == null || data == null)
+            return;
+
+        DamageInfo info = CreateDamageInfo(attacker, hit, data);
+
+        DamageResult result
+            = target.playerHealth.TakeDamage(target.playerHealth, info);
+    }
 
     /// <summary>
-    /// ヒット時のダメージ情報作成
+    /// ヒット時のダメージ情報作成(ピッケル用)
     /// </summary>
     /// <returns></returns>
-    public DamageInfo CreateDamageInfo(PlayerManager attacker, HitPart hit, WeaponData data)
+    public DamageInfo CreateDamageInfo(PlayerManager attacker, HitPart hit, PickaxeData data)
     {
         DamageInfo info = new DamageInfo();
 
         info.Damage = data.weaponDamage;
-        info.DamageMultiplier =
-            SetDamageMultiplier(hit, data, out info.IsHeadshot);
+        info.DamageMultiplier = 1.0f;
         info.Attacker = attacker;
 
         return info;
     }
+
     public DamageInfo CreateDamageInfo(PlayerManager attacker, HitPart hit, WeaponDamageSyncData data)
     {
         DamageInfo info = new DamageInfo();
