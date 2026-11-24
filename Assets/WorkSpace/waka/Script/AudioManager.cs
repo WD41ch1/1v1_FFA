@@ -79,6 +79,13 @@ public class AudioManager : MonoBehaviour
     private float[] voiceVolumes;
     private int nextVoice;
 
+    // 音源ごとに、誰の何の音かを記録する。
+    private readonly Dictionary<int, UnityEngine.Object> voiceOwners =
+        new Dictionary<int, UnityEngine.Object>();
+
+    private readonly Dictionary<int, GameSoundId> voiceSoundIds =
+        new Dictionary<int, GameSoundId>();
+
     [RuntimeInitializeOnLoadMethod(
         RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetStatics()
@@ -125,9 +132,7 @@ public class AudioManager : MonoBehaviour
 
         for (int i = 0; i < count; i++)
         {
-            GameObject voiceObject =
-                new GameObject("SE_" + i);
-
+            GameObject voiceObject = new GameObject("SE_" + i);
             voiceObject.transform.SetParent(transform, false);
 
             AudioSource source =
@@ -152,14 +157,34 @@ public class AudioManager : MonoBehaviour
     }
 
     /// <summary>
+    /// 発射音かどうかを判定する。
+    /// リロード・装備・建築・足音は含めない。
+    /// </summary>
+    public static bool IsGunfire(GameSoundId id)
+    {
+        return id == GameSoundId.AssaultFire ||
+               id == GameSoundId.PistolFire ||
+               id == GameSoundId.ShotgunFire ||
+               id == GameSoundId.SubmachineFire;
+    }
+
+    /// <summary>
     /// このPCだけで音を再生する。
     /// オンライン通知はNetworkSoundEmitterが担当する。
+    ///
+    /// soundOwnerには、通知元のNetworkSoundEmitterを渡す。
+    /// 省略した場合も従来どおり再生できるが、
+    /// プレイヤーを指定した停止処理の対象にはならない。
     /// </summary>
     public void PlaySE(
         GameSoundId id,
         Vector3 position,
-        int variationSeed)
+        int variationSeed,
+        UnityEngine.Object soundOwner = null)
     {
+        if (voices == null || voices.Length == 0)
+            return;
+
         if (!lookup.TryGetValue(id, out SoundSetting setting) ||
             setting.clips == null ||
             setting.clips.Length == 0)
@@ -168,8 +193,7 @@ public class AudioManager : MonoBehaviour
             return;
         }
 
-        // サーバーから同じSeedを受け取り、
-        // 各PCで同じ音と音程を選ぶ。
+        // 同じSeedを渡した場合は、同じ音と音程を選ぶ。
         System.Random random = new System.Random(variationSeed);
 
         int startIndex = random.Next(setting.clips.Length);
@@ -196,8 +220,15 @@ public class AudioManager : MonoBehaviour
         AudioSource source = voices[voiceIndex];
 
         source.Stop();
+
+        // 音源の再利用時も必ず情報を更新する。
+        // 前のプレイヤーの停止処理で別の音が止まるのを防ぐ。
+        voiceOwners[voiceIndex] = soundOwner;
+        voiceSoundIds[voiceIndex] = id;
+
         source.transform.position = position;
         source.clip = clip;
+        source.loop = false;
 
         float low = Mathf.Clamp(
             Mathf.Min(setting.minPitch, setting.maxPitch),
@@ -215,14 +246,53 @@ public class AudioManager : MonoBehaviour
             (float)random.NextDouble());
 
         voiceVolumes[voiceIndex] = Mathf.Clamp01(setting.volume);
-        source.volume = voiceVolumes[voiceIndex] * masterVolume;
+        source.volume =
+            voiceVolumes[voiceIndex] * Mathf.Clamp01(masterVolume);
 
-        source.minDistance = Mathf.Max(0.1f, setting.minDistance);
+        source.minDistance =
+            Mathf.Max(0.1f, setting.minDistance);
+
         source.maxDistance = Mathf.Max(
             source.minDistance + 0.1f,
             setting.maxDistance);
 
         source.Play();
+    }
+
+    /// <summary>
+    /// 指定したプレイヤーの発射音だけを停止する。
+    /// 重なって再生されている発射音もすべて止める。
+    /// 他のプレイヤーの音や、建築音・リロード音は止めない。
+    /// </summary>
+    public void StopGunfire(UnityEngine.Object soundOwner)
+    {
+        if (soundOwner == null || voices == null)
+            return;
+
+        for (int i = 0; i < voices.Length; i++)
+        {
+            if (!voiceOwners.TryGetValue(
+                    i,
+                    out UnityEngine.Object owner) ||
+                owner != soundOwner)
+            {
+                continue;
+            }
+
+            if (!voiceSoundIds.TryGetValue(
+                    i,
+                    out GameSoundId id) ||
+                !IsGunfire(id))
+            {
+                continue;
+            }
+
+            if (voices[i] != null)
+                voices[i].Stop();
+
+            voiceOwners.Remove(i);
+            voiceSoundIds.Remove(i);
+        }
     }
 
     private int FindVoice()
@@ -236,6 +306,7 @@ public class AudioManager : MonoBehaviour
         // 上限に達したら順番に再利用する。
         int result = nextVoice;
         nextVoice = (nextVoice + 1) % voices.Length;
+
         return result;
     }
 
@@ -248,6 +319,9 @@ public class AudioManager : MonoBehaviour
 
         for (int i = 0; i < voices.Length; i++)
         {
+            if (voices[i] == null)
+                continue;
+
             voices[i].volume =
                 voiceVolumes[i] * masterVolume;
         }
