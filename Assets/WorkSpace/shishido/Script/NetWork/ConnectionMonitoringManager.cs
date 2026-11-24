@@ -168,7 +168,7 @@ public class ConnectionMonitoringManager : MonoBehaviour
     }
 
 
-    public async void CreateRoom()
+    public async void CreateRoom(string _port)
     {
         // 1. サーバー起動
         _networkManager.TransportManager.Transport.SetPort(7777);
@@ -181,7 +181,14 @@ public class ConnectionMonitoringManager : MonoBehaviour
         _networkDiscovery.AdvertiseServer();
 
         // 3. ホスト自身もクライアントとして接続（リッスンサーバー）
-        _networkManager.TransportManager.Transport.SetClientAddress(_localHost);
+
+        string port = "";
+        if (_port == string.Empty)
+            port = _localHost;
+        else
+            port = _port;
+
+        _networkManager.TransportManager.Transport.SetClientAddress(port);
         StartClient();
 
         await UniTask.WaitUntil(() => _networkManager.IsClientStarted, cancellationToken: ct);

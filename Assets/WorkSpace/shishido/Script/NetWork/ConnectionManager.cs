@@ -1,15 +1,16 @@
+using Cysharp.Threading.Tasks;
 using FishNet;
 using FishNet.Connection;
+using FishNet.Discovery;
 using FishNet.Managing;
 using FishNet.Managing.Scened;
 using FishNet.Transporting;
+using System;
+using System.Threading;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 using static GameConst;
-using System.Threading;
-using Cysharp.Threading.Tasks;
-using FishNet.Discovery;
-using System;
 
 public class ConnectionManager : MonoBehaviour
 {
@@ -64,7 +65,7 @@ public class ConnectionManager : MonoBehaviour
         //StartServer();
         //StartClient();
 
-        _monitoringManager.CreateRoom();
+        _monitoringManager.CreateRoom(_inputField.text);
     }
 
     public void StartClient()
