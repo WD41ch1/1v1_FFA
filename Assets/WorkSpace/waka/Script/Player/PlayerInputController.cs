@@ -92,7 +92,7 @@ public class PlayerInputController : MonoBehaviour
     {
         started = true;
 
-        SetCursorLockd(true);
+        //SetCursorLockd(true);
 
         if (buildingSystem == null)
         {
