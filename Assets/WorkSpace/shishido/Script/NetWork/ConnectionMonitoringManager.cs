@@ -226,46 +226,6 @@ public class ConnectionMonitoringManager : MonoBehaviour
         GameDebug.Client($"IsClientStarted: {_networkManager.IsClientStarted}");
 
         await FindAndJoinRoomAsync(ct);
-
-#if false
-
-        // すでに検索中なら何もしない
-        if (_searchCts != null)
-            return;
-
-        _searchCts = new CancellationTokenSource();
-
-        // サーバー探索
-        try
-        {
-            _networkDiscovery.SearchForServers();
-
-            GameDebug.Client($"IsSearching: {_networkDiscovery.IsSearching}");
-
-            GameDebug.Client("部屋を検索しています...");
-
-            // 5秒間検索
-            await UniTask.Delay(
-                _derision,
-                cancellationToken: _searchCts.Token
-            );
-
-            // 5秒経過しても見つからなかった場合
-            _networkDiscovery.StopSearchingOrAdvertising();
-
-            GameDebug.Client("部屋が見つかりませんでした。");
-        }
-        catch (OperationCanceledException)
-        {
-            // 検索中に部屋が見つかった場合
-            // ※_networkDiscovery.ServerFoundCallbackに登録されてるeventが呼ばれるためここでは何も記述しない
-        }
-        finally
-        {
-            _searchCts?.Dispose();
-            _searchCts = null;
-        }
-#endif
     }
 
     /// <summary>
@@ -315,7 +275,7 @@ public class ConnectionMonitoringManager : MonoBehaviour
 
         // 4. ホストの開始ブロードキャストを待つ
     }
-#endregion
+    #endregion
 
     #region ConnectionMonitoring
 
@@ -423,6 +383,9 @@ public class ConnectionMonitoringManager : MonoBehaviour
             if (InstanceFinder.ClientManager.Started)
                 InstanceFinder.ClientManager.StopConnection();
 
+            if (_networkDiscovery.IsAdvertising)
+                _networkDiscovery.StopSearchingOrAdvertising();
+
             GameDebug.Server("Hostを終了しました");
         }
         else
@@ -430,6 +393,8 @@ public class ConnectionMonitoringManager : MonoBehaviour
             // Client：ロビーから退出
             if (InstanceFinder.ClientManager.Started)
                 InstanceFinder.ClientManager.StopConnection();
+
+            _networkDiscovery.StopSearchingOrAdvertising();
 
             GameDebug.Client("ロビーから退出しました");
         }

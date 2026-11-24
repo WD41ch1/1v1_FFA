@@ -133,7 +133,7 @@ public class MatchManager : nobManagerBase
     private void StartMatch()
     {
         // 試合開始処理
-
+        FindAnyObjectByType<ScenePlayerSpawner>().DespawnBarrier();
     }
     #endregion
 

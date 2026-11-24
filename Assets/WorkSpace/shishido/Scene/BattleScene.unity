@@ -2454,13 +2454,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1075064767}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
   m_LocalPosition: {x: -6.010752, y: 2, z: 6.43}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
 --- !u!1 &1120035109
 GameObject:
   m_ObjectHideFlags: 0
@@ -4557,7 +4557,9 @@ MonoBehaviour:
   _networkObjectCache: {fileID: 0}
   _networkManager: {fileID: 0}
   _playerPrefab: {fileID: 3890100773366206426, guid: 96220761ca32c2444a029a3c78e7e533, type: 3}
+  _StartBarrierPrefab: {fileID: 81117046929699729, guid: b30e6bc7bb2e23241ae3506060a21687, type: 3}
   _viewplayerOBJList: []
+  _BarrierList: []
   _addToDefaultScene: 1
   Spawns:
   - {fileID: 1706958669}
@@ -4660,7 +4662,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <IsNested>k__BackingField: 0
-  WasActiveDuringEdit: 1
+  WasActiveDuringEdit: 0
   WasActiveDuringEdit_Set1: 1
   <ComponentIndex>k__BackingField: 0
   <PredictedSpawn>k__BackingField: {fileID: 0}
