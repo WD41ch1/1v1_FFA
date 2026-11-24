@@ -3239,6 +3239,10 @@ MonoBehaviour:
       m_Calls: []
     m_ActionId: 46877d7e-6161-4b4b-9a37-337b9616671b
     m_ActionName: Player/Crouch[/Keyboard/leftCtrl]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: a64bc56f-2328-4e2f-b3c4-4d6755fc0b9b
+    m_ActionName: Player/Edit[/Keyboard/e]
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
   m_DefaultActionMap: Player
@@ -3496,7 +3500,7 @@ MonoBehaviour:
   _componentIndexCache: 4
   _addedNetworkObject: {fileID: 3890100773366206426}
   _networkObjectCache: {fileID: 3890100773366206426}
-  _componentConfiguration: 0
+  _componentConfiguration: 2
   _synchronizeParent: 0
   _packing:
     Position: 1
@@ -3505,7 +3509,7 @@ MonoBehaviour:
   _useScaledTime: 1
   _interpolation: 2
   _extrapolation: 2
-  _enableTeleport: 0
+  _enableTeleport: 1
   _teleportThreshold: 1
   _clientAuthoritative: 1
   _sendToOwner: 1
@@ -3521,7 +3525,7 @@ MonoBehaviour:
     X: 0
     Y: 0
     Z: 0
-  _synchronizeScale: 1
+  _synchronizeScale: 0
   _scaleSensitivity: 0.001
   _scaleSnapping:
     X: 0
