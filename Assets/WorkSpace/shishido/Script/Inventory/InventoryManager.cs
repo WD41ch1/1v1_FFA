@@ -82,6 +82,7 @@ public class InventoryManager : NetworkBehaviour
 
     //  インベントリUI側通知処理
     public event Action<ChangeInventoryItemInfo> OnChangeInventoryItem;
+    public event Action<int> OnSetPickeleIcon;
     public event Action<int> OnAddHotbarItem;
     public event Action<int, int> OnSwapHotbarItem;
     public event Action<ChangeAmmoInfo> OnChangeAmmo;
@@ -104,6 +105,12 @@ public class InventoryManager : NetworkBehaviour
     private void OnDestroy()
     {
         OnSlotItemReceivedEvent -= OnSlotItemReceived;
+    }
+
+    public void SetPickeleIcon()
+    {
+        if (OnSetPickeleIcon != null)
+            OnSetPickeleIcon.Invoke(PICKEL_SLOT);
     }
 
     private void OnSlotItemReceived(int slotNum, InventoryItem data)
@@ -1050,7 +1057,7 @@ public class InventoryManager : NetworkBehaviour
         if (0 <= number && number <= slots.Count)
             result = true;
         //  ピッケル用スロットであれば
-        else if(number == PICKEL_SLOT)
+        else if (number == PICKEL_SLOT)
             result = true;
 
         return result;
@@ -1133,7 +1140,7 @@ public class InventoryManager : NetworkBehaviour
             return;
         }
 
-        if(prefab == null)
+        if (prefab == null)
         {
             nob = null;
             return;

@@ -1,10 +1,5 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.UI;
 using static GameConst;
 
 public class HotbarUI : UIBase
@@ -33,12 +28,11 @@ public class HotbarUI : UIBase
         //  イベント登録
         myPlayer.equipmentManager.OnEquipChanged += UpdateSelectFrame;
         myPlayer.inventoryManager.OnAddHotbarItem += UpdateSlotIcon;
-        myPlayer.inventoryManager.OnSwapHotbarItem += SwapSlotData;
+        myPlayer.inventoryManager.OnSetPickeleIcon += UpdateSlotIcon;
         myPlayer.inventoryManager.OnRemoveItem += UpdateSlotIcon;
+        myPlayer.inventoryManager.OnSwapHotbarItem += SwapSlotData;
         myPlayer.inventoryManager.OnUpdateItem += UpdateSlotCounter;
 
-        //  Pickelのアイコン設定
-        UpdateSlotIcon(PICKEL_SLOT);
     }
 
     /// <summary>

@@ -1,8 +1,6 @@
 using Cysharp.Threading.Tasks;
 using FishNet.Object;
-using System.Diagnostics;
 using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
 using static CheckReferenceUtility;
 using static GameConst;
@@ -240,6 +238,8 @@ public class PlayerManager : NetworkBehaviour
 
         // UIを初期化
         characterGUI?.Initialize();
+        //  ピッケルのアイコン設定
+        inventoryManager.SetPickeleIcon();
     }
 
 
