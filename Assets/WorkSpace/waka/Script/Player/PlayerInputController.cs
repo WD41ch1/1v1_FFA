@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 using FishNet.Object;
 using Cysharp.Threading.Tasks;
 using static GameConst;
@@ -20,6 +21,7 @@ public class PlayerInputController : MonoBehaviour
     public BuildingSystem buildingSystem { get; private set; }
 
     private EditSystem editSystem;
+    private NetworkObject playerNetworkObject;
 
     private Vector2 moveInput;
     private Vector2 lookInput;
@@ -59,15 +61,13 @@ public class PlayerInputController : MonoBehaviour
     private bool gameplayWasBlocked;
     private bool wasEditing;
 
-    private NetworkObject playerNetworkObject;
-
     private bool IsLocalOwner =>
         playerNetworkObject != null &&
         playerNetworkObject.IsClientInitialized &&
         playerNetworkObject.IsOwner;
 
     // インベントリを閉じる操作も受け付けるため、
-    // この判定にはUI表示状態を含めない。
+    // UI表示状態はこの判定に含めない。
     public bool CanProcessInput =>
         isActiveAndEnabled &&
         localInputActive &&
@@ -76,6 +76,18 @@ public class PlayerInputController : MonoBehaviour
     private bool IsMenuOpen =>
         CameraController.InventoryOpen ||
         KeybindSession.SettingsOpen;
+
+    private bool IsBattleScene
+    {
+        get
+        {
+            string sceneName =
+                SceneManager.GetActiveScene().name;
+
+            return sceneName == "BattleScene" ||
+                   sceneName == "BattleScene_β";
+        }
+    }
 
     private bool IsGameplayBlocked =>
         !Application.isFocused ||
@@ -105,7 +117,8 @@ public class PlayerInputController : MonoBehaviour
         if (owner == null)
             owner = GetComponent<PlayerManager>();
 
-        playerNetworkObject = GetComponent<NetworkObject>();
+        playerNetworkObject =
+            GetComponent<NetworkObject>();
 
         buildingSystem =
             GetComponentInChildren<BuildingSystem>(true);
@@ -223,11 +236,13 @@ public class PlayerInputController : MonoBehaviour
         if (!IsLocalOwner)
             return;
 
-        // EditSystemやGUIManagerのUpdate後の状態も確認する。
+        // 他のUpdateで変更されたUI・編集状態も反映する。
         UpdateGameplayBlocking();
         UpdateEditingBlocking();
 
+        // カーソルを隠すのはバトルシーンの通常操作中だけ。
         bool showCursor =
+            !IsBattleScene ||
             IsMenuOpen ||
             !Application.isFocused ||
             !CanProcessInput;
@@ -623,7 +638,7 @@ public class PlayerInputController : MonoBehaviour
 
     public void OnUsePrimary(InputAction.CallbackContext context)
     {
-        // 編集中・UI中でも、射撃終了の通知は処理する。
+        // 編集中・UI中でも射撃終了の通知は処理する。
         if (context.canceled)
         {
             if (IsLocalOwner &&
