@@ -112,6 +112,12 @@ public class PlayerManager : NetworkBehaviour
         GameDebug.Client(
         $"[CLIENT] OnStartClient " +
         $"ObjectId:{ObjectId}, OwnerId:{OwnerId}, IsOwner:{IsOwner}");
+
+        //  初期装備配布
+        MatchManager.Instance?.GiveMatchDefaultItemRequest(this);
+
+        //  初期化完了通知を送る
+        NotifyPlayerInitializeComplete();
     }
 
     #endregion
@@ -242,6 +248,14 @@ public class PlayerManager : NetworkBehaviour
         inventoryManager.SetPickeleIcon();
     }
 
+    /// <summary>
+    /// MatchManagerに初期化完了通知を送る
+    /// </summary>
+    [ServerRpc]
+    private void NotifyPlayerInitializeComplete()
+    {
+        MatchManager.Instance.AddInitializeComplete(Owner);
+    }
 
     #endregion
 

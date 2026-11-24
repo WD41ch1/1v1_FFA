@@ -1,9 +1,10 @@
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 using FishNet.Object;
-using static GameConst;
 using Cysharp.Threading.Tasks;
+using static GameConst;
 
 [DefaultExecutionOrder(-200)]
 public class PlayerInputController : MonoBehaviour
@@ -19,10 +20,22 @@ public class PlayerInputController : MonoBehaviour
 
     public BuildingSystem buildingSystem { get; private set; }
 
-    public Vector2 MoveInput { get; private set; }
-    public Vector2 LookInput { get; private set; }
+    private EditSystem editSystem;
+    private NetworkObject playerNetworkObject;
 
-    public bool JumpPressed { get; private set; }
+    private Vector2 moveInput;
+    private Vector2 lookInput;
+    private bool jumpPressed;
+
+    public Vector2 MoveInput =>
+        CanProcessGameplay ? moveInput : Vector2.zero;
+
+    public Vector2 LookInput =>
+        CanProcessGameplay ? lookInput : Vector2.zero;
+
+    public bool JumpPressed =>
+        CanProcessGameplay && jumpPressed;
+
     public bool BuildWallPressed { get; private set; }
     public bool BuildRampPressed { get; private set; }
     public bool BuildFloorPressed { get; private set; }
@@ -45,18 +58,54 @@ public class PlayerInputController : MonoBehaviour
     private bool started;
     private bool localInputActive;
     private bool mapErrorReported;
+    private bool gameplayWasBlocked;
+    private bool wasEditing;
 
-    private NetworkObject playerNetworkObject;
-
-    public bool CanProcessInput =>
-        isActiveAndEnabled &&
-        localInputActive &&
+    private bool IsLocalOwner =>
         playerNetworkObject != null &&
         playerNetworkObject.IsClientInitialized &&
         playerNetworkObject.IsOwner;
 
+    // インベントリを閉じる操作も受け付けるため、
+    // UI表示状態はこの判定に含めない。
+    public bool CanProcessInput =>
+        isActiveAndEnabled &&
+        localInputActive &&
+        IsLocalOwner;
+
+    private bool IsMenuOpen =>
+        CameraController.InventoryOpen ||
+        KeybindSession.SettingsOpen;
+
+    private bool IsBattleScene
+    {
+        get
+        {
+            string sceneName =
+                SceneManager.GetActiveScene().name;
+
+            return sceneName == "BattleScene" ||
+                   sceneName == "BattleScene_β";
+        }
+    }
+
+    private bool IsGameplayBlocked =>
+        !Application.isFocused ||
+        CameraController.InventoryOpen ||
+        KeybindSession.BlocksGameplay;
+
+    private bool CanProcessGameplay =>
+        CanProcessInput && !IsGameplayBlocked;
+
+    private bool IsEditingBuilding =>
+        editSystem != null && editSystem.IsEditing;
+
+    private bool CanProcessWeaponInput =>
+        CanProcessGameplay && !IsEditingBuilding;
+
     public bool BuildHeld =>
-        CanProcessInput &&
+        CanProcessGameplay &&
+        !IsEditingBuilding &&
         buildingMap != null &&
         buildingMap.enabled &&
         buildAction != null &&
@@ -65,11 +114,17 @@ public class PlayerInputController : MonoBehaviour
 
     private void Awake()
     {
-        owner = GetComponent<PlayerManager>();
-        playerNetworkObject = GetComponent<NetworkObject>();
+        if (owner == null)
+            owner = GetComponent<PlayerManager>();
+
+        playerNetworkObject =
+            GetComponent<NetworkObject>();
 
         buildingSystem =
             GetComponentInChildren<BuildingSystem>(true);
+
+        editSystem =
+            GetComponentInChildren<EditSystem>(true);
 
         if (playerNetworkObject == null)
         {
@@ -114,25 +169,11 @@ public class PlayerInputController : MonoBehaviour
         buildingMap =
             playerInput.actions.FindActionMap("Building", false);
 
-        buildAction = buildingMap != null
-            ? buildingMap.FindAction("Place", false)
-            : null;
-
-        wallAction = buildingMap != null
-            ? buildingMap.FindAction("Wall", false)
-            : null;
-
-        rampAction = buildingMap != null
-            ? buildingMap.FindAction("Ramp", false)
-            : null;
-
-        floorAction = buildingMap != null
-            ? buildingMap.FindAction("Floor", false)
-            : null;
-
-        coneAction = buildingMap != null
-            ? buildingMap.FindAction("Cone", false)
-            : null;
+        buildAction = buildingMap?.FindAction("Place", false);
+        wallAction = buildingMap?.FindAction("Wall", false);
+        rampAction = buildingMap?.FindAction("Ramp", false);
+        floorAction = buildingMap?.FindAction("Floor", false);
+        coneAction = buildingMap?.FindAction("Cone", false);
 
         return
             playerMap != null &&
@@ -150,12 +191,7 @@ public class PlayerInputController : MonoBehaviour
         if (!started || playerInput == null)
             return;
 
-        bool localOwner =
-            playerNetworkObject != null &&
-            playerNetworkObject.IsClientInitialized &&
-            playerNetworkObject.IsOwner;
-
-        if (!localOwner)
+        if (!IsLocalOwner)
         {
             if (localInputActive)
                 StopLocalInput();
@@ -166,30 +202,99 @@ public class PlayerInputController : MonoBehaviour
             return;
         }
 
-        if (localInputActive || mapErrorReported)
-            return;
-
-        playerInput.enabled = true;
-
-        if (!ResolveMaps())
+        if (!localInputActive)
         {
-            playerInput.enabled = false;
+            if (mapErrorReported)
+                return;
 
-            if (!mapErrorReported)
+            playerInput.enabled = true;
+
+            if (!ResolveMaps())
             {
+                playerInput.enabled = false;
+                mapErrorReported = true;
+
                 Debug.LogError(
                     "PlayerInputController：" +
                     "Player / Combat / Buildingと、" +
                     "Place / Wall / Ramp / Floor / Coneを確認してください。",
                     this);
+
+                return;
             }
 
-            mapErrorReported = true;
-            return;
+            localInputActive = true;
+            RestoreInputMode();
         }
 
-        localInputActive = true;
-        RestoreInputMode();
+        UpdateGameplayBlocking();
+        UpdateEditingBlocking();
+    }
+
+    private void LateUpdate()
+    {
+        if (!IsLocalOwner)
+            return;
+
+        // 他のUpdateで変更されたUI・編集状態も反映する。
+        UpdateGameplayBlocking();
+        UpdateEditingBlocking();
+
+        // カーソルを隠すのはバトルシーンの通常操作中だけ。
+        bool showCursor =
+            !IsBattleScene ||
+            IsMenuOpen ||
+            !Application.isFocused ||
+            !CanProcessInput;
+
+        SetCursorVisible(showCursor);
+    }
+
+    private void UpdateGameplayBlocking()
+    {
+        if (!localInputActive)
+            return;
+
+        bool blocked = IsGameplayBlocked;
+
+        if (blocked)
+        {
+            ResetJump();
+            ResetBuildInputs();
+
+            if (!gameplayWasBlocked)
+                StopCombat();
+        }
+
+        gameplayWasBlocked = blocked;
+    }
+
+    private void UpdateEditingBlocking()
+    {
+        if (!localInputActive)
+            return;
+
+        bool editing = IsEditingBuilding;
+
+        if (editing)
+        {
+            ResetBuildInputs();
+
+            // 編集開始時に連射予約とADSを解除する。
+            if (!wasEditing)
+                StopCombat();
+        }
+
+        wasEditing = editing;
+    }
+
+    private void SetCursorVisible(bool visible)
+    {
+        Cursor.lockState = visible
+            ? CursorLockMode.None
+            : CursorLockMode.Locked;
+
+        Cursor.visible = visible;
     }
 
     private void OnEnable()
@@ -200,7 +305,13 @@ public class PlayerInputController : MonoBehaviour
 
     private void OnDisable()
     {
+        bool controlledLocalPlayer =
+            localInputActive || IsLocalOwner;
+
         StopLocalInput();
+
+        if (controlledLocalPlayer)
+            SetCursorVisible(true);
     }
 
     private void RestoreInputMode()
@@ -226,15 +337,13 @@ public class PlayerInputController : MonoBehaviour
 
     public void OnInventory(InputAction.CallbackContext context)
     {
-        if (!context.performed)
+        if (!CanProcessInput ||
+            !context.performed ||
+            !Application.isFocused ||
+            KeybindSession.BlocksGameplay)
+        {
             return;
-
-        Debug.Log(
-            $"[インベントリ入力] Gを受信 / 入力可能={CanProcessInput}",
-            this);
-
-        if (!CanProcessInput)
-            return;
+        }
 
         onInventoryToggle.Invoke();
     }
@@ -248,7 +357,8 @@ public class PlayerInputController : MonoBehaviour
         if (!CanProcessInput)
             return;
 
-        MoveInput = context.ReadValue<Vector2>();
+        // UI中にキーを離した状態も記録する。
+        moveInput = context.ReadValue<Vector2>();
     }
 
     public void OnLook(InputAction.CallbackContext context)
@@ -256,21 +366,27 @@ public class PlayerInputController : MonoBehaviour
         if (!CanProcessInput)
             return;
 
-        LookInput = context.ReadValue<Vector2>();
+        lookInput = CanProcessGameplay
+            ? context.ReadValue<Vector2>()
+            : Vector2.zero;
     }
 
     public void OnJump(InputAction.CallbackContext context)
     {
-        if (!CanProcessInput || !context.performed)
+        if (!CanProcessGameplay || !context.performed)
             return;
 
-        JumpPressed = true;
+        jumpPressed = true;
     }
 
     public void OnPickUP(InputAction.CallbackContext context)
     {
-        if (!CanProcessInput || !context.performed)
+        if (!CanProcessGameplay ||
+            IsEditingBuilding ||
+            !context.performed)
+        {
             return;
+        }
 
         if (owner != null && owner.cameraController != null)
             owner.cameraController.StandbyPickUpItem();
@@ -280,15 +396,34 @@ public class PlayerInputController : MonoBehaviour
     // 装備スロット
     // ---------------------------
 
+    private void ExitBuildingForEquipment()
+    {
+        exitFrame = Time.frameCount;
+
+        ResetBuildInputs();
+
+        if (buildingSystem != null)
+            buildingSystem.CancelBuild();
+        else
+            SetBuildingMode(false);
+    }
+
     private void EquipSlot(
         InputAction.CallbackContext context,
         int slot)
     {
-        if (!CanProcessInput || !context.performed)
+        if (!CanProcessGameplay ||
+            IsEditingBuilding ||
+            !context.performed)
+        {
             return;
+        }
 
         if (owner == null || owner.equipmentManager == null)
             return;
+
+        StopCombat();
+        ExitBuildingForEquipment();
 
         owner.equipmentManager.Equip(slot).Forget();
     }
@@ -325,30 +460,48 @@ public class PlayerInputController : MonoBehaviour
 
     public void OnNextSlot(InputAction.CallbackContext context)
     {
-        if (!CanProcessInput || !context.performed)
+        if (!CanProcessGameplay ||
+            IsEditingBuilding ||
+            !context.performed)
+        {
             return;
+        }
 
         if (owner == null || owner.equipmentManager == null)
             return;
 
         Vector2 scroll = context.ReadValue<Vector2>();
 
-        if (scroll.y < 0f)
-            owner.equipmentManager.NextItemEquip();
+        if (scroll.y >= 0f)
+            return;
+
+        StopCombat();
+        ExitBuildingForEquipment();
+
+        owner.equipmentManager.NextItemEquip();
     }
 
     public void OnPreviousSlot(InputAction.CallbackContext context)
     {
-        if (!CanProcessInput || !context.performed)
+        if (!CanProcessGameplay ||
+            IsEditingBuilding ||
+            !context.performed)
+        {
             return;
+        }
 
         if (owner == null || owner.equipmentManager == null)
             return;
 
         Vector2 scroll = context.ReadValue<Vector2>();
 
-        if (scroll.y > 0f)
-            owner.equipmentManager.PreviousItemEquip();
+        if (scroll.y <= 0f)
+            return;
+
+        StopCombat();
+        ExitBuildingForEquipment();
+
+        owner.equipmentManager.PreviousItemEquip();
     }
 
     // ---------------------------
@@ -365,7 +518,6 @@ public class PlayerInputController : MonoBehaviour
         if (!CanProcessInput || !ResolveMaps())
             return;
 
-        // InventoryもこのMapに置くので常時有効にする。
         playerMap.Enable();
 
         wallAction.Enable();
@@ -377,17 +529,14 @@ public class PlayerInputController : MonoBehaviour
         {
             combatEnabled = false;
             StopCombat();
+
             combatMap.Disable();
             buildAction.Enable();
         }
         else
         {
             buildAction.Disable();
-
-            ResetBuildWall();
-            ResetBuildRamp();
-            ResetBuildFloor();
-            ResetBuildCone();
+            ResetBuildInputs();
 
             combatEnabled = true;
             combatMap.Enable();
@@ -396,21 +545,25 @@ public class PlayerInputController : MonoBehaviour
 
     public void OnExitBuilding(InputAction.CallbackContext context)
     {
-        if (!CanProcessInput || !context.performed)
+        if (!CanProcessGameplay ||
+            IsEditingBuilding ||
+            !context.performed)
+        {
             return;
+        }
 
-        exitFrame = Time.frameCount;
-
-        if (buildingSystem != null)
-            buildingSystem.CancelBuild();
-        else
-            SetBuildingMode(false);
+        ExitBuildingForEquipment();
     }
 
     private bool CanSelectBuilding(InputAction.CallbackContext context)
     {
-        if (!context.performed || exitFrame == Time.frameCount)
+        if (!CanProcessGameplay ||
+            IsEditingBuilding ||
+            !context.performed ||
+            exitFrame == Time.frameCount)
+        {
             return false;
+        }
 
         if (!ResolveMaps())
             return false;
@@ -428,6 +581,7 @@ public class PlayerInputController : MonoBehaviour
             Debug.LogWarning(
                 "PlayerInputController：有効なBuildingSystemを設定してください。",
                 this);
+
             return false;
         }
 
@@ -437,7 +591,7 @@ public class PlayerInputController : MonoBehaviour
 
     public void OnBuildWall(InputAction.CallbackContext context)
     {
-        if (!CanProcessInput || !CanSelectBuilding(context))
+        if (!CanSelectBuilding(context))
             return;
 
         BuildWallPressed = true;
@@ -445,7 +599,7 @@ public class PlayerInputController : MonoBehaviour
 
     public void OnBuildRamp(InputAction.CallbackContext context)
     {
-        if (!CanProcessInput || !CanSelectBuilding(context))
+        if (!CanSelectBuilding(context))
             return;
 
         BuildRampPressed = true;
@@ -453,7 +607,7 @@ public class PlayerInputController : MonoBehaviour
 
     public void OnBuildFloor(InputAction.CallbackContext context)
     {
-        if (!CanProcessInput || !CanSelectBuilding(context))
+        if (!CanSelectBuilding(context))
             return;
 
         BuildFloorPressed = true;
@@ -461,7 +615,7 @@ public class PlayerInputController : MonoBehaviour
 
     public void OnBuildCone(InputAction.CallbackContext context)
     {
-        if (!CanProcessInput || !CanSelectBuilding(context))
+        if (!CanSelectBuilding(context))
             return;
 
         BuildConePressed = true;
@@ -474,6 +628,7 @@ public class PlayerInputController : MonoBehaviour
     private bool CanUseCombat(InputAction.CallbackContext context)
     {
         return
+            CanProcessWeaponInput &&
             combatEnabled &&
             context.action != null &&
             context.action.actionMap == combatMap &&
@@ -483,7 +638,21 @@ public class PlayerInputController : MonoBehaviour
 
     public void OnUsePrimary(InputAction.CallbackContext context)
     {
-        if (!CanProcessInput || !CanUseCombat(context))
+        // 編集中・UI中でも射撃終了の通知は処理する。
+        if (context.canceled)
+        {
+            if (IsLocalOwner &&
+                owner != null &&
+                owner.equipmentManager != null)
+            {
+                owner.equipmentManager
+                    .GetcurrentItem()?.UsePrimary(context);
+            }
+
+            return;
+        }
+
+        if (!CanUseCombat(context))
             return;
 
         owner.equipmentManager.GetcurrentItem()?.UsePrimary(context);
@@ -491,34 +660,42 @@ public class PlayerInputController : MonoBehaviour
 
     public void OnUseSecondary(InputAction.CallbackContext context)
     {
-        if (!CanProcessInput || !CanUseCombat(context))
-            return;
-
-        if (context.started)
-            isADS = true;
-        else if (context.canceled)
+        if (context.canceled)
+        {
+            bool wasADS = isADS;
             isADS = false;
-        else
+
+            if (wasADS &&
+                IsLocalOwner &&
+                owner != null &&
+                owner.equipmentManager != null)
+            {
+                owner.equipmentManager
+                    .GetcurrentItem()?.UseSecondary(false);
+            }
+
+            return;
+        }
+
+        if (!CanUseCombat(context) || !context.started)
             return;
 
-        owner.equipmentManager.GetcurrentItem()?.UseSecondary(isADS);
+        isADS = true;
+
+        owner.equipmentManager.GetcurrentItem()?.UseSecondary(true);
     }
 
     public void OnCombatReload(InputAction.CallbackContext context)
     {
-        if (!CanProcessInput ||
-            !CanUseCombat(context) ||
-            !context.performed)
-        {
+        if (!CanUseCombat(context) || !context.performed)
             return;
-        }
 
         OnUseReload();
     }
 
     public void OnUseReload()
     {
-        if (!CanProcessInput ||
+        if (!CanProcessWeaponInput ||
             !combatEnabled ||
             owner == null ||
             owner.equipmentManager == null)
@@ -552,7 +729,7 @@ public class PlayerInputController : MonoBehaviour
 
     public void ResetJump()
     {
-        JumpPressed = false;
+        jumpPressed = false;
     }
 
     public void ResetBuildWall()
@@ -575,6 +752,14 @@ public class PlayerInputController : MonoBehaviour
         BuildConePressed = false;
     }
 
+    private void ResetBuildInputs()
+    {
+        ResetBuildWall();
+        ResetBuildRamp();
+        ResetBuildFloor();
+        ResetBuildCone();
+    }
+
     private void StopLocalInput()
     {
         localInputActive = false;
@@ -589,13 +774,13 @@ public class PlayerInputController : MonoBehaviour
         buildingMap?.Disable();
         playerMap?.Disable();
 
-        MoveInput = Vector2.zero;
-        LookInput = Vector2.zero;
+        moveInput = Vector2.zero;
+        lookInput = Vector2.zero;
+
+        gameplayWasBlocked = false;
+        wasEditing = false;
 
         ResetJump();
-        ResetBuildWall();
-        ResetBuildRamp();
-        ResetBuildFloor();
-        ResetBuildCone();
+        ResetBuildInputs();
     }
 }

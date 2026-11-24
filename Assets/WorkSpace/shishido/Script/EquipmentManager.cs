@@ -118,8 +118,14 @@ public class EquipmentManager : NetworkBehaviour
 
         SetCurrentSlot(slotNum);
 
-        // 装備成功後に、そのアイテムのアニメーションへ変更
+        // 装備成功後に、そのアイテムのアニメーションへ変更。
         ApplyEquippedAnimation(data);
+
+        // 武器の装備に成功したときだけ鳴らす。
+        WeaponBase equippedWeapon = GetcurrentWeapon();
+
+        if (equippedWeapon != null)
+            equippedWeapon.PlayEquipSound();
 
         return true;
     }
@@ -175,6 +181,13 @@ public class EquipmentManager : NetworkBehaviour
         //  生成ができなかった
         if (createItem == null)
             return false;
+
+        NetworkObject apNOB
+            = createItem.GetComponent<NetworkObject>();
+        //  AppearancePrefab生成要求(network)
+        RequestCreateAppearanceModel(
+            apNOB,
+            myPlayer);
 
         //  モデル情報を取得
         currentItemView = createItem.GetComponent<ItemView>();
@@ -244,6 +257,18 @@ public class EquipmentManager : NetworkBehaviour
             _itemId,
             _slotNum);
     }
+    /// <summary>
+    /// ProcessData生成要求
+    /// </summary>
+    private void RequestCreateAppearanceModel(
+        NetworkObject _prefab,
+        PlayerManager _myOwner)
+    {
+        CreateAppearanceModel(
+            this,
+            _prefab,
+            _myOwner);
+    }
 
     /// <summary>
     /// 装備を外し、通常アニメーションへ戻す。
@@ -258,7 +283,13 @@ public class EquipmentManager : NetworkBehaviour
         //  見た目の削除
         if (createItem != null)
         {
-            Destroy(createItem);
+            if (createItem.TryGetComponent(out NetworkObject nob))
+            {
+                Despawn(nob);
+            }
+            else
+                Destroy(createItem);
+
             createItem = null;
         }
 
@@ -438,6 +469,44 @@ public class EquipmentManager : NetworkBehaviour
         // 生成完了を通知
         _myManager.IsCreatedProcess.Value = true;
 
+    }
+    /// <summary>
+    /// Appearance生成
+    /// </summary>
+    [ServerRpc]
+    private void CreateAppearanceModel(
+        EquipmentManager _myManager,
+        NetworkObject _prefab,
+        PlayerManager _owner)
+    {
+        if (!IsServerInitialized)
+            return;
+
+        if (_myManager == null || _prefab == null)
+            return;
+
+        // 既存のcreateItemを削除
+        if (_myManager.createItem != null)
+        {
+            NetworkObject oldProcess =
+                createItem.GetComponent<NetworkObject>();
+
+            if (oldProcess.IsSpawned)
+                oldProcess.Despawn();
+
+            _myManager.createItem = null;
+        }
+
+        // 新規生成
+        // 新規生成
+        NetworkObject nob = Instantiate(_prefab, _myManager.itemSocket);
+
+        if (nob == null)
+            return;
+
+        Spawn(nob);
+
+        _myManager.createItem = nob.gameObject;
     }
 
     [TargetRpc]

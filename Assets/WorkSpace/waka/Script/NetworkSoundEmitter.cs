@@ -35,27 +35,19 @@ public class NetworkSoundEmitter : NetworkBehaviour
     private AudioSource runningSource;
     private bool warnedMissingManager;
 
-    // 自分の操作による走行状態。
     private bool localRunning;
-
-    // サーバーが保持する走行状態。
     private bool serverRunning;
-
-    // 相手のPCで再生する走行状態。
     private bool remoteRunning;
 
     private float nextRunningRefresh;
     private float lastServerRunningRefresh;
 
-    // 走っている間だけ定期的に状態を更新する。
     private const float RunningRefreshInterval = 0.25f;
-
-    // 操作側の更新が途絶えたときに鳴り続けるのを防ぐ。
     private const float RunningTimeout = 1f;
 
     private void Awake()
     {
-        // 足音専用。建築音や銃声とは別に停止できる。
+        // 足音専用。銃声とは別に停止できる。
         GameObject soundObject = new GameObject("RunningFootstep");
         soundObject.transform.SetParent(transform, false);
 
@@ -70,12 +62,13 @@ public class NetworkSoundEmitter : NetworkBehaviour
         runningSource.clip = runningClip;
         runningSource.volume = runningVolume;
         runningSource.pitch = runningPitch;
+
         runningSource.minDistance =
             Mathf.Max(0.1f, runningMinDistance);
-        runningSource.maxDistance =
-            Mathf.Max(
-                runningSource.minDistance + 0.1f,
-                runningMaxDistance);
+
+        runningSource.maxDistance = Mathf.Max(
+            runningSource.minDistance + 0.1f,
+            runningMaxDistance);
     }
 
     public override void OnStartServer()
@@ -108,8 +101,7 @@ public class NetworkSoundEmitter : NetworkBehaviour
     }
 
     /// <summary>
-    /// 所有者のPlayerMovementから毎FixedUpdate呼ぶ。
-    /// 自分は即座に再生・停止し、相手にはサーバー経由で通知する。
+    /// 所有者のPlayerMovementから呼ぶ。
     /// </summary>
     public void SetRunning(bool running)
     {
@@ -121,8 +113,6 @@ public class NetworkSoundEmitter : NetworkBehaviour
 
         ApplyRunningPlayback(running);
 
-        // 停止中は、状態が変わったときだけ通知する。
-        // 走行中は、停止通知がなくなった場合に備えて定期更新する。
         if (!changed &&
             (!running || Time.unscaledTime < nextRunningRefresh))
         {
@@ -151,15 +141,12 @@ public class NetworkSoundEmitter : NetworkBehaviour
         SetRunningObserversRpc(running);
     }
 
-    // 途中からこのPlayerが見えるようになった相手にも、
-    // 現在の走行状態を渡す。
     [ObserversRpc(BufferLast = true)]
     private void SetRunningObserversRpc(bool running)
     {
         remoteRunning = running;
 
-        // 所有者は自分の入力を即座に反映済み。
-        // 遅れて届いた通知で足音が再開しないようにする。
+        // 所有者は自身の入力で即座に反映する。
         if (!IsOwner && IsClientInitialized)
         {
             ApplyRunningPlayback(
@@ -180,68 +167,17 @@ public class NetworkSoundEmitter : NetworkBehaviour
             return;
         }
 
-        // 再生中なら最初から再生し直さない。
         if (!runningSource.isPlaying)
             runningSource.Play();
     }
 
-    public override void OnStopClient()
-    {
-        localRunning = false;
-        remoteRunning = false;
-        ApplyRunningPlayback(false);
-
-        base.OnStopClient();
-    }
-
-    private void OnDisable()
-    {
-        if (IsClientInitialized && IsOwner)
-            SetRunning(false);
-
-        localRunning = false;
-        remoteRunning = false;
-        ApplyRunningPlayback(false);
-    }
-
     /// <summary>
-    /// 単発の効果音を所有者クライアントから要求する。
-    /// 建築音・射撃音などに使用する。
+    /// 所有者クライアントから効果音を要求する。
+    /// 発射音は自分のPCで即座に再生する。
     /// </summary>
     public void RequestSound(GameSoundId id, Vector3 position)
     {
         if (!IsClientInitialized || !IsOwner)
-            return;
-
-        RequestSoundServerRpc(id, position);
-    }
-
-    [ServerRpc]
-    private void RequestSoundServerRpc(
-        GameSoundId id,
-        Vector3 position)
-    {
-        if (!ValidPosition(position))
-            return;
-
-        float allowedDistance =
-            Mathf.Max(1f, maxRequestDistance);
-
-        if ((position - transform.position).sqrMagnitude >
-            allowedDistance * allowedDistance)
-        {
-            return;
-        }
-
-        PlayOnServer(id, position);
-    }
-
-    /// <summary>
-    /// サーバーで確定した建築・編集・射撃などから呼ぶ。
-    /// </summary>
-    public void PlayOnServer(GameSoundId id, Vector3 position)
-    {
-        if (!IsServerInitialized || !IsSpawned)
             return;
 
         if (!Enum.IsDefined(typeof(GameSoundId), id) ||
@@ -250,29 +186,119 @@ public class NetworkSoundEmitter : NetworkBehaviour
             return;
         }
 
+        float allowedDistance = Mathf.Max(1f, maxRequestDistance);
+
+        if ((position - transform.position).sqrMagnitude >
+            allowedDistance * allowedDistance)
+        {
+            return;
+        }
+
+        int seed = UnityEngine.Random.Range(0, int.MaxValue);
+        bool predictedGunfire = AudioManager.IsGunfire(id);
+
+        // ボタンを離した後に、遅れて届いた発射通知で
+        // 自分の音が再開することを防ぐ。
+        if (predictedGunfire)
+            PlayLocalSound(id, position, seed);
+
+        RequestSoundServerRpc(
+            id,
+            position,
+            seed);
+    }
+
+    [ServerRpc]
+    private void RequestSoundServerRpc(
+        GameSoundId id,
+        Vector3 position,
+        int seed)
+    {
+        if (!Enum.IsDefined(typeof(GameSoundId), id) ||
+            !ValidPosition(position))
+        {
+            return;
+        }
+
+        float allowedDistance = Mathf.Max(1f, maxRequestDistance);
+
+        if ((position - transform.position).sqrMagnitude >
+            allowedDistance * allowedDistance)
+        {
+            return;
+        }
+
+        if (!CanPlayOnServer(id))
+            return;
+
+        // 発射音のみ所有者側で再生済み。
+        PlayObserversRpc(
+            id,
+            position,
+            seed,
+            AudioManager.IsGunfire(id));
+    }
+
+    /// <summary>
+    /// サーバーで確定した建築・編集などから呼ぶ。
+    /// RequestSoundと同じイベントに重複して呼ばない。
+    /// </summary>
+    public void PlayOnServer(GameSoundId id, Vector3 position)
+    {
+        if (!Enum.IsDefined(typeof(GameSoundId), id) ||
+            !ValidPosition(position))
+        {
+            return;
+        }
+
+        if (!CanPlayOnServer(id))
+            return;
+
+        int seed = UnityEngine.Random.Range(0, int.MaxValue);
+
+        // サーバー直接呼び出しは所有者も含めて再生する。
+        PlayObserversRpc(id, position, seed, false);
+    }
+
+    private bool CanPlayOnServer(GameSoundId id)
+    {
+        if (!IsServerInitialized || !IsSpawned)
+            return false;
+
         float now = Time.unscaledTime;
 
         if (lastPlayed.TryGetValue(id, out float previous) &&
             now - previous < minimumInterval)
         {
-            return;
+            return false;
         }
 
         lastPlayed[id] = now;
-
-        int seed = UnityEngine.Random.Range(0, int.MaxValue);
-        PlayObserversRpc(id, position, seed);
+        return true;
     }
 
     [ObserversRpc]
     private void PlayObserversRpc(
         GameSoundId id,
         Vector3 position,
-        int seed)
+        int seed,
+        bool alreadyPlayedByOwner)
     {
-        if (!IsClientInitialized)
+        if (!IsClientInitialized || !isActiveAndEnabled)
             return;
 
+        // 所有者はRequestSoundで再生済み。
+        if (alreadyPlayedByOwner && IsOwner)
+            return;
+
+        PlayLocalSound(id, position, seed);
+    }
+
+    private void PlayLocalSound(
+        GameSoundId id,
+        Vector3 position,
+        int seed)
+    {
         if (AudioManager.Instance == null)
         {
             if (!warnedMissingManager)
@@ -287,7 +313,79 @@ public class NetworkSoundEmitter : NetworkBehaviour
             return;
         }
 
-        AudioManager.Instance.PlaySE(id, position, seed);
+        // このEmitterの音として登録する。
+        AudioManager.Instance.PlaySE(
+            id,
+            position,
+            seed,
+            this);
+    }
+
+    /// <summary>
+    /// 所有者が射撃を止めたときに呼ぶ。
+    /// このプレイヤーの発射音だけ停止する。
+    /// </summary>
+    public void StopGunfire()
+    {
+        if (!IsClientInitialized || !IsOwner)
+            return;
+
+        // 自分は通信を待たずに停止。
+        StopLocalGunfire();
+
+        StopGunfireServerRpc();
+    }
+
+    private void StopLocalGunfire()
+    {
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.StopGunfire(this);
+    }
+
+    [ServerRpc]
+    private void StopGunfireServerRpc()
+    {
+        StopGunfireObserversRpc();
+    }
+
+    [ObserversRpc]
+    private void StopGunfireObserversRpc()
+    {
+        if (!IsClientInitialized)
+            return;
+
+        // 自分は停止済み。
+        // 遅れて届いた停止通知で次の射撃音を切らない。
+        if (IsOwner)
+            return;
+
+        StopLocalGunfire();
+    }
+
+    public override void OnStopClient()
+    {
+        StopLocalGunfire();
+
+        localRunning = false;
+        remoteRunning = false;
+        ApplyRunningPlayback(false);
+
+        base.OnStopClient();
+    }
+
+    private void OnDisable()
+    {
+        if (IsClientInitialized && IsOwner)
+        {
+            SetRunning(false);
+            StopGunfire();
+        }
+
+        StopLocalGunfire();
+
+        localRunning = false;
+        remoteRunning = false;
+        ApplyRunningPlayback(false);
     }
 
     private static bool ValidPosition(Vector3 value)

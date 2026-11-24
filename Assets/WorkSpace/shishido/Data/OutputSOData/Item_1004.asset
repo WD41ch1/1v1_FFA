@@ -23,7 +23,7 @@ MonoBehaviour:
   reloadTime: 1.5
   ammoType: 0
   magazineSize: 30
-  ammoSpeed: 50
+  ammoSpeed: 100
   fireAccuracy: 0
   recoilValue: 0
   adsSpeed: 1
