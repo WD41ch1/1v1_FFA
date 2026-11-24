@@ -92,11 +92,27 @@ public class PlayerInputController : MonoBehaviour
     {
         started = true;
 
+        SetCursorLockd(true);
+
         if (buildingSystem == null)
         {
             Debug.LogWarning(
                 "PlayerInputController：Player配下にBuildingSystemを配置してください。",
                 this);
+        }
+    }
+
+    private void SetCursorLockd(bool flag)
+    {
+        if (flag)
+        {
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked;
+        }
+        else
+        {
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
         }
     }
 

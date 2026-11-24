@@ -128,6 +128,7 @@ public class GUIManager : MonoBehaviour, IGuiInitialize
         if (inventoryAction.WasPressedThisFrame())
         {
             SetInventoryOpen(!inventoryOpen);
+
         }
     }
 
