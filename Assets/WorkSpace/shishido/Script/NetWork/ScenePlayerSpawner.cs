@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static ConversionUtility;
 
 public class ScenePlayerSpawner : NetworkBehaviour
 {
@@ -222,15 +223,4 @@ public class ScenePlayerSpawner : NetworkBehaviour
 
     #endregion
 
-    /// <summary>
-    /// セットは、プレハブの値を使用して生成
-    /// </summary>
-    /// <param name = "prefab"></param>
-    /// <param name = "pos"></param>
-    /// <param name = "rot"></param>
-    private void SetSpawnUsingPrefab(Transform prefab, out Vector3 pos, out Quaternion rot)
-    {
-        pos = prefab.position;
-        rot = prefab.rotation;
-    }
 }

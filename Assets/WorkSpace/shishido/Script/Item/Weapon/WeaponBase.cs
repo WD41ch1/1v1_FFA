@@ -73,7 +73,8 @@ public abstract class WeaponBase : ItemBase
             $"IsServer:{IsServerInitialized} " +
             $"IsClient:{IsClientInitialized} " +
             $"asServer:{asServer} " +
-            $"next:{next}");
+            $"next:{next}",
+            false);
     }
 
     private void OnchangeShootCount(

@@ -8,5 +8,8 @@ public class AppearanceModelData : ScriptableObject
     public int itemId;
 
     [Header("Prefab")]
+    [Header("Local上")]
     public GameObject AppearancePrefab;
+    [Header("Net上")]
+    public GameObject AppearanceNetPrefab;
 }
