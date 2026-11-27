@@ -17,6 +17,8 @@ public static class ConversionUtility
         rot = prefab.rotation;
     }
 
+    #region Log関連
+
     public static string NULLchackString(Object chackTarget)
     {
         string processInfo = "null";
@@ -30,4 +32,21 @@ public static class ConversionUtility
         return processInfo;
     }
 
+    public static string NULLchackString(
+    params (string name, Object target)[] targets)
+    {
+        string result = "";
+
+        foreach (var target in targets)
+        {
+            if (target.target == null)
+            {
+                result += $"[{target.name}]: null\n";
+            }
+        }
+
+        return result;
+    }
+
+    #endregion
 }

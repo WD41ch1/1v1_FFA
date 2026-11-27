@@ -42,6 +42,8 @@ public class EquipmentManager : NetworkBehaviour
         new SyncVar<string>(string.Empty);
     #endregion
 
+    #region 初期化処理・破棄処理
+
     private void Awake()
     {
         _createItemToken = this.GetCancellationTokenOnDestroy();
@@ -94,6 +96,10 @@ public class EquipmentManager : NetworkBehaviour
             subscribedInventory.OnDeletingSetItems -= DeletingSetItems;
         }
     }
+
+    #endregion
+
+    #region 装備処理
 
     /// <summary>
     /// 指定スロットのアイテムを装備する。
@@ -177,69 +183,67 @@ public class EquipmentManager : NetworkBehaviour
         if (GetcurrentItem() != null || createItem.Value != null)
             UnEquip();
 
-        //  AppearancePrefab生成要求(network)
-        RequestCreateAppearanceModel(socketBehaviour, data.itemId);
+        // AppearanceModel生成要求
+        RequestCreateAppearanceModel(
+            socketBehaviour,
+            data.itemId);
 
-        //  AppearanceModel生成完了を待つ
-        if (!await WaitCreatedAppearanceModel(_createItemToken))
-        {
-            GameDebug.Warning("AppearanceModelの生成に失敗しました。");
-        }
-
-        //  生成ができなかった
-        if (createItem.Value == null)
-        {
-            UnEquip();
-            GameDebug.Warning("AppearanceModelの生成に失敗しました");
-            return false;
-        }
-
-        //  モデル情報を取得
-        currentItemView = createItem.Value.GetComponentInChildren<ItemView>();
-        if (currentItemView == null)
-        {
-            GameDebug.Warning("装備の見た目PrefabにItemViewがありません。");
-
-            DespawnAppearanceModel();
-            return false;
-        }
-
-        //  ProcessData生成要求(network)
+        // ProcessData生成要求
         RequestCreateProcessData(
             processData.processPrefab,
             transform,
             myPlayer,
             data.itemId,
-            slotNum
-            );
+            slotNum);
 
-        //  ProcessData生成完了を待つ
-        if (!await WaitChangeIsCreatedProcess(_currentProcessToken))
-        {
-            GameDebug.Warning("ProcessDataの生成に失敗しました。");
-        }
 
-        //  オブジェクトが取得できなかった場合は、装備を外す
-        if (currentProcess.Value == null)
+        //  両方の生成完了を同時に待つ
+        UniTask<bool> appearanceTask =
+            WaitCreatedAppearanceModel(_createItemToken);
+
+        UniTask<bool> processTask =
+            WaitChangeIsCreatedProcess(_currentProcessToken);
+
+        // 両方が完了するまで待機
+        (bool appearanceSuccess, bool processSuccess) =
+            await UniTask.WhenAll(
+                appearanceTask,
+                processTask);
+
+        //  生成結果を確認
+        if (!appearanceSuccess || createItem.Value == null)
         {
+            GameDebug.Warning("AppearanceModelの生成に失敗しました。");
+
             UnEquip();
             return false;
         }
 
-        ItemBase process =
-            currentProcess.Value.gameObject.GetComponent<ItemBase>();
-
-        if (process == null || myPlayer == null || data == null || currentItemView == null)
+        if (!processSuccess || currentProcess.Value == null)
         {
-            GameDebug.Warning($"[CreateEquipItem]" +
-                $"初期化に必要なデータがかけています" +
-                $"[process]:{NULLchackString(process)}" +
-                $"[myPlayer]:{NULLchackString(myPlayer)}" +
-                $"[data]:{NULLchackString(data)}" +
-                $"[currentItemView]:{NULLchackString(currentItemView)}");
+            GameDebug.Warning("ProcessDataの生成に失敗しました。");
+
+            UnEquip();
             return false;
         }
 
+        //  その他必要なコンポーネント取得
+        currentItemView =
+            createItem.Value.GetComponentInChildren<ItemView>();
+        ItemBase process =
+            currentProcess.Value.gameObject.GetComponent<ItemBase>();
+
+        if (process == null || myPlayer == null ||
+            data == null || currentItemView == null)
+        {
+            GameDebug.Warning("[CreateEquipItem] 初期化に必要なデータが不足しています。\n" +
+                    NULLchackString(("process", process), ("myPlayer", myPlayer),
+                        ("data", data), ("currentItemView", currentItemView)));
+            UnEquip();
+            return false;
+        }
+
+        //  Processの初期化開始
         bool success = process.Initialize(
             myPlayer,
             data,
@@ -247,6 +251,7 @@ public class EquipmentManager : NetworkBehaviour
             state);
 
         return success;
+
     }
 
     /// <summary>
@@ -343,6 +348,9 @@ public class EquipmentManager : NetworkBehaviour
             }
         }
     }
+
+    #endregion
+
     #region Getter/Setter
 
     public ItemBase GetcurrentItem()

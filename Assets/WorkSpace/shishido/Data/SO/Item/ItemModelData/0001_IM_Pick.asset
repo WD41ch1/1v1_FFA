@@ -14,3 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   itemId: 1
   AppearancePrefab: {fileID: 923540029661830127, guid: 8b00242da992b8349abaeb8d4e72e30a, type: 3}
+  AppearanceNetPrefab: {fileID: 5294868489141543031, guid: 86faac4dbd95c6e418fdde027abcf8f7, type: 3}
